@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+*.log
+npm-debug.log*
+
+# backend local storage artifacts
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/storage-data/*
+!backend/storage-data/.gitkeep
+
+# expo
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+.DS_Store
