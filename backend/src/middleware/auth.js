@@ -19,10 +19,11 @@ async function requireAuth(req, res, next) {
 
     const decoded = verifyToken(token);
     const { rows } = await query(
-      'SELECT id, email, role, name FROM users WHERE id = $1',
+      'SELECT id, email, role, name, is_blocked FROM users WHERE id = $1',
       [decoded.sub]
     );
     if (!rows[0]) throw new ApiError(401, 'User no longer exists');
+    if (rows[0].is_blocked) throw new ApiError(403, 'Your account has been blocked');
 
     req.user = rows[0];
     next();

@@ -20,7 +20,9 @@ async function getOrCreateConversation(userId, otherUserId, propertyId = null) {
   if (userId === otherUserId) throw new Error('Cannot start a conversation with yourself');
   const [a, b] = orderPair(userId, otherUserId);
 
-  // Confirm the other user exists.
+  // Confirm the other user exists. (Any roles may chat: seeker↔owner for
+  // listings, seeker↔seeker for roommate matching, owner↔owner for questions,
+  // and anyone↔admin for support.)
   const other = await query('SELECT id FROM users WHERE id = $1', [otherUserId]);
   if (!other.rows[0]) throw new Error('Recipient does not exist');
 

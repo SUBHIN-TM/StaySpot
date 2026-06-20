@@ -4,6 +4,7 @@ const { query, withTransaction } = require('../config/db');
 const storage = require('../storage');
 const { asyncHandler, ApiError } = require('../utils/http');
 const { publicUser, propertyImage } = require('../utils/serialize');
+const { getBool } = require('../services/settings');
 
 // Assemble a property row with its images + owner summary.
 async function hydrate(propertyRow) {
@@ -16,6 +17,7 @@ async function hydrate(propertyRow) {
   return {
     ...propertyRow,
     rent_amount: Number(propertyRow.rent_amount),
+    video_url: propertyRow.video_key ? storage.url(propertyRow.video_key) : null,
     images: images.rows.map(propertyImage),
     owner: publicUser(owner.rows[0]),
   };
@@ -42,7 +44,8 @@ const listProperties = asyncHandler(async (req, res) => {
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
   const offset = (page - 1) * limit;
 
-  const where = ['p.is_available = TRUE'];
+  // Public list shows only available AND admin-approved listings.
+  const where = ['p.is_available = TRUE', "p.approval_status = 'approved'"];
   const params = [];
   let i = 1;
 
@@ -105,20 +108,44 @@ const getProperty = asyncHandler(async (req, res) => {
   res.json({ property: await hydrate(rows[0]) });
 });
 
+// GET /api/properties/all  (admin: every property, incl. unavailable)
+const listAll = asyncHandler(async (req, res) => {
+  const { rows } = await query('SELECT * FROM properties ORDER BY created_at DESC LIMIT 200');
+  const data = await Promise.all(rows.map(hydrate));
+  res.json({ properties: data });
+});
+
+// GET /api/properties/mine  (owner: ALL their properties, incl. unavailable)
+const listMine = asyncHandler(async (req, res) => {
+  const { rows } = await query(
+    'SELECT * FROM properties WHERE owner_id = $1 ORDER BY created_at DESC',
+    [req.user.id]
+  );
+  const data = await Promise.all(rows.map(hydrate));
+  res.json({ properties: data });
+});
+
 // POST /api/properties  (owner only)
 const createProperty = asyncHandler(async (req, res) => {
   const {
     title, description, property_type, rent_amount,
     latitude, longitude, address, district, city,
+    map_link, max_persons, occupancy_status,
   } = req.body || {};
 
   if (!title || !String(title).trim()) throw new ApiError(400, 'Title is required');
 
+  // If the admin enabled auto-approval, new listings go live immediately;
+  // otherwise they start as "pending" and wait for admin approval.
+  const autoApprove = await getBool('auto_approve_listings', false);
+  const approval = autoApprove ? 'approved' : 'pending';
+
   const { rows } = await query(
     `INSERT INTO properties
        (owner_id, title, description, property_type, rent_amount,
-        latitude, longitude, address, district, city)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        latitude, longitude, address, district, city,
+        map_link, max_persons, occupancy_status, approval_status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING *`,
     [
       req.user.id,
@@ -131,9 +158,27 @@ const createProperty = asyncHandler(async (req, res) => {
       address || null,
       district || null,
       city || null,
+      map_link || null,
+      max_persons != null && max_persons !== '' ? parseInt(max_persons, 10) : null,
+      occupancy_status || 'available',
+      approval,
     ]
   );
   res.status(201).json({ property: await hydrate(rows[0]) });
+});
+
+// PATCH /api/properties/:id/approval  (admin) — approve / reject / reset.
+const setApproval = asyncHandler(async (req, res) => {
+  const { approval_status } = req.body || {};
+  if (!['approved', 'rejected', 'pending'].includes(approval_status)) {
+    throw new ApiError(400, 'approval_status must be approved, rejected, or pending');
+  }
+  const { rows } = await query(
+    'UPDATE properties SET approval_status = $2, updated_at = now() WHERE id = $1 RETURNING *',
+    [req.params.id, approval_status]
+  );
+  if (!rows[0]) throw new ApiError(404, 'Property not found');
+  res.json({ property: await hydrate(rows[0]) });
 });
 
 // Ensure the property exists and belongs to the requester (or requester is admin).
@@ -153,6 +198,7 @@ const updateProperty = asyncHandler(async (req, res) => {
   const fields = [
     'title', 'description', 'property_type', 'rent_amount',
     'latitude', 'longitude', 'address', 'district', 'city', 'is_available',
+    'map_link', 'max_persons', 'occupancy_status',
   ];
   const sets = [];
   const params = [req.params.id];
@@ -218,6 +264,26 @@ const uploadImages = asyncHandler(async (req, res) => {
   res.status(201).json({ images: saved.map(propertyImage) });
 });
 
+// POST /api/properties/:id/video  (multipart: video)
+const uploadVideo = asyncHandler(async (req, res) => {
+  const property = await loadOwnedProperty(req.params.id, req.user);
+  if (!req.file) throw new ApiError(400, 'No video uploaded (field: "video")');
+
+  const oldKey = property.video_key;
+  const { key } = await storage.save({
+    buffer: req.file.buffer,
+    originalName: req.file.originalname,
+    mimeType: req.file.mimetype,
+    folder: 'videos',
+  });
+  const { rows } = await query(
+    'UPDATE properties SET video_key = $2, updated_at = now() WHERE id = $1 RETURNING *',
+    [req.params.id, key]
+  );
+  if (oldKey) await storage.delete(oldKey).catch(() => {});
+  res.status(201).json({ property: await hydrate(rows[0]) });
+});
+
 // DELETE /api/properties/:id/images/:imageId
 const deleteImage = asyncHandler(async (req, res) => {
   await loadOwnedProperty(req.params.id, req.user);
@@ -231,6 +297,6 @@ const deleteImage = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  listProperties, getProperty, createProperty, updateProperty,
-  deleteProperty, uploadImages, deleteImage,
+  listProperties, listAll, listMine, getProperty, createProperty, updateProperty,
+  setApproval, deleteProperty, uploadImages, uploadVideo, deleteImage,
 };

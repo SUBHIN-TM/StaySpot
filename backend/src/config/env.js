@@ -28,6 +28,19 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || 'insecure-dev-secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',
 
+  // Google OAuth client id — used to verify Google sign-in tokens.
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+
+  // Email (SMTP) settings for nodemailer.
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587,
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+  },
+  mailFrom: process.env.MAIL_FROM || '',
+  mailFromName: process.env.MAIL_FROM_NAME || 'StayMate',
+
   storageDriver: (process.env.STORAGE_DRIVER || 'local').toLowerCase(),
   publicBaseUrl: (process.env.PUBLIC_BASE_URL || 'http://localhost:4000').replace(/\/$/, ''),
 

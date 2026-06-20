@@ -7,7 +7,7 @@ Monorepo for StayMate — "Find your next stay, roommate, or rental space in min
 ```
 /backend   Node.js + Express REST API, Socket.io real-time chat, PostgreSQL
 /mobile    React Native (Expo, TypeScript) app for Seekers & Owners
-/frontend  React.js admin dashboard (planned — not built yet)
+/frontend  Next.js (App Router, JS, Tailwind) web app — public landing + admin dashboard
 ```
 
 ## Quick start (local)

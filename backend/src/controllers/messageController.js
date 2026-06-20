@@ -1,7 +1,20 @@
 'use strict';
 
 const chat = require('../services/chatService');
+const { query } = require('../config/db');
 const { asyncHandler, ApiError } = require('../utils/http');
+
+// POST /api/chat/support
+// Start (or reuse) a conversation with an admin — the common "contact support".
+const startSupport = asyncHandler(async (req, res) => {
+  const { rows } = await query(
+    "SELECT id FROM users WHERE role = 'admin' AND id <> $1 ORDER BY created_at ASC LIMIT 1",
+    [req.user.id]
+  );
+  if (!rows[0]) throw new ApiError(404, 'No support contact is available right now');
+  const conv = await chat.getOrCreateConversation(req.user.id, rows[0].id, null);
+  res.status(201).json({ conversation_id: conv.id });
+});
 
 // POST /api/chat/conversations  { other_user_id, property_id? }
 const startConversation = asyncHandler(async (req, res) => {
@@ -70,4 +83,6 @@ const readConversation = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { startConversation, getConversations, getMessages, postMessage, readConversation };
+module.exports = {
+  startConversation, startSupport, getConversations, getMessages, postMessage, readConversation,
+};

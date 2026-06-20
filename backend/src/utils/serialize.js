@@ -8,14 +8,14 @@ function publicUser(u) {
   return {
     id: u.id,
     email: u.email,
+    username: u.username ?? null,
     name: u.name,
     mobile_number: u.mobile_number ?? null,
     gender: u.gender ?? null,
     occupation: u.occupation ?? null,
     role: u.role,
-    is_verified: u.is_verified ?? false,
-    profile_image_key: u.profile_image ?? null,
-    profile_image_url: u.profile_image ? storage.url(u.profile_image) : null,
+    is_blocked: u.is_blocked ?? false,
+    avatar_url: u.avatar_url ?? null, // single image field (Google pic or uploaded photo URL)
     created_at: u.created_at,
   };
 }

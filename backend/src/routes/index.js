@@ -10,6 +10,7 @@ router.use('/roommate-posts', require('./roommateRoutes'));
 router.use('/favorites', require('./favoriteRoutes'));
 router.use('/chat', require('./chatRoutes'));
 router.use('/notifications', require('./notificationRoutes'));
+router.use('/settings', require('./settingsRoutes'));
 
 router.get('/', (req, res) => res.json({ name: 'StayMate API', version: '1.0.0' }));
 
