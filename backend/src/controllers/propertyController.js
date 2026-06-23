@@ -249,7 +249,7 @@ const uploadImages = asyncHandler(async (req, res) => {
         buffer: file.buffer,
         originalName: file.originalname,
         mimeType: file.mimetype,
-        folder: 'properties',
+        folder: 'image',
       });
       const ins = await client.query(
         `INSERT INTO property_images (property_id, image_key, sort_order)
@@ -274,7 +274,7 @@ const uploadVideo = asyncHandler(async (req, res) => {
     buffer: req.file.buffer,
     originalName: req.file.originalname,
     mimeType: req.file.mimetype,
-    folder: 'videos',
+    folder: 'video',
   });
   const { rows } = await query(
     'UPDATE properties SET video_key = $2, updated_at = now() WHERE id = $1 RETURNING *',
@@ -296,7 +296,31 @@ const deleteImage = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
+// PATCH /api/properties/:id/images/order  body: { order: [imageId, …] }
+// Re-numbers sort_order to match the given order. Index 0 = the cover photo
+// (shown first to seekers). Ids not belonging to this property are ignored.
+const reorderImages = asyncHandler(async (req, res) => {
+  await loadOwnedProperty(req.params.id, req.user);
+  const order = Array.isArray(req.body.order) ? req.body.order : [];
+  if (!order.length) throw new ApiError(400, 'No image order provided (field: "order")');
+
+  await withTransaction(async (client) => {
+    for (let i = 0; i < order.length; i++) {
+      await client.query(
+        'UPDATE property_images SET sort_order = $1 WHERE id = $2 AND property_id = $3',
+        [i, order[i], req.params.id]
+      );
+    }
+  });
+
+  const { rows } = await query(
+    'SELECT * FROM property_images WHERE property_id = $1 ORDER BY sort_order, created_at',
+    [req.params.id]
+  );
+  res.json({ images: rows.map(propertyImage) });
+});
+
 module.exports = {
   listProperties, listAll, listMine, getProperty, createProperty, updateProperty,
-  setApproval, deleteProperty, uploadImages, uploadVideo, deleteImage,
+  setApproval, deleteProperty, uploadImages, uploadVideo, deleteImage, reorderImages,
 };

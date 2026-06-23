@@ -23,6 +23,7 @@ router.delete('/:id', requireAuth, ctrl.deleteProperty);
 
 router.post('/:id/images', requireAuth, upload.array('images', 10), ctrl.uploadImages);
 router.post('/:id/video', requireAuth, requireRole('owner', 'admin'), uploadVideo.single('video'), ctrl.uploadVideo);
+router.patch('/:id/images/order', requireAuth, ctrl.reorderImages);
 router.delete('/:id/images/:imageId', requireAuth, ctrl.deleteImage);
 
 module.exports = router;

@@ -14,6 +14,7 @@ mobile app both talk to it.
 cd backend
 npm install                 # first time only
 cp .env.example .env        # then edit .env (DB URL, JWT, Google, SMTP) — see CLAUDE.md
+npm run db:check            # verify the DB is reachable before migrating
 npm run db:migrate          # create / update tables (safe to re-run)
 npm run db:seed             # optional: demo data
 npm run dev                 # starts the API + chat. Keep this terminal open.

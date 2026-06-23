@@ -7,12 +7,14 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "db:check": "node src/db/check.js",
     "db:migrate": "node src/db/migrate.js",
     "db:seed": "node src/db/seed.js",
     "db:seed-images": "node src/db/seed-images.js",
     "smoke": "node scripts/smoke-test.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1073.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

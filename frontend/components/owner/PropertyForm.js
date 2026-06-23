@@ -9,7 +9,7 @@
 // Files are saved to the backend's local upload folder (later: Contabo bucket —
 // no frontend change needed, the URLs just point elsewhere).
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost, apiPatch, apiUpload, apiDelete } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
@@ -40,7 +40,7 @@ export default function PropertyForm({ existing }) {
     map_link: existing?.map_link || "",
   });
 
-  const [images, setImages] = useState([]); // newly picked image Files
+  const [images, setImages] = useState([]); // newly picked images: [{ file, preview }]
   const [video, setVideo] = useState(null); // newly picked video File
   const [existingImages, setExistingImages] = useState(existing?.images || []);
 
@@ -60,6 +60,57 @@ export default function PropertyForm({ existing }) {
       setError(e.message);
     }
   }
+
+  // Reorder already-saved images (edit mode). Index 0 is the cover photo seekers
+  // see first. Persists immediately since the property already exists.
+  async function moveExistingImage(index, dir) {
+    const j = index + dir;
+    if (j < 0 || j >= existingImages.length) return;
+    const next = [...existingImages];
+    [next[index], next[j]] = [next[j], next[index]];
+    setExistingImages(next);
+    try {
+      await apiPatch(
+        `/properties/${existing.id}/images/order`,
+        { order: next.map((img) => img.id) },
+        token
+      );
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  // Newly picked images (not yet uploaded). Kept with a preview URL so the owner
+  // can arrange them before saving. They upload in this order.
+  function addImages(fileList) {
+    const picked = Array.from(fileList).map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setImages((prev) => [...prev, ...picked]);
+  }
+
+  function removeImage(index) {
+    setImages((prev) => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  function moveImage(index, dir) {
+    setImages((prev) => {
+      const j = index + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[j]] = [next[j], next[index]];
+      return next;
+    });
+  }
+
+  // Revoke any leftover preview URLs when the form unmounts (avoids leaks).
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+  useEffect(() => () => imagesRef.current.forEach((img) => URL.revokeObjectURL(img.preview)), []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -82,10 +133,10 @@ export default function PropertyForm({ existing }) {
         propertyId = res.property.id;
       }
 
-      // 2. Upload any newly added images.
+      // 2. Upload any newly added images, in the order the owner arranged them.
       if (images.length) {
         const fd = new FormData();
-        images.forEach((f) => fd.append("images", f));
+        images.forEach(({ file }) => fd.append("images", file));
         await apiUpload(`/properties/${propertyId}/images`, fd, token);
       }
 
@@ -166,40 +217,69 @@ export default function PropertyForm({ existing }) {
         <input value={form.map_link} onChange={(e) => set("map_link", e.target.value)} placeholder="https://maps.google.com/?q=…" className={field} />
       </div>
 
-      {/* Existing images (edit mode) */}
-      {existingImages.length > 0 && (
+      {/* Existing images (edit mode) — reorderable, first one is the cover */}
+      {isEdit && existingImages.length > 0 && (
         <div>
           <label className={label}>Current photos</label>
+          <p className="mt-0.5 text-xs text-slate-500">
+            The first photo is the{" "}
+            <span className="font-medium text-emerald-700">cover</span> seekers see first. Use ◀ ▶
+            to arrange.
+          </p>
           <div className="mt-2 flex flex-wrap gap-3">
-            {existingImages.map((img) => (
-              <div key={img.id} className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.image_url} alt="" className="h-20 w-20 rounded-lg object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeExistingImage(img.id)}
-                  className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-red-600 text-xs text-white"
-                  title="Remove"
-                >
-                  ✕
-                </button>
-              </div>
+            {existingImages.map((img, i) => (
+              <PhotoTile
+                key={img.id}
+                src={img.image_url}
+                index={i}
+                total={existingImages.length}
+                isCover={i === 0}
+                onMove={(dir) => moveExistingImage(i, dir)}
+                onRemove={() => removeExistingImage(img.id)}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* Add images */}
+      {/* Add / arrange new images */}
       <div>
         <label className={label}>{isEdit ? "Add more photos" : "Photos"}</label>
+        {!isEdit && (
+          <p className="mt-0.5 text-xs text-slate-500">
+            The first photo is the{" "}
+            <span className="font-medium text-emerald-700">cover</span> seekers see first. Use ◀ ▶
+            to arrange.
+          </p>
+        )}
+        {images.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-3">
+            {images.map((img, i) => (
+              <PhotoTile
+                key={img.preview}
+                src={img.preview}
+                index={i}
+                total={images.length}
+                isCover={!isEdit && i === 0}
+                onMove={(dir) => moveImage(i, dir)}
+                onRemove={() => removeImage(i)}
+              />
+            ))}
+          </div>
+        )}
         <input
           type="file"
           accept="image/*"
           multiple
-          onChange={(e) => setImages(Array.from(e.target.files))}
-          className="mt-1 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-medium file:text-white hover:file:bg-emerald-700"
+          onChange={(e) => {
+            addImages(e.target.files);
+            e.target.value = ""; // allow re-picking the same file
+          }}
+          className="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-medium file:text-white hover:file:bg-emerald-700"
         />
-        {images.length > 0 && <p className="mt-1 text-xs text-slate-500">{images.length} image(s) selected</p>}
+        {isEdit && images.length > 0 && (
+          <p className="mt-1 text-xs text-slate-500">New photos are added after the current ones.</p>
+        )}
       </div>
 
       {/* Video */}
@@ -233,5 +313,48 @@ export default function PropertyForm({ existing }) {
         </button>
       </div>
     </form>
+  );
+}
+
+// A photo thumbnail with a cover badge, reorder (◀ ▶) and remove (✕) controls.
+function PhotoTile({ src, index, total, isCover, onMove, onRemove }) {
+  return (
+    <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" className="h-full w-full object-cover" />
+      {isCover && (
+        <span className="absolute left-0 top-0 rounded-br-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+          Cover
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        title="Remove"
+        className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-red-600 text-xs text-white"
+      >
+        ✕
+      </button>
+      <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/45 text-white">
+        <button
+          type="button"
+          disabled={index === 0}
+          onClick={() => onMove(-1)}
+          title="Move earlier"
+          className="px-2 py-0.5 disabled:opacity-30"
+        >
+          ◀
+        </button>
+        <button
+          type="button"
+          disabled={index === total - 1}
+          onClick={() => onMove(1)}
+          title="Move later"
+          className="px-2 py-0.5 disabled:opacity-30"
+        >
+          ▶
+        </button>
+      </div>
+    </div>
   );
 }
