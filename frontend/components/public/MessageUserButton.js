@@ -25,7 +25,9 @@ export default function MessageUserButton({ userId, label = "Message", className
 
   async function go() {
     if (!getUserToken()) {
-      router.push("/login");
+      // Remember this page so login can bring them right back here.
+      const next = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
     setLoading(true);

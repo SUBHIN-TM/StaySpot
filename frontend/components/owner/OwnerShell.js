@@ -7,7 +7,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser, getUserToken, clearUser } from "@/lib/userAuth";
+import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
+import { apiGet } from "@/lib/api";
 import NotificationBell from "@/components/NotificationBell";
 
 function initials(name = "") {
@@ -19,14 +20,35 @@ export default function OwnerShell({ active, children }) {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState(null);
 
+  // Auth guard: never trust localStorage alone. Validate the token against the
+  // backend before showing any owner content — the account may have been
+  // deleted, blocked, demoted, or the DB switched. Stay on "Loading…" until the
+  // server confirms a real owner session.
   useEffect(() => {
-    const u = getCurrentUser();
-    if (!u || !getUserToken() || u.role !== "owner") {
+    const token = getUserToken();
+    const cached = getCurrentUser();
+    if (!token || !cached || cached.role !== "owner") {
+      clearUser();
       router.replace("/owner/login");
       return;
     }
-    setUser(u);
-    setReady(true);
+    apiGet("/auth/me", token)
+      .then((res) => {
+        if (res.user.role !== "owner") {
+          // Token is valid but the account is no longer an owner.
+          clearUser();
+          router.replace("/owner/login");
+          return;
+        }
+        setUser(res.user);
+        saveUser(token, res.user); // refresh cached profile
+        setReady(true);
+      })
+      .catch(() => {
+        // 401 "User no longer exists" / blocked / invalid token.
+        clearUser();
+        router.replace("/owner/login");
+      });
   }, [router]);
 
   function logout() {

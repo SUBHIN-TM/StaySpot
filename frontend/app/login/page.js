@@ -8,10 +8,10 @@
 //   3. Username/email + OTP  → a real code is emailed by the backend.
 
 import { GoogleLogin } from "@react-oauth/google";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
-import { saveUser } from "@/lib/userAuth";
+import { saveUser, getNextPath } from "@/lib/userAuth";
 import PasswordInput from "@/components/PasswordInput";
 
 export default function LoginPage() {
@@ -27,7 +27,15 @@ export default function LoginPage() {
 
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // verify / password buttons
+  const [sending, setSending] = useState(false); // send / resend OTP button
+
+  // Where to go after a successful login: the page the user came from (?next=…),
+  // or home. Read once on mount.
+  const [nextUrl, setNextUrl] = useState("/");
+  useEffect(() => {
+    setNextUrl(getNextPath("/"));
+  }, []);
 
   // 1. Google → direct login.
   async function handleGoogle(credentialResponse) {
@@ -35,7 +43,7 @@ export default function LoginPage() {
     try {
       const data = await apiPost("/auth/google", { credential: credentialResponse.credential });
       saveUser(data.token, data.user);
-      window.location.assign("/");
+      window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Sign-in failed");
     }
@@ -49,14 +57,15 @@ export default function LoginPage() {
     try {
       const data = await apiPost("/auth/login", { identifier, password });
       saveUser(data.token, data.user);
-      window.location.assign("/");
+      window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Invalid username/email or password");
       setLoading(false);
     }
   }
 
-  // 3a. Ask the backend to email a login code.
+  // 3a. Ask the backend to email a login code. Clears the old message + any
+  // typed code first, so it's clear that a brand-new code has been emailed.
   async function sendOtp() {
     setError("");
     setInfo("");
@@ -64,15 +73,21 @@ export default function LoginPage() {
       setError("Enter your username or email first.");
       return;
     }
-    setLoading(true);
+    const isResend = otpSent;
+    setSending(true);
     try {
       const res = await apiPost("/auth/send-otp", { purpose: "login", identifier });
+      setOtpInput(""); // drop any previously typed code
       setOtpSent(true);
-      setInfo(`We emailed a 6-digit code to ${res.email || "your email"}.`);
+      setInfo(
+        isResend
+          ? `We sent a new 6-digit code to ${res.email || "your email"}.`
+          : `We emailed a 6-digit code to ${res.email || "your email"}.`
+      );
     } catch (err) {
       setError(err.message || "Couldn’t send the code");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   }
 
@@ -83,7 +98,7 @@ export default function LoginPage() {
     try {
       const data = await apiPost("/auth/otp-login", { identifier, code: otpInput });
       saveUser(data.token, data.user);
-      window.location.assign("/");
+      window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "OTP login failed");
       setLoading(false);
@@ -142,7 +157,12 @@ export default function LoginPage() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder="username or you@gmail.com"
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+            // Once a code is sent it's locked — use "Edit" below to change it.
+            readOnly={mode === "otp" && otpSent}
+            className={
+              "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand" +
+              (mode === "otp" && otpSent ? " cursor-not-allowed bg-slate-100 text-slate-500" : "")
+            }
           />
         </div>
 
@@ -182,10 +202,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={sendOtp}
-                disabled={loading}
+                disabled={sending}
                 className="w-full rounded-lg bg-slate-900 py-2.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
               >
-                {loading ? "Sending…" : "Send OTP to my email"}
+                {sending ? "Sending…" : "Send OTP to my email"}
               </button>
             ) : (
               <>
@@ -195,7 +215,9 @@ export default function LoginPage() {
                     value={otpInput}
                     onChange={(e) => setOtpInput(e.target.value)}
                     placeholder="6-digit code from your email"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 tracking-widest outline-none focus:border-brand"
                   />
                 </div>
                 <button
@@ -206,6 +228,25 @@ export default function LoginPage() {
                 >
                   {loading ? "Verifying…" : "Verify & log in"}
                 </button>
+
+                {/* Didn't get it? Resend the same way, or go back to edit the email/username. */}
+                <div className="flex items-center justify-between text-sm">
+                  <button
+                    type="button"
+                    onClick={sendOtp}
+                    disabled={sending}
+                    className="font-medium text-brand hover:underline disabled:opacity-60"
+                  >
+                    {sending ? "Sending…" : "Resend code"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setOtpInput(""); setError(""); setInfo(""); }}
+                    className="font-medium text-slate-500 hover:underline"
+                  >
+                    Edit email/username
+                  </button>
+                </div>
               </>
             )}
             <button
@@ -220,7 +261,10 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-slate-500">
           New to StayMate?{" "}
-          <Link href="/signup" className="font-medium text-brand hover:underline">
+          <Link
+            href={nextUrl !== "/" ? `/signup?next=${encodeURIComponent(nextUrl)}` : "/signup"}
+            className="font-medium text-brand hover:underline"
+          >
             Create an account
           </Link>
         </p>

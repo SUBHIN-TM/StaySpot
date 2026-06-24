@@ -23,7 +23,8 @@ export default function OwnerLoginPage() {
   const [otpInput, setOtpInput] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // verify / password buttons
+  const [sending, setSending] = useState(false); // send / resend OTP button
 
   // Accept the login only if the account is an owner; otherwise reject cleanly.
   function finishLogin(data) {
@@ -64,19 +65,27 @@ export default function OwnerLoginPage() {
     }
   }
 
+  // Send (or resend) the login code. Clears the old message + any typed code
+  // first, so it's clear that a brand-new code has been emailed.
   async function sendOtp() {
     setError("");
     setInfo("");
     if (!identifier.trim()) return setError("Enter your username or email first.");
-    setLoading(true);
+    const isResend = otpSent;
+    setSending(true);
     try {
       const res = await apiPost("/auth/send-otp", { purpose: "login", identifier });
+      setOtpInput(""); // drop any previously typed code
       setOtpSent(true);
-      setInfo(`We emailed a 6-digit code to ${res.email || "your email"}.`);
+      setInfo(
+        isResend
+          ? `We sent a new 6-digit code to ${res.email || "your email"}.`
+          : `We emailed a 6-digit code to ${res.email || "your email"}.`
+      );
     } catch (err) {
       setError(err.message || "Couldn’t send the code");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   }
 
@@ -142,7 +151,12 @@ export default function OwnerLoginPage() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder="username or you@gmail.com"
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500"
+            // Once a code is sent it's locked — use "Edit" below to change it.
+            readOnly={mode === "otp" && otpSent}
+            className={
+              "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500" +
+              (mode === "otp" && otpSent ? " cursor-not-allowed bg-slate-100 text-slate-500" : "")
+            }
           />
         </div>
 
@@ -180,10 +194,10 @@ export default function OwnerLoginPage() {
               <button
                 type="button"
                 onClick={sendOtp}
-                disabled={loading}
+                disabled={sending}
                 className="w-full rounded-lg bg-slate-900 py-2.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
               >
-                {loading ? "Sending…" : "Send OTP to my email"}
+                {sending ? "Sending…" : "Send OTP to my email"}
               </button>
             ) : (
               <>
@@ -193,7 +207,9 @@ export default function OwnerLoginPage() {
                     value={otpInput}
                     onChange={(e) => setOtpInput(e.target.value)}
                     placeholder="6-digit code from your email"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 tracking-widest outline-none focus:border-emerald-500"
                   />
                 </div>
                 <button
@@ -204,6 +220,25 @@ export default function OwnerLoginPage() {
                 >
                   {loading ? "Verifying…" : "Verify & log in"}
                 </button>
+
+                {/* Didn't get it? Resend the same way, or go back to edit the email/username. */}
+                <div className="flex items-center justify-between text-sm">
+                  <button
+                    type="button"
+                    onClick={sendOtp}
+                    disabled={sending}
+                    className="font-medium text-emerald-700 hover:underline disabled:opacity-60"
+                  >
+                    {sending ? "Sending…" : "Resend code"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setOtpInput(""); setError(""); setInfo(""); }}
+                    className="font-medium text-slate-500 hover:underline"
+                  >
+                    Edit email/username
+                  </button>
+                </div>
               </>
             )}
             <button

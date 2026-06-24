@@ -44,8 +44,8 @@ const listProperties = asyncHandler(async (req, res) => {
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
   const offset = (page - 1) * limit;
 
-  // Public list shows only available AND admin-approved listings.
-  const where = ['p.is_available = TRUE', "p.approval_status = 'approved'"];
+  // Public list shows only available, admin-approved AND not-deleted listings.
+  const where = ['p.deleted_at IS NULL', 'p.is_available = TRUE', "p.approval_status = 'approved'"];
   const params = [];
   let i = 1;
 
@@ -103,14 +103,19 @@ const listProperties = asyncHandler(async (req, res) => {
 
 // GET /api/properties/:id
 const getProperty = asyncHandler(async (req, res) => {
-  const { rows } = await query('SELECT * FROM properties WHERE id = $1', [req.params.id]);
+  const { rows } = await query(
+    'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+    [req.params.id]
+  );
   if (!rows[0]) throw new ApiError(404, 'Property not found');
   res.json({ property: await hydrate(rows[0]) });
 });
 
 // GET /api/properties/all  (admin: every property, incl. unavailable)
 const listAll = asyncHandler(async (req, res) => {
-  const { rows } = await query('SELECT * FROM properties ORDER BY created_at DESC LIMIT 200');
+  const { rows } = await query(
+    'SELECT * FROM properties WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 200'
+  );
   const data = await Promise.all(rows.map(hydrate));
   res.json({ properties: data });
 });
@@ -118,7 +123,7 @@ const listAll = asyncHandler(async (req, res) => {
 // GET /api/properties/mine  (owner: ALL their properties, incl. unavailable)
 const listMine = asyncHandler(async (req, res) => {
   const { rows } = await query(
-    'SELECT * FROM properties WHERE owner_id = $1 ORDER BY created_at DESC',
+    'SELECT * FROM properties WHERE owner_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
     [req.user.id]
   );
   const data = await Promise.all(rows.map(hydrate));
@@ -183,7 +188,10 @@ const setApproval = asyncHandler(async (req, res) => {
 
 // Ensure the property exists and belongs to the requester (or requester is admin).
 async function loadOwnedProperty(id, user) {
-  const { rows } = await query('SELECT * FROM properties WHERE id = $1', [id]);
+  const { rows } = await query(
+    'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+    [id]
+  );
   const property = rows[0];
   if (!property) throw new ApiError(404, 'Property not found');
   if (property.owner_id !== user.id && user.role !== 'admin') {
@@ -220,14 +228,15 @@ const updateProperty = asyncHandler(async (req, res) => {
 });
 
 // DELETE /api/properties/:id
+// Soft delete: we DON'T remove the row or its image/video files. We just stamp
+// deleted_at so it disappears from every listing (public, owner, admin) while
+// staying recoverable. (loadOwnedProperty already 404s on an already-deleted one.)
 const deleteProperty = asyncHandler(async (req, res) => {
   await loadOwnedProperty(req.params.id, req.user);
-  const imgs = await query('SELECT image_key FROM property_images WHERE property_id = $1', [
-    req.params.id,
-  ]);
-  await query('DELETE FROM properties WHERE id = $1', [req.params.id]);
-  // Best-effort cleanup of stored files.
-  await Promise.all(imgs.rows.map((r) => storage.delete(r.image_key).catch(() => {})));
+  await query(
+    'UPDATE properties SET deleted_at = now(), updated_at = now() WHERE id = $1',
+    [req.params.id]
+  );
   res.json({ ok: true });
 });
 

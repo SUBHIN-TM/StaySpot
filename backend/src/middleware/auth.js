@@ -13,23 +13,33 @@ function getToken(req) {
 
 // Requires a valid JWT; attaches req.user = { id, role, email }.
 async function requireAuth(req, res, next) {
-  try {
-    const token = getToken(req);
-    if (!token) throw new ApiError(401, 'Authentication required');
+  const token = getToken(req);
+  if (!token) return next(new ApiError(401, 'Authentication required'));
 
-    const decoded = verifyToken(token);
+  // 1. Verify the token itself. ONLY a genuine token problem (bad signature /
+  //    expired) is an auth failure — don't let other errors fall through here.
+  let decoded;
+  try {
+    decoded = verifyToken(token);
+  } catch (err) {
+    return next(new ApiError(401, 'Invalid or expired session — please log in again'));
+  }
+
+  // 2. Look the user up. A DB/network error here is NOT an auth problem, so let
+  //    it surface as a real server error instead of a misleading "invalid token"
+  //    (which made it look like a fresh login had failed).
+  try {
     const { rows } = await query(
       'SELECT id, email, role, name, is_blocked FROM users WHERE id = $1',
       [decoded.sub]
     );
-    if (!rows[0]) throw new ApiError(401, 'User no longer exists');
-    if (rows[0].is_blocked) throw new ApiError(403, 'Your account has been blocked');
+    if (!rows[0]) return next(new ApiError(401, 'User no longer exists'));
+    if (rows[0].is_blocked) return next(new ApiError(403, 'Your account has been blocked'));
 
     req.user = rows[0];
     next();
   } catch (err) {
-    if (err instanceof ApiError) return next(err);
-    return next(new ApiError(401, 'Invalid or expired token'));
+    return next(err); // e.g. DB unreachable → handled as a 500, not a 401
   }
 }
 

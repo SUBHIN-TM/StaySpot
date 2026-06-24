@@ -29,7 +29,9 @@ export default function ContactOwnerButton({ ownerId, propertyId }) {
 
   async function contact() {
     if (!getUserToken()) {
-      router.push("/login");
+      // Remember this page so login can bring them right back here to contact.
+      const next = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
     setLoading(true);

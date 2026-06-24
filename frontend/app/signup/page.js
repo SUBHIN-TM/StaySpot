@@ -12,10 +12,10 @@
 //   - /auth/register sends a welcome email
 
 import { GoogleLogin } from "@react-oauth/google";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
-import { saveUser } from "@/lib/userAuth";
+import { saveUser, getNextPath } from "@/lib/userAuth";
 import PasswordInput from "@/components/PasswordInput";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,13 +39,19 @@ export default function SignupPage() {
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Where to go after signing up: the page the user came from (?next=…) or home.
+  const [nextUrl, setNextUrl] = useState("/");
+  useEffect(() => {
+    setNextUrl(getNextPath("/"));
+  }, []);
+
   // ── Google sign-up ────────────────────────────────────────────────────────
   async function handleGoogle(credentialResponse) {
     setError("");
     try {
       const data = await apiPost("/auth/google", { credential: credentialResponse.credential });
       saveUser(data.token, data.user);
-      window.location.assign("/");
+      window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Google sign-up failed");
     }
@@ -106,7 +112,7 @@ export default function SignupPage() {
         otp: otpInput, // the verified code
       });
       saveUser(data.token, data.user);
-      window.location.assign("/");
+      window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Sign-up failed");
       setLoading(false);
@@ -266,7 +272,10 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-brand hover:underline">
+          <Link
+            href={nextUrl !== "/" ? `/login?next=${encodeURIComponent(nextUrl)}` : "/login"}
+            className="font-medium text-brand hover:underline"
+          >
             Log in
           </Link>
         </p>

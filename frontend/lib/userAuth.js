@@ -29,3 +29,13 @@ export function clearUser() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
+
+// Read a safe "return to" path from the current URL (?next=/some/page), used so
+// login/signup can send the user back to the page they came from. Only relative
+// paths (starting with a single "/") are allowed — this blocks open-redirects to
+// other sites. Falls back to "/" (home) when there's no valid next.
+export function getNextPath(fallback = "/") {
+  if (typeof window === "undefined") return fallback;
+  const n = new URLSearchParams(window.location.search).get("next");
+  return n && n.startsWith("/") && !n.startsWith("//") ? n : fallback;
+}

@@ -4,6 +4,9 @@ node_modules/
 *.log
 npm-debug.log*
 
+# secrets / credentials (never commit)
+vpsCredentials.txt
+
 # backend local storage artifacts
 backend/uploads/*
 !backend/uploads/.gitkeep

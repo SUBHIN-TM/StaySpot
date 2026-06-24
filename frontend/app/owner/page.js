@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import OwnerShell from "@/components/owner/OwnerShell";
-import { apiGet, imageUrl } from "@/lib/api";
+import { apiGet, apiDelete, imageUrl } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
 
 // Friendly label + colour for the occupancy status.
@@ -27,6 +27,7 @@ export default function OwnerDashboard() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState(null); // which card is being deleted
 
   useEffect(() => {
     (async () => {
@@ -40,6 +41,22 @@ export default function OwnerDashboard() {
       }
     })();
   }, []);
+
+  // Soft-delete a property: confirm, call the API, then drop it from the list.
+  async function handleDelete(p) {
+    if (!window.confirm(`Delete "${p.title}"? It will be removed from your listings and the public site.`)) {
+      return;
+    }
+    setDeletingId(p.id);
+    try {
+      await apiDelete(`/properties/${p.id}`, getUserToken());
+      setProperties((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (e) {
+      alert(e.message || "Couldn’t delete the property.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <OwnerShell active="dashboard">
@@ -103,12 +120,22 @@ export default function OwnerDashboard() {
                       ₹{Number(p.rent_amount).toLocaleString("en-IN")}
                       <span className="text-xs font-normal text-slate-500"> /mo</span>
                     </span>
-                    <Link
-                      href={`/owner/properties/${p.id}/edit`}
-                      className="rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/owner/properties/${p.id}/edit`}
+                        className="rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p)}
+                        disabled={deletingId === p.id}
+                        className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        {deletingId === p.id ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

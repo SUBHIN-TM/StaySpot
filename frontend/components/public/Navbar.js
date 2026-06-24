@@ -6,7 +6,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getCurrentUser, getUserToken, clearUser } from "@/lib/userAuth";
+import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
+import { apiGet } from "@/lib/api";
 import AvatarMenu from "./AvatarMenu";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -14,9 +15,28 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null); // logged-in user (or null)
 
-  // On mount, read the signed-in user from localStorage (browser only).
+  // On mount, show the cached user instantly for no flicker, then VALIDATE the
+  // token against the backend. localStorage alone can't be trusted — the account
+  // may have been deleted, blocked, or the DB switched (e.g. to a server with a
+  // different user set), in which case we must clear the stale session.
   useEffect(() => {
-    setUser(getCurrentUser());
+    const token = getUserToken();
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    setUser(getCurrentUser()); // optimistic render from cache
+    apiGet("/auth/me", token)
+      .then((res) => {
+        // Token is valid — refresh the cached profile with the latest data.
+        setUser(res.user);
+        saveUser(token, res.user);
+      })
+      .catch(() => {
+        // 401 "User no longer exists" / blocked / invalid token — log out.
+        clearUser();
+        setUser(null);
+      });
   }, []);
 
   // Log out: clear storage and reload so the navbar resets.

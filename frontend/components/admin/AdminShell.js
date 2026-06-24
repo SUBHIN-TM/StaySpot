@@ -7,7 +7,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getToken, getUser, clearAuth } from "@/lib/auth";
+import { getToken, getUser, clearAuth, saveAuth } from "@/lib/auth";
+import { apiGet } from "@/lib/api";
 import NotificationBell from "@/components/NotificationBell";
 
 export default function AdminShell({ active, children }) {
@@ -16,13 +17,33 @@ export default function AdminShell({ active, children }) {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false); // mobile drawer
 
+  // Auth guard: validate the token against the backend before showing the admin
+  // panel. localStorage alone can't be trusted — the account may have been
+  // deleted, demoted, or the DB switched. Stay on "Loading…" until the server
+  // confirms a real admin session.
   useEffect(() => {
-    if (!getToken()) {
+    const token = getToken();
+    if (!token) {
       router.replace("/admin/login");
       return;
     }
-    setUser(getUser());
-    setReady(true);
+    apiGet("/auth/me", token)
+      .then((res) => {
+        if (res.user.role !== "admin") {
+          // Valid token but not an admin — don't expose the admin panel.
+          clearAuth();
+          router.replace("/admin/login");
+          return;
+        }
+        setUser(res.user);
+        saveAuth(token, res.user); // refresh cached profile
+        setReady(true);
+      })
+      .catch(() => {
+        // 401 "User no longer exists" / invalid token.
+        clearAuth();
+        router.replace("/admin/login");
+      });
   }, [router]);
 
   function logout() {
