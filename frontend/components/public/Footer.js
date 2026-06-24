@@ -1,4 +1,5 @@
-// Site footer shown on all public pages.
+// Site footer shown on all public pages. Dark "ink" background with sunset
+// accents, matching the landing-page theme.
 
 import Link from "next/link";
 
@@ -9,7 +10,7 @@ export default function Footer() {
       title: "Explore",
       links: [
         { href: "/properties", label: "Browse rentals" },
-        { href: "/properties", label: "Find roommates" },
+        { href: "/roommates", label: "Find roommates" },
       ],
     },
     {
@@ -30,29 +31,35 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-50">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
+    <footer className="mt-auto bg-ink text-white">
+      <div className="mx-auto grid max-w-[1440px] gap-10 px-4 py-14 sm:px-6 md:grid-cols-4 lg:px-10">
         {/* Brand blurb */}
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
+        <div className="md:pr-6">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sun via-coral to-grape font-black text-white shadow-md shadow-coral/30">
               S
             </span>
-            <span className="text-xl font-bold text-slate-900">StayMate</span>
+            <span className="text-xl font-black tracking-tight">StayMate</span>
           </div>
-          <p className="mt-3 text-sm text-slate-500">
-            Find your next stay, roommate, or rental space in minutes.
+          <p className="mt-4 max-w-xs text-sm text-white/55">
+            Find your next stay, roommate, or rental space in minutes — every listing
+            admin-checked.
           </p>
         </div>
 
         {/* Link columns */}
         {columns.map((col) => (
           <div key={col.title}>
-            <h3 className="text-sm font-semibold text-slate-900">{col.title}</h3>
-            <ul className="mt-3 space-y-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/40">
+              {col.title}
+            </h3>
+            <ul className="mt-4 space-y-2.5">
               {col.links.map((l, idx) => (
                 <li key={idx}>
-                  <Link href={l.href} className="text-sm text-slate-500 hover:text-brand">
+                  <Link
+                    href={l.href}
+                    className="text-sm text-white/70 transition hover:text-white"
+                  >
                     {l.label}
                   </Link>
                 </li>
@@ -62,7 +69,9 @@ export default function Footer() {
         ))}
       </div>
 
-      <div className="border-t border-slate-200 py-6 text-center text-sm text-slate-400">
+      {/* gradient hairline + copyright */}
+      <div className="h-px bg-gradient-to-r from-transparent via-coral/40 to-transparent" />
+      <div className="py-6 text-center text-sm text-white/40">
         © {new Date().getFullYear()} StayMate. All rights reserved.
       </div>
     </footer>

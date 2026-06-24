@@ -10,6 +10,16 @@
   --color-brand: #2563eb;       /* primary blue (buttons, links) */
   --color-brand-dark: #1d4ed8;  /* darker blue for hover states */
   --font-sans: var(--font-geist-sans);
+
+  /* ── Landing-page "soft light sunset" palette (warm grey base, dark text) ──
+     Used only by the public landing sections. Tailwind v4 turns each token
+     into utilities: bg-cream, text-ink, text-coral, from-sun, via-coral …
+     Background is a soft warm grey (NOT pure white); text is deep plum. */
+  --color-cream: #ece6dd;   /* soft warm light grey page background (not white) */
+  --color-ink:   #241245;   /* deep indigo-plum for headings/text              */
+  --color-sun:   #f59e0b;   /* amber  — gradient start                         */
+  --color-coral: #fb7185;   /* rose   — gradient middle                        */
+  --color-grape: #7c3aed;   /* violet — gradient end                           */
 }
 
 :root {
@@ -25,4 +35,61 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Landing-page animations. Plain CSS keyframes + small helper classes so the
+   server-rendered sections animate without extra JS. Scroll-triggered reveals
+   are toggled by the <Reveal> client component (adds .reveal-in when visible).
+   All motion is disabled for users who prefer reduced motion.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Slow drifting colour blobs behind the hero. */
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(30px, -40px) scale(1.1); }
+  66%      { transform: translate(-25px, 20px) scale(0.95); }
+}
+.blob { animation: blob 16s ease-in-out infinite; }
+
+/* Gentle up/down floating for cards and chips. */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+.floaty      { animation: floaty 6s ease-in-out infinite; }
+.floaty-slow { animation: floaty 9s ease-in-out infinite; }
+
+/* One-shot entrance used for above-the-fold hero content. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* Infinite horizontal marquee (track is duplicated, so -50% loops seamlessly). */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 30s linear infinite; }
+
+/* Animated multi-stop gradient (set background-size:200% on the element). */
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+.gradient-pan { background-size: 200% 200%; animation: gradient-pan 9s ease infinite; }
+
+/* Scroll-reveal: hidden until <Reveal> adds .reveal-in. */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+              transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal.reveal-in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .blob, .floaty, .floaty-slow, .rise, .marquee-track, .gradient-pan {
+    animation: none !important;
+  }
+  .reveal { opacity: 1 !important; transform: none !important; }
 }

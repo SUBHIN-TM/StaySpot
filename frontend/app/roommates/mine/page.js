@@ -43,21 +43,22 @@ export default function MyRoommatePostsPage() {
   }
 
   if (!ready) {
-    return <div className="grid min-h-screen place-items-center text-slate-400">Loading…</div>;
+    return <div className="grid min-h-screen place-items-center bg-cream text-ink/40">Loading…</div>;
   }
 
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <main className="min-h-screen bg-cream">
+        <div className="mx-auto max-w-[1100px] px-4 py-10 sm:px-6 lg:px-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">My posts</h1>
-            <p className="mt-2 text-slate-600">Your roommate requirements.</p>
+            <h1 className="text-3xl font-bold text-ink">My posts</h1>
+            <p className="mt-2 text-ink/60">Your roommate requirements.</p>
           </div>
           <Link
             href="/roommates/new"
-            className="rounded-lg bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
+            className="rounded-lg bg-gradient-to-r from-sun via-coral to-grape px-5 py-2.5 font-semibold text-white shadow-md shadow-coral/30 hover:shadow-lg"
           >
             + Post a requirement
           </Link>
@@ -66,11 +67,11 @@ export default function MyRoommatePostsPage() {
         {error ? (
           <p className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">{error}</p>
         ) : loading ? (
-          <p className="mt-8 text-slate-500">Loading…</p>
+          <p className="mt-8 text-ink/50">Loading…</p>
         ) : posts.length === 0 ? (
-          <div className="mt-10 rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+          <div className="mt-10 rounded-xl border border-dashed border-ink/20 p-10 text-center text-ink/50">
             You haven’t posted any requirements yet.{" "}
-            <Link href="/roommates/new" className="font-semibold text-brand hover:underline">
+            <Link href="/roommates/new" className="font-semibold text-coral hover:underline">
               Post one
             </Link>
             .
@@ -83,9 +84,10 @@ export default function MyRoommatePostsPage() {
           </div>
         )}
 
-        <Link href="/roommates" className="mt-8 inline-block text-sm text-slate-500 hover:text-brand">
+        <Link href="/roommates" className="mt-8 inline-block text-sm text-ink/50 hover:text-coral">
           ← Back to all roommates
         </Link>
+        </div>
       </main>
     </>
   );

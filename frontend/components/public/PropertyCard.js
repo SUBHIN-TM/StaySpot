@@ -19,30 +19,30 @@ export default function PropertyCard({ property }) {
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="block overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-lg"
+      className="block overflow-hidden rounded-2xl border border-ink/10 bg-white transition hover:-translate-y-1 hover:shadow-xl hover:shadow-grape/10"
     >
       {/* Swipeable image gallery with dots */}
       <div className="relative">
         <ImageCarousel images={imageUrls} alt={property.title} heightClass="h-48" />
-        <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize text-slate-700">
+        <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize text-ink/70 backdrop-blur">
           {property.property_type}
         </span>
       </div>
 
       {/* Details */}
       <div className="p-4">
-        <h3 className="line-clamp-1 text-lg font-semibold text-slate-900">{property.title}</h3>
-        <p className="mt-1 line-clamp-1 text-sm text-slate-500">
+        <h3 className="line-clamp-1 text-lg font-semibold text-ink">{property.title}</h3>
+        <p className="mt-1 line-clamp-1 text-sm text-ink/50">
           📍 {property.address ? `${property.address}, ` : ""}
           {property.city || "—"}
         </p>
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-lg font-bold text-brand">
+          <span className="text-lg font-bold text-coral">
             {formatRent(property.rent_amount)}
-            <span className="text-sm font-normal text-slate-500"> / mo</span>
+            <span className="text-sm font-normal text-ink/50"> / mo</span>
           </span>
           {property.owner?.name && (
-            <span className="text-xs text-slate-400">by {property.owner.name}</span>
+            <span className="text-xs text-ink/40">by {property.owner.name}</span>
           )}
         </div>
       </div>

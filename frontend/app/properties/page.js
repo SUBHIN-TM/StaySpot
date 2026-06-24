@@ -39,11 +39,12 @@ export default async function PropertiesPage({ searchParams }) {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <h1 className="text-3xl font-bold text-slate-900">
+      <main className="min-h-screen bg-cream">
+        <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10">
+        <h1 className="text-3xl font-bold text-ink">
           {city ? `Rentals in ${city}` : "All listings"}
         </h1>
-        <p className="mt-2 text-slate-600">
+        <p className="mt-2 text-ink/60">
           {properties.length} {properties.length === 1 ? "place" : "places"} found
           {type ? ` · ${type}` : ""}
         </p>
@@ -53,7 +54,7 @@ export default async function PropertiesPage({ searchParams }) {
             Couldn’t load listings: {error}. Is the backend running on port 4000?
           </p>
         ) : properties.length === 0 ? (
-          <p className="mt-10 rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+          <p className="mt-10 rounded-xl border border-dashed border-ink/20 p-10 text-center text-ink/50">
             No listings match your search. Try a different city or type.
           </p>
         ) : (
@@ -63,6 +64,7 @@ export default async function PropertiesPage({ searchParams }) {
             ))}
           </div>
         )}
+        </div>
       </main>
       <Footer />
     </>
