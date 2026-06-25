@@ -18,14 +18,19 @@ export const metadata = {
 
 export default async function PropertiesPage({ searchParams }) {
   const params = await searchParams; // Next 16: await the search params
+  const district = params?.district || "";
   const city = params?.city || "";
   const type = params?.property_type || "";
 
   // Re-build the query string we forward to the backend.
   const qs = new URLSearchParams();
+  if (district) qs.set("district", district);
   if (city) qs.set("city", city);
   if (type) qs.set("property_type", type);
   qs.set("limit", "50");
+
+  // Human-readable summary of where we're searching.
+  const place = district && city ? `${city}, ${district}` : district || city;
 
   let properties = [];
   let error = null;
@@ -42,7 +47,7 @@ export default async function PropertiesPage({ searchParams }) {
       <main className="min-h-screen bg-cream">
         <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-10">
         <h1 className="text-3xl font-bold text-ink">
-          {city ? `Rentals in ${city}` : "All listings"}
+          {place ? `Rentals in ${place}` : "All listings"}
         </h1>
         <p className="mt-2 text-ink/60">
           {properties.length} {properties.length === 1 ? "place" : "places"} found

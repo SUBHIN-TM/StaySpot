@@ -81,12 +81,25 @@ Admin login is at `/admin/login` (separate session from regular users).
 - **Listings:** owners create/edit with images + video + map link + type + persons +
   occupancy status. Public browse `/properties`, full detail page `/properties/[id]`
   (gallery carousel, video, map, contact owner).
+- **Structured location (canonical, India/Kerala):** `state` (locked to Kerala for
+  now, but a real field/dropdown so more states can be enabled later), `district`
+  (dropdown of the 14 Kerala districts — bundled dataset in `backend/src/config/geo.js`
+  + `frontend/lib/geo.js`, validated server-side), `pincode` (6-digit; **autofills
+  state+district** via the free India Post API proxied at `GET /api/geo/pincode/:pin`,
+  cached), plus `city` (Town/Locality), `landmark`, `address`. **District is required**;
+  town/landmark/address stay disabled until a district is chosen. **Town/Locality is a
+  per-district dropdown** sourced from the owner-curated `localities` table (migration
+  012) merged with the pincode's post-office areas; an **"Other"** option lets owners
+  type a new locality, which is recorded on save (`GET /api/geo/localities?district=`).
+  District is the canonical public filter. lat/lng still only set from the mobile app
+  (the web radius search is unreachable until a map pin-picker is added).
 - **Approval workflow:** new listings are `pending` until an admin approves them
   (Admin → Properties → click row → detail modal → Approve/Reject). A **Settings**
   toggle (`auto_approve_listings`) makes new listings publish instantly. Public pages
   show **only approved** listings; owners see each listing's status.
 - **Admin panel:** Dashboard, Properties (approve/reject/delete + detail modal),
-  Users, Owners (block/unblock + delete), Messages, Settings. Responsive sidebar.
+  Users, Owners (block/unblock + delete), **Localities** (merge/rename/delete to
+  dedupe the per-district list), Messages, Settings. Responsive sidebar.
 - **Block users:** blocked accounts can't log in or use the API.
 - **Chat (REST + polling, Socket.io available):** seeker↔owner, seeker↔seeker
   (roommates), owner↔owner, anyone↔admin (support). `/messages` for users/owners,
@@ -128,6 +141,17 @@ Admin login is at `/admin/login` (separate session from regular users).
   and shows a live upload-progress % (XHR, not fetch — only XHR exposes progress).
 - Local-driver uploads land in `backend/uploads/`. Contabo is the prod driver
   (`STORAGE_DRIVER=contabo` + `CONTABO_*` env) — same code path, presigned URLs.
+
+## Ops / debugging
+- **Error log file:** server faults (5xx), `unhandledRejection`, and
+  `uncaughtException` are appended to `backend/logs/error.log` (git-ignored via
+  `*.log`, auto-rotates at ~5 MB). View the tail in a browser at
+  `GET /api/log-error` (`?lines=300`, `DELETE` to clear). Gated by `LOG_ACCESS_KEY`:
+  **must** be set in production (pass `?key=<value>`); open in development.
+- **502s behind nginx:** `server.js` sets `keepAliveTimeout`/`headersTimeout`
+  (> nginx's, fixes the keep-alive race) and global crash guards. If 502s persist,
+  check `/var/log/nginx/error.log` and run the backend under a process manager
+  (pm2/systemd) so a crash auto-restarts. See `/api/log-error` for the app-side cause.
 
 ## Roadmap / ideas (not yet built)
 - **AI roommate compatibility matching** (lifestyle profile + match score + Claude-

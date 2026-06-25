@@ -1,6 +1,7 @@
 'use strict';
 
 const { ApiError } = require('../utils/http');
+const { logError } = require('../utils/logger');
 
 // 404 for unmatched routes.
 function notFound(req, res, next) {
@@ -24,8 +25,11 @@ function errorHandler(err, req, res, next) {
     message = 'Referenced record does not exist';
   }
 
+  // Only real server faults (5xx) are worth logging to the file — 4xx are
+  // expected client mistakes (bad input, wrong password) and would be noise.
   if (status >= 500) {
     console.error('[error]', err);
+    logError(`${req.method} ${req.originalUrl}`, err);
   }
 
   res.status(status).json({

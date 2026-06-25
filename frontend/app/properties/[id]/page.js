@@ -104,8 +104,8 @@ export default async function PropertyDetailPage({ params }) {
 
             <h1 className="mt-4 text-3xl font-bold text-slate-900">{p.title}</h1>
             <p className="mt-2 text-slate-500">
-              📍 {p.address ? `${p.address}, ` : ""}
-              {[p.district, p.city].filter(Boolean).join(", ") || "—"}
+              📍 {[p.address, p.landmark, p.city, p.district, p.state].filter(Boolean).join(", ") || "—"}
+              {p.pincode ? ` - ${p.pincode}` : ""}
             </p>
 
             {p.description && (

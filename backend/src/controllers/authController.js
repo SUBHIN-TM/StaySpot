@@ -5,7 +5,7 @@ const { query } = require('../config/db');
 const env = require('../config/env');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
-const { asyncHandler, ApiError } = require('../utils/http');
+const { asyncHandler, ApiError, withTimeout } = require('../utils/http');
 const { publicUser } = require('../utils/serialize');
 const { createOtp, checkOtp, consumeOtp } = require('../services/otp');
 const { sendOtpEmail, sendWelcomeEmail } = require('../services/mail');
@@ -180,14 +180,18 @@ const googleAuth = asyncHandler(async (req, res) => {
   const desiredRole = role === 'owner' ? 'owner' : 'seeker';
 
   // 1. Verify the token is genuine and was issued for OUR app.
+  //    Hard 8s ceiling: verifyIdToken normally uses cached Google certs (fast),
+  //    but if it must refetch certs and Google/network is slow, don't hang.
   let payload;
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: env.googleClientId,
-    });
+    const ticket = await withTimeout(
+      googleClient.verifyIdToken({ idToken: credential, audience: env.googleClientId }),
+      8000,
+      'Google verification timed out'
+    );
     payload = ticket.getPayload();
-  } catch {
+  } catch (err) {
+    if (err.status === 504) throw err; // timeout → surface as 504, not "invalid token"
     throw new ApiError(401, 'Invalid Google token');
   }
 

@@ -24,6 +24,7 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
     try {
       await apiPatch(`/properties/${p.id}/approval`, { approval_status: status }, getToken());
       onChanged({ ...p, approval_status: status });
+      onClose(); // close the modal once the action succeeds
     } catch (e) {
       alert(e.message);
     } finally {

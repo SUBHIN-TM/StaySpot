@@ -43,6 +43,9 @@ const getPost = asyncHandler(async (req, res) => {
 const createPost = asyncHandler(async (req, res) => {
   const { title, description, budget, preferred_location, move_in_date } = req.body || {};
   if (!title || !String(title).trim()) throw new ApiError(400, 'Title is required');
+  if (budget != null && budget !== '' && (!Number.isFinite(Number(budget)) || Number(budget) < 0)) {
+    throw new ApiError(400, 'Budget must be 0 or more');
+  }
   const { rows } = await query(
     `INSERT INTO roommate_posts (user_id, title, description, budget, preferred_location, move_in_date)
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
@@ -64,6 +67,10 @@ const updatePost = asyncHandler(async (req, res) => {
   if (!owned.rows[0]) throw new ApiError(404, 'Post not found');
   if (owned.rows[0].user_id !== req.user.id && req.user.role !== 'admin')
     throw new ApiError(403, 'Not your post');
+
+  if (req.body.budget !== undefined && req.body.budget !== '' && req.body.budget !== null && Number(req.body.budget) < 0) {
+    throw new ApiError(400, 'Budget must be 0 or more');
+  }
 
   const fields = ['title', 'description', 'budget', 'preferred_location', 'move_in_date', 'is_active'];
   const sets = [];

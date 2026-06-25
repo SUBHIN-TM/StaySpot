@@ -7,6 +7,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { districtsOf, DEFAULT_STATE } from "@/lib/geo";
 
 // Property types come straight from the backend schema's allowed values.
 const TYPES = [
@@ -21,14 +22,16 @@ const TYPES = [
 
 export default function SearchBar() {
   const router = useRouter();
-  const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
+  const [locality, setLocality] = useState("");
   const [type, setType] = useState("");
 
   function handleSearch(e) {
     e.preventDefault();
     // Build the query string, skipping empty fields.
     const params = new URLSearchParams();
-    if (city.trim()) params.set("city", city.trim());
+    if (district) params.set("district", district);
+    if (locality.trim()) params.set("city", locality.trim());
     if (type) params.set("property_type", type);
     router.push(`/properties?${params.toString()}`);
   }
@@ -38,11 +41,21 @@ export default function SearchBar() {
       onSubmit={handleSearch}
       className="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-lg sm:flex-row sm:items-center"
     >
+      <select
+        value={district}
+        onChange={(e) => setDistrict(e.target.value)}
+        className="rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-brand"
+      >
+        <option value="">Any district</option>
+        {districtsOf(DEFAULT_STATE).map((d) => (
+          <option key={d} value={d}>{d}</option>
+        ))}
+      </select>
       <input
         type="text"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        placeholder="Search by city (e.g. Bengaluru)"
+        value={locality}
+        onChange={(e) => setLocality(e.target.value)}
+        placeholder="Area / locality (e.g. Kakkanad)"
         className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-slate-900 outline-none focus:border-brand"
       />
       <select

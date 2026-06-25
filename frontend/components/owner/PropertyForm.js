@@ -16,12 +16,18 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete, uploadToPresignedUrl } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
+import { STATE_LIST, DEFAULT_STATE, districtsOf } from "@/lib/geo";
 
 // Fallback caps used only until the server's limits load (server re-validates anyway).
 const FALLBACK_LIMITS = {
   image: { maxMb: 8, maxBytes: 8 * 1024 * 1024 },
   video: { maxMb: 50, maxBytes: 50 * 1024 * 1024 },
 };
+
+// Attachment-state messages — kept as constants so we can auto-clear them once
+// the underlying condition (still uploading / has a failed file) goes away.
+const UPLOADING_MSG = "Please wait for attachments to finish uploading.";
+const FAILED_MSG = "Some attachments failed to upload — remove and re-add them.";
 
 const TYPES = ["room", "apartment", "house", "pg", "hostel", "shared"];
 const STATUSES = [
@@ -45,11 +51,79 @@ export default function PropertyForm({ existing }) {
     rent_amount: existing?.rent_amount ?? "",
     max_persons: existing?.max_persons ?? "",
     occupancy_status: existing?.occupancy_status || "available",
-    city: existing?.city || "",
+    state: existing?.state || DEFAULT_STATE,
     district: existing?.district || "",
+    pincode: existing?.pincode || "",
+    city: existing?.city || "", // Town / Locality (free text)
+    landmark: existing?.landmark || "",
     address: existing?.address || "",
     map_link: existing?.map_link || "",
   });
+
+  // Pincode → district autofill state.
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinNote, setPinNote] = useState("");
+
+  // Locality dropdown: options come from our DB (per district) merged with the
+  // pincode's post-office areas. "Other" lets the owner add a new one.
+  const [dbLocalities, setDbLocalities] = useState([]);
+  const [pinAreas, setPinAreas] = useState([]);
+  const [localityOther, setLocalityOther] = useState(false);
+
+  // Combined, de-duplicated, sorted list shown in the dropdown.
+  const localityOptions = Array.from(new Set([...dbLocalities, ...pinAreas])).sort((a, b) =>
+    a.localeCompare(b)
+  );
+  const pincodeReady = /^\d{6}$/.test(form.pincode || ""); // district waits for a valid pincode
+  const locationLocked = !form.district; // town/landmark/address wait for a district
+
+  // Load this district's known localities whenever the district changes.
+  useEffect(() => {
+    let active = true;
+    if (!form.district) {
+      setDbLocalities([]);
+      return;
+    }
+    apiGet(`/geo/localities?district=${encodeURIComponent(form.district)}`, token)
+      .then((d) => active && setDbLocalities(d.localities || []))
+      .catch(() => active && setDbLocalities([]));
+    return () => {
+      active = false;
+    };
+  }, [form.district]);
+
+  // If the current locality isn't a known option (e.g. editing an old listing,
+  // or a freshly-typed one), show it in the "Other" text box.
+  useEffect(() => {
+    if (form.city && !localityOptions.includes(form.city)) setLocalityOther(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbLocalities, pinAreas]);
+
+  // Locality dropdown change: pick a known one, or switch to free-text "Other".
+  function onLocalitySelect(value) {
+    if (value === "__other__") {
+      setLocalityOther(true);
+      set("city", "");
+    } else {
+      setLocalityOther(false);
+      set("city", value);
+    }
+  }
+
+  // When the owner finishes typing an "Other" locality, normalise it (trim +
+  // collapse spaces) and, if it matches an existing option case-insensitively,
+  // snap to that one — so we don't create a duplicate of "Kakkanad"/"kakkanad".
+  function normalizeLocalityInput() {
+    const v = (form.city || "").trim().replace(/\s+/g, " ");
+    if (!v) return set("city", "");
+    const match = localityOptions.find((o) => o.toLowerCase() === v.toLowerCase());
+    if (match) {
+      setLocalityOther(false);
+      set("city", match);
+    } else {
+      set("city", v);
+    }
+  }
 
   // Newly picked images: [{ id, preview, status: 'uploading'|'done'|'error', key }]
   const [images, setImages] = useState([]);
@@ -59,6 +133,23 @@ export default function PropertyForm({ existing }) {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false); // highlight required fields after a submit attempt
+
+  // Per-field validity (only flagged after a submit attempt).
+  const titleErr = showErrors && !form.title.trim();
+  const pinErr = showErrors && !pincodeReady;
+  const distErr = showErrors && pincodeReady && !form.district;
+
+  // Live attachment state.
+  const anyUploading = images.some((i) => i.status === "uploading") || video?.status === "uploading";
+  const anyFailed = images.some((i) => i.status === "error") || video?.status === "error";
+
+  // Auto-clear the attachment messages once their condition resolves, so a stale
+  // "Please wait…" doesn't linger above the button after the upload finishes.
+  useEffect(() => {
+    if (error === UPLOADING_MSG && !anyUploading) setError("");
+    if (error === FAILED_MSG && !anyFailed) setError("");
+  }, [error, anyUploading, anyFailed]);
 
   // Admin-configured max upload sizes; fetched on mount.
   const [limits, setLimits] = useState(FALLBACK_LIMITS);
@@ -76,6 +167,36 @@ export default function PropertyForm({ existing }) {
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  // Pincode entry: keep only digits, and once 6 are entered, ask the backend to
+  // look it up (free India Post API) and auto-fill state + district + locality
+  // suggestions. Falls back to manual selection if the lookup can't resolve it.
+  async function onPincodeChange(value) {
+    const pin = value.replace(/\D/g, "").slice(0, 6);
+    set("pincode", pin);
+    setPinNote("");
+    if (pin.length !== 6) return;
+
+    setPinLoading(true);
+    try {
+      const d = await apiGet(`/geo/pincode/${pin}`, token);
+      if (d.found) {
+        setForm((f) => ({
+          ...f,
+          state: STATE_LIST.includes(d.state) ? d.state : f.state,
+          district: districtsOf(d.state).includes(d.district) ? d.district : f.district,
+        }));
+        setPinAreas(d.areas || []);
+        setPinNote(`${d.district || "?"}, ${d.state || "?"}`);
+      } else {
+        setPinNote("Couldn't resolve this pincode — pick the district manually.");
+      }
+    } catch {
+      setPinNote("Pincode lookup failed — pick the district manually.");
+    } finally {
+      setPinLoading(false);
+    }
   }
 
   // Best-effort: ask the backend to delete an orphaned storage object.
@@ -214,13 +335,14 @@ export default function PropertyForm({ existing }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    if (!form.title.trim()) return setError("Title is required.");
+    setShowErrors(true);
+    if (!form.title.trim() || !pincodeReady || !form.district) {
+      return setError("Please fix the highlighted fields above.");
+    }
 
     // Don't submit while attachments are still uploading or have failed.
-    const anyUploading = images.some((i) => i.status === "uploading") || video?.status === "uploading";
-    if (anyUploading) return setError("Please wait for attachments to finish uploading.");
-    const anyFailed = images.some((i) => i.status === "error") || video?.status === "error";
-    if (anyFailed) return setError("Some attachments failed to upload — remove and re-add them.");
+    if (anyUploading) return setError(UPLOADING_MSG);
+    if (anyFailed) return setError(FAILED_MSG);
 
     setLoading(true);
     try {
@@ -262,13 +384,15 @@ export default function PropertyForm({ existing }) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-      )}
-
       <div>
         <label className={label}>Title *</label>
-        <input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Cozy 1BHK near MG Road" className={field} />
+        <input
+          value={form.title}
+          onChange={(e) => set("title", e.target.value)}
+          placeholder="e.g. Cozy 1BHK near MG Road"
+          className={`${field} ${titleErr ? "border-red-400" : ""}`}
+        />
+        {titleErr && <p className="mt-1 text-xs text-red-600">Title is required.</p>}
       </div>
 
       <div>
@@ -285,11 +409,27 @@ export default function PropertyForm({ existing }) {
         </div>
         <div>
           <label className={label}>Rent (₹ / month)</label>
-          <input type="number" value={form.rent_amount} onChange={(e) => set("rent_amount", e.target.value)} placeholder="18000" className={field} />
+          {/* Strip anything but digits/decimal so a negative (or "e") can't be typed. */}
+          <input
+            type="number"
+            min={0}
+            value={form.rent_amount}
+            onChange={(e) => set("rent_amount", e.target.value.replace(/[^0-9.]/g, ""))}
+            placeholder="18000"
+            className={field}
+          />
         </div>
         <div>
           <label className={label}>Max persons</label>
-          <input type="number" value={form.max_persons} onChange={(e) => set("max_persons", e.target.value)} placeholder="4" className={field} />
+          {/* Digits only → no negatives, no decimals. */}
+          <input
+            type="number"
+            min={0}
+            value={form.max_persons}
+            onChange={(e) => set("max_persons", e.target.value.replace(/[^0-9]/g, ""))}
+            placeholder="4"
+            className={field}
+          />
         </div>
         <div>
           <label className={label}>Current status</label>
@@ -299,19 +439,113 @@ export default function PropertyForm({ existing }) {
         </div>
       </div>
 
+      {/* Location — State (locked) / Pincode (autofills district) / District */}
       <div className="grid gap-5 sm:grid-cols-3">
         <div>
-          <label className={label}>City</label>
-          <input value={form.city} onChange={(e) => set("city", e.target.value)} className={field} />
+          <label className={label}>State</label>
+          <select
+            value={form.state}
+            onChange={(e) => set("state", e.target.value)}
+            disabled
+            title="More states coming soon"
+            className={`${field} cursor-not-allowed bg-slate-100 text-slate-500`}
+          >
+            {STATE_LIST.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
         <div>
-          <label className={label}>District / area</label>
-          <input value={form.district} onChange={(e) => set("district", e.target.value)} className={field} />
+          <label className={label}>Pincode *</label>
+          <input
+            inputMode="numeric"
+            value={form.pincode}
+            onChange={(e) => onPincodeChange(e.target.value)}
+            placeholder="e.g. 682030"
+            className={`${field} ${pinErr ? "border-red-400" : ""}`}
+          />
+          {pinErr ? (
+            <p className="mt-1 text-xs text-red-600">Enter a valid 6-digit pincode.</p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">
+              {pinLoading ? "Looking up…" : pinNote || "Enter this first — it fills the district."}
+            </p>
+          )}
         </div>
         <div>
-          <label className={label}>Address</label>
-          <input value={form.address} onChange={(e) => set("address", e.target.value)} className={field} />
+          <label className={label}>District *</label>
+          <select
+            value={form.district}
+            onChange={(e) => set("district", e.target.value)}
+            disabled={!pincodeReady}
+            className={`${field} ${!pincodeReady ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""} ${
+              distErr ? "border-red-400" : ""
+            }`}
+          >
+            <option value="">{pincodeReady ? "Select district" : "Enter pincode first"}</option>
+            {districtsOf(form.state).map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          {distErr && <p className="mt-1 text-xs text-red-600">Please select a district.</p>}
         </div>
+      </div>
+
+      {locationLocked && (
+        <p className="text-xs text-amber-600">Select a district first to add the town, landmark and address.</p>
+      )}
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label className={label}>Town / Locality</label>
+          <select
+            value={localityOther ? "__other__" : localityOptions.includes(form.city) ? form.city : ""}
+            onChange={(e) => onLocalitySelect(e.target.value)}
+            disabled={locationLocked}
+            className={`${field} ${locationLocked ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
+          >
+            <option value="">{locationLocked ? "Select a district first" : "Select locality"}</option>
+            {localityOptions.map((l) => <option key={l} value={l}>{l}</option>)}
+            <option value="__other__">Other (add new)…</option>
+          </select>
+
+          {localityOther && !locationLocked && (
+            <>
+              <input
+                list="locality-other-list"
+                value={form.city}
+                onChange={(e) => set("city", e.target.value)}
+                onBlur={normalizeLocalityInput}
+                placeholder="Type the locality / area name"
+                className={`${field} mt-2`}
+              />
+              <datalist id="locality-other-list">
+                {localityOptions.map((l) => <option key={l} value={l} />)}
+              </datalist>
+              <p className="mt-1 text-xs text-slate-500">
+                New locality will be saved under <span className="font-medium">{form.district}</span>.
+              </p>
+            </>
+          )}
+        </div>
+        <div>
+          <label className={label}>Landmark</label>
+          <input
+            value={form.landmark}
+            onChange={(e) => set("landmark", e.target.value)}
+            disabled={locationLocked}
+            placeholder="e.g. near Infopark"
+            className={`${field} ${locationLocked ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className={label}>Address</label>
+        <textarea
+          value={form.address}
+          onChange={(e) => set("address", e.target.value)}
+          disabled={locationLocked}
+          rows={4}
+          placeholder="House / building, street, area…"
+          className={`${field} ${locationLocked ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
+        />
       </div>
 
       <div>
@@ -425,6 +659,11 @@ export default function PropertyForm({ existing }) {
           <p className="mt-1 text-xs text-slate-500">A video is already uploaded.</p>
         )}
       </div>
+
+      {/* Summary shown next to the button so a long form doesn't hide the reason. */}
+      {error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
 
       <div className="flex gap-3 pt-2">
         <button

@@ -84,7 +84,8 @@ export default function RoommatePostForm({ existing }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={label}>Budget (₹ / month)</label>
-          <input type="number" value={form.budget} onChange={(e) => set("budget", e.target.value)} placeholder="8000" className={field} />
+          {/* Digits/decimal only — no negative budgets. */}
+          <input type="number" min={0} value={form.budget} onChange={(e) => set("budget", e.target.value.replace(/[^0-9.]/g, ""))} placeholder="8000" className={field} />
         </div>
         <div>
           <label className={label}>Preferred location</label>

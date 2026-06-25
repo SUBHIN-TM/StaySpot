@@ -6,6 +6,31 @@ const { asyncHandler, ApiError } = require('../utils/http');
 const { publicUser, propertyImage } = require('../utils/serialize');
 const { getBool } = require('../services/settings');
 const { claimKeys } = require('../services/pendingUploads');
+const { resolveLocality } = require('../services/localities');
+const geo = require('../config/geo');
+
+// Validate + normalise the canonical location fields from a request body.
+// Returns { state, district, pincode } with the district in its canonical
+// spelling. Throws ApiError(400) on bad input. Free-text fields (city/locality,
+// landmark, address) are not validated here.
+function normalizeLocation(body) {
+  const state = body.state || geo.DEFAULT_STATE;
+  if (!geo.isValidState(state)) throw new ApiError(400, `Unknown state: ${state}`);
+
+  let district = null;
+  if (body.district) {
+    district = geo.canonicalDistrict(state, body.district);
+    if (!district) throw new ApiError(400, `Invalid district for ${state}: ${body.district}`);
+  }
+
+  let pincode = null;
+  if (body.pincode != null && body.pincode !== '') {
+    pincode = String(body.pincode).trim();
+    if (!/^\d{6}$/.test(pincode)) throw new ApiError(400, 'Pincode must be 6 digits');
+  }
+
+  return { state, district, pincode };
+}
 
 // Assemble a property row with its images + owner summary.
 async function hydrate(propertyRow) {
@@ -135,11 +160,27 @@ const listMine = asyncHandler(async (req, res) => {
 const createProperty = asyncHandler(async (req, res) => {
   const {
     title, description, property_type, rent_amount,
-    latitude, longitude, address, district, city,
-    map_link, max_persons, occupancy_status,
+    latitude, longitude, address, city,
+    map_link, max_persons, occupancy_status, landmark,
   } = req.body || {};
 
   if (!title || !String(title).trim()) throw new ApiError(400, 'Title is required');
+
+  // Numbers can't be negative.
+  const rent = rent_amount != null && rent_amount !== '' ? Number(rent_amount) : 0;
+  if (!Number.isFinite(rent) || rent < 0) throw new ApiError(400, 'Rent must be 0 or more');
+  const persons = max_persons != null && max_persons !== '' ? parseInt(max_persons, 10) : null;
+  if (persons != null && (!Number.isFinite(persons) || persons < 0)) {
+    throw new ApiError(400, 'Max persons must be 0 or more');
+  }
+
+  // Canonical location (state/district/pincode) — validated + normalised.
+  const { state, district, pincode } = normalizeLocation(req.body || {});
+  if (!pincode) throw new ApiError(400, 'Pincode is required');
+  if (!district) throw new ApiError(400, 'District is required');
+
+  // Canonicalise the locality (dedupes case/whitespace, reuses an existing one).
+  const cityValue = city ? await resolveLocality(state, district, city) : null;
 
   // If the admin enabled auto-approval, new listings go live immediately;
   // otherwise they start as "pending" and wait for admin approval.
@@ -149,27 +190,31 @@ const createProperty = asyncHandler(async (req, res) => {
   const { rows } = await query(
     `INSERT INTO properties
        (owner_id, title, description, property_type, rent_amount,
-        latitude, longitude, address, district, city,
+        latitude, longitude, address, state, district, city, pincode, landmark,
         map_link, max_persons, occupancy_status, approval_status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
      RETURNING *`,
     [
       req.user.id,
       String(title).trim(),
       description || null,
       property_type || 'room',
-      rent_amount != null ? Number(rent_amount) : 0,
+      rent,
       latitude != null ? Number(latitude) : null,
       longitude != null ? Number(longitude) : null,
       address || null,
-      district || null,
-      city || null,
+      state,
+      district,
+      cityValue,
+      pincode,
+      landmark || null,
       map_link || null,
-      max_persons != null && max_persons !== '' ? parseInt(max_persons, 10) : null,
+      persons,
       occupancy_status || 'available',
       approval,
     ]
   );
+
   res.status(201).json({ property: await hydrate(rows[0]) });
 });
 
@@ -203,11 +248,37 @@ async function loadOwnedProperty(id, user) {
 
 // PATCH /api/properties/:id
 const updateProperty = asyncHandler(async (req, res) => {
-  await loadOwnedProperty(req.params.id, req.user);
+  const owned = await loadOwnedProperty(req.params.id, req.user);
+
+  // Numbers can't be negative.
+  if (req.body.rent_amount !== undefined && req.body.rent_amount !== '' && Number(req.body.rent_amount) < 0) {
+    throw new ApiError(400, 'Rent must be 0 or more');
+  }
+  if (req.body.max_persons !== undefined && req.body.max_persons !== '' && req.body.max_persons !== null && Number(req.body.max_persons) < 0) {
+    throw new ApiError(400, 'Max persons must be 0 or more');
+  }
+
+  // Validate/normalise any canonical location fields being changed, and write
+  // the normalised values back so the generic field loop persists them.
+  if (req.body.state !== undefined || req.body.district !== undefined || req.body.pincode !== undefined) {
+    const norm = normalizeLocation(req.body);
+    if (req.body.state !== undefined) req.body.state = norm.state;
+    if (req.body.district !== undefined) req.body.district = norm.district;
+    if (req.body.pincode !== undefined) req.body.pincode = norm.pincode;
+  }
+
+  // Canonicalise the locality (dedupe) before it's written, using the district
+  // it'll end up with (the one being set, or the existing one).
+  if (req.body.city) {
+    const dist = req.body.district !== undefined ? req.body.district : owned.district;
+    const st = req.body.state !== undefined ? req.body.state : owned.state;
+    if (dist) req.body.city = await resolveLocality(st, dist, req.body.city);
+  }
+
   const fields = [
     'title', 'description', 'property_type', 'rent_amount',
-    'latitude', 'longitude', 'address', 'district', 'city', 'is_available',
-    'map_link', 'max_persons', 'occupancy_status',
+    'latitude', 'longitude', 'address', 'state', 'district', 'city', 'pincode',
+    'landmark', 'is_available', 'map_link', 'max_persons', 'occupancy_status',
   ];
   const sets = [];
   const params = [req.params.id];
@@ -225,6 +296,7 @@ const updateProperty = asyncHandler(async (req, res) => {
     `UPDATE properties SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
     params
   );
+
   res.json({ property: await hydrate(rows[0]) });
 });
 

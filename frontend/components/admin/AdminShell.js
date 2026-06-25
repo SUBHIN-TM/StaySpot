@@ -56,6 +56,7 @@ export default function AdminShell({ active, children }) {
     { key: "properties", label: "Properties", href: "/admin/properties" },
     { key: "users", label: "Users", href: "/admin/users" },
     { key: "owners", label: "Owners", href: "/admin/owners" },
+    { key: "localities", label: "Localities", href: "/admin/localities" },
     { key: "messages", label: "Messages", href: "/admin/messages" },
     { key: "settings", label: "Settings", href: "/admin/settings" },
   ];

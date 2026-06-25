@@ -53,6 +53,11 @@ const env = {
     publicUrl: (process.env.CONTABO_PUBLIC_URL || '').replace(/\/$/, ''),
   },
 
+  // Secret that gates the error-log viewer (GET /api/log-error?key=...).
+  // In production this MUST be set or the endpoint stays locked. In development
+  // the viewer is open (no key needed).
+  logAccessKey: process.env.LOG_ACCESS_KEY || '',
+
   isProd: process.env.NODE_ENV === 'production',
   bool,
 };

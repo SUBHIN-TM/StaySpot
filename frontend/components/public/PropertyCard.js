@@ -33,8 +33,7 @@ export default function PropertyCard({ property }) {
       <div className="p-4">
         <h3 className="line-clamp-1 text-lg font-semibold text-ink">{property.title}</h3>
         <p className="mt-1 line-clamp-1 text-sm text-ink/50">
-          📍 {property.address ? `${property.address}, ` : ""}
-          {property.city || "—"}
+          📍 {[property.city, property.district].filter(Boolean).join(", ") || "—"}
         </p>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-lg font-bold text-coral">

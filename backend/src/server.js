@@ -8,6 +8,20 @@ const { createApp } = require('./app');
 const { registerChat } = require('./sockets/chat');
 const { pool } = require('./config/db');
 const { startSweeper } = require('./services/uploadSweeper');
+const { logError } = require('./utils/logger');
+
+// Last-resort safety net: log async errors instead of letting Node crash the
+// whole process (which, behind nginx, shows up as intermittent 502s for EVERY
+// request until it restarts). These should be rare — investigate anything logged
+// here — but a single stray rejection must not take the server down.
+process.on('unhandledRejection', (reason) => {
+  console.error('[fatal] unhandledRejection:', reason);
+  logError('unhandledRejection', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[fatal] uncaughtException:', err);
+  logError('uncaughtException', err);
+});
 
 async function start() {
   // Fail fast if the database is unreachable.
@@ -22,6 +36,15 @@ async function start() {
 
   const app = createApp();
   const server = http.createServer(app);
+
+  // Fix intermittent 502s from the nginx⇄Node keep-alive race: Node's default
+  // keepAliveTimeout (5s) is shorter than nginx's upstream keepalive, so nginx
+  // can reuse a socket Node is closing → connection reset → 502. Keep Node's
+  // idle timeout LONGER than nginx's (typically 60–75s), and headersTimeout
+  // just above it. Also cap total request time so nothing hangs forever.
+  server.keepAliveTimeout = 75 * 1000;
+  server.headersTimeout = 76 * 1000;
+  server.requestTimeout = 30 * 1000;
 
   const io = new Server(server, {
     cors: { origin: env.corsOrigin === '*' ? true : env.corsOrigin.split(',') },
