@@ -10,18 +10,18 @@
 
 const { asyncHandler, ApiError } = require('../utils/http');
 const geo = require('../config/geo');
-const { listByDistrict } = require('../services/localities');
+const { listByPincode } = require('../services/localities');
 
 // GET /api/geo/states — the bundled dataset (Kerala only for now).
 const getStates = asyncHandler(async (req, res) => {
   res.json({ states: geo.listStates(), districts: geo.STATES });
 });
 
-// GET /api/geo/localities?district=Ernakulam — owner-curated localities for the
-// Town/Locality dropdown.
+// GET /api/geo/localities?pincode=682030 — owner-curated localities for the
+// Town/Locality dropdown, scoped to the pincode.
 const getLocalities = asyncHandler(async (req, res) => {
-  const district = String(req.query.district || '').trim();
-  res.json({ localities: district ? await listByDistrict(district) : [] });
+  const pincode = String(req.query.pincode || '').trim();
+  res.json({ localities: pincode ? await listByPincode(pincode) : [] });
 });
 
 // Tiny in-memory cache: pincodes never change, so cache forever for this process.

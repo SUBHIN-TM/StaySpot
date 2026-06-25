@@ -86,13 +86,15 @@ Admin login is at `/admin/login` (separate session from regular users).
   (dropdown of the 14 Kerala districts — bundled dataset in `backend/src/config/geo.js`
   + `frontend/lib/geo.js`, validated server-side), `pincode` (6-digit; **autofills
   state+district** via the free India Post API proxied at `GET /api/geo/pincode/:pin`,
-  cached), plus `city` (Town/Locality), `landmark`, `address`. **District is required**;
-  town/landmark/address stay disabled until a district is chosen. **Town/Locality is a
-  per-district dropdown** sourced from the owner-curated `localities` table (migration
-  012) merged with the pincode's post-office areas; an **"Other"** option lets owners
-  type a new locality, which is recorded on save (`GET /api/geo/localities?district=`).
-  District is the canonical public filter. lat/lng still only set from the mobile app
-  (the web radius search is unreachable until a map pin-picker is added).
+  cached), plus `city` (Town/Locality), `landmark`, `address`. **Pincode and District
+  are required** (pincode first — it unlocks the District dropdown); town/landmark/
+  address stay disabled until a district is chosen. **Town/Locality is a dropdown
+  scoped to the PINCODE** (migration 013), sourced from the owner-curated `localities`
+  table (keyed by pincode) merged with that pincode's post-office areas; an **"Other"**
+  option lets owners type a new locality, recorded against that pincode on save
+  (`GET /api/geo/localities?pincode=`). District is the canonical public filter; the
+  admin Localities tool merges/renames within a pincode. lat/lng still only set from
+  the mobile app (web radius search needs a map pin-picker).
 - **Approval workflow:** new listings are `pending` until an admin approves them
   (Admin → Properties → click row → detail modal → Approve/Reject). A **Settings**
   toggle (`auto_approve_listings`) makes new listings publish instantly. Public pages

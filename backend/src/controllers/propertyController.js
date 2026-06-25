@@ -180,7 +180,8 @@ const createProperty = asyncHandler(async (req, res) => {
   if (!district) throw new ApiError(400, 'District is required');
 
   // Canonicalise the locality (dedupes case/whitespace, reuses an existing one).
-  const cityValue = city ? await resolveLocality(state, district, city) : null;
+  // Scoped to the pincode so it only appears under that pincode.
+  const cityValue = city ? await resolveLocality(state, district, pincode, city) : null;
 
   // If the admin enabled auto-approval, new listings go live immediately;
   // otherwise they start as "pending" and wait for admin approval.
@@ -267,12 +268,13 @@ const updateProperty = asyncHandler(async (req, res) => {
     if (req.body.pincode !== undefined) req.body.pincode = norm.pincode;
   }
 
-  // Canonicalise the locality (dedupe) before it's written, using the district
+  // Canonicalise the locality (dedupe) before it's written, scoped to the pincode
   // it'll end up with (the one being set, or the existing one).
   if (req.body.city) {
     const dist = req.body.district !== undefined ? req.body.district : owned.district;
     const st = req.body.state !== undefined ? req.body.state : owned.state;
-    if (dist) req.body.city = await resolveLocality(st, dist, req.body.city);
+    const pin = req.body.pincode !== undefined ? req.body.pincode : owned.pincode;
+    if (pin) req.body.city = await resolveLocality(st, dist, pin, req.body.city);
   }
 
   const fields = [

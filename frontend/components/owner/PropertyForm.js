@@ -29,6 +29,9 @@ const FALLBACK_LIMITS = {
 const UPLOADING_MSG = "Please wait for attachments to finish uploading.";
 const FAILED_MSG = "Some attachments failed to upload — remove and re-add them.";
 
+// Capitalize the first letter of each word (mirrors the backend's normaliser).
+const capitalizeWords = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+
 const TYPES = ["room", "apartment", "house", "pg", "hostel", "shared"];
 const STATUSES = [
   { value: "available", label: "Available" },
@@ -77,20 +80,21 @@ export default function PropertyForm({ existing }) {
   const pincodeReady = /^\d{6}$/.test(form.pincode || ""); // district waits for a valid pincode
   const locationLocked = !form.district; // town/landmark/address wait for a district
 
-  // Load this district's known localities whenever the district changes.
+  // Load this PINCODE's known localities whenever the pincode changes, so a
+  // locality only shows up for the pincode it belongs to.
   useEffect(() => {
     let active = true;
-    if (!form.district) {
+    if (!/^\d{6}$/.test(form.pincode || "")) {
       setDbLocalities([]);
       return;
     }
-    apiGet(`/geo/localities?district=${encodeURIComponent(form.district)}`, token)
+    apiGet(`/geo/localities?pincode=${form.pincode}`, token)
       .then((d) => active && setDbLocalities(d.localities || []))
       .catch(() => active && setDbLocalities([]));
     return () => {
       active = false;
     };
-  }, [form.district]);
+  }, [form.pincode]);
 
   // If the current locality isn't a known option (e.g. editing an old listing,
   // or a freshly-typed one), show it in the "Other" text box.
@@ -114,7 +118,7 @@ export default function PropertyForm({ existing }) {
   // collapse spaces) and, if it matches an existing option case-insensitively,
   // snap to that one — so we don't create a duplicate of "Kakkanad"/"kakkanad".
   function normalizeLocalityInput() {
-    const v = (form.city || "").trim().replace(/\s+/g, " ");
+    const v = capitalizeWords((form.city || "").trim().replace(/\s+/g, " "));
     if (!v) return set("city", "");
     const match = localityOptions.find((o) => o.toLowerCase() === v.toLowerCase());
     if (match) {
@@ -475,12 +479,14 @@ export default function PropertyForm({ existing }) {
           <select
             value={form.district}
             onChange={(e) => set("district", e.target.value)}
-            disabled={!pincodeReady}
-            className={`${field} ${!pincodeReady ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""} ${
+            disabled={!pincodeReady || pinLoading}
+            className={`${field} ${!pincodeReady || pinLoading ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""} ${
               distErr ? "border-red-400" : ""
             }`}
           >
-            <option value="">{pincodeReady ? "Select district" : "Enter pincode first"}</option>
+            <option value="">
+              {pinLoading ? "Loading district…" : pincodeReady ? "Select district" : "Enter pincode first"}
+            </option>
             {districtsOf(form.state).map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
           {distErr && <p className="mt-1 text-xs text-red-600">Please select a district.</p>}
@@ -519,7 +525,8 @@ export default function PropertyForm({ existing }) {
                 {localityOptions.map((l) => <option key={l} value={l} />)}
               </datalist>
               <p className="mt-1 text-xs text-slate-500">
-                New locality will be saved under <span className="font-medium">{form.district}</span>.
+                New locality will be saved under pincode{" "}
+                <span className="font-medium">{form.pincode}</span>.
               </p>
             </>
           )}

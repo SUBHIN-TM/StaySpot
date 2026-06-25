@@ -1,8 +1,8 @@
 "use client";
 
 // Admin → Localities  (URL: "/admin/localities")
-// Manage the owner-curated locality list per district: see how many properties
-// use each, merge duplicates/variants into one, rename (fix typos), and delete.
+// Manage owner-curated localities (scoped per PINCODE): see how many properties
+// use each, merge duplicates/variants within a pincode, rename (fix typos), delete.
 
 import { useEffect, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
@@ -14,16 +14,19 @@ const DISTRICTS = districtsOf(DEFAULT_STATE);
 
 export default function AdminLocalitiesPage() {
   const [district, setDistrict] = useState(DISTRICTS[0] || "");
+  const [pincodeFilter, setPincodeFilter] = useState("");
   const [q, setQ] = useState("");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  // Merge state: which rows are checked, and which name is the target.
+  // Merge state: which rows are checked (by id), and which row is the target (id).
   const [selected, setSelected] = useState(() => new Set());
   const [target, setTarget] = useState("");
-  const [mergePreview, setMergePreview] = useState(null); // dry-run result awaiting confirmation
+  const [mergePreview, setMergePreview] = useState(null); // dry-run awaiting confirmation
+
+  const targetRow = rows.find((r) => r.id === target) || null;
 
   async function load() {
     setLoading(true);
@@ -31,6 +34,7 @@ export default function AdminLocalitiesPage() {
     try {
       const qs = new URLSearchParams();
       if (district) qs.set("district", district);
+      if (pincodeFilter.trim()) qs.set("pincode", pincodeFilter.trim());
       if (q.trim()) qs.set("q", q.trim());
       const d = await apiGet(`/localities?${qs.toString()}`, getToken());
       setRows(d.localities || []);
@@ -44,36 +48,42 @@ export default function AdminLocalitiesPage() {
     }
   }
 
-  // Reload when the district changes (search is manual via the button).
+  // Reload when the district changes (pincode/search are manual via the button).
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [district]);
 
-  function toggle(name) {
+  function toggle(id) {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
-  // Step 1: ask the server how many properties this merge would touch (no changes).
+  // Step 1: dry-run. Merge happens within ONE pincode — the target's pincode.
   async function requestMerge() {
-    const sources = [...selected].filter((s) => s !== target);
-    if (!target) return setError("Pick a target locality to merge into.");
-    if (!sources.length) return setError("Select at least one other locality to merge in.");
+    if (!targetRow) return setError("Pick a target locality to merge into.");
+    const pincode = targetRow.pincode;
+    // Only sources in the SAME pincode as the target can be merged.
+    const sources = rows
+      .filter((r) => selected.has(r.id) && r.pincode === pincode && r.id !== target)
+      .map((r) => r.name);
+    if (!sources.length) {
+      return setError("Select at least one other locality in the same pincode as the target.");
+    }
     setError("");
     setNotice("");
     try {
-      const d = await apiPost("/localities/merge/preview", { district, target, sources }, getToken());
-      setMergePreview({ ...d, sources });
+      const d = await apiPost("/localities/merge/preview", { pincode, target: targetRow.name, sources }, getToken());
+      setMergePreview({ ...d, pincode, sources });
     } catch (e) {
       setError(e.message);
     }
   }
 
-  // Step 2: the admin confirmed the preview — actually perform the merge.
+  // Step 2: the admin confirmed the preview — perform the merge.
   async function confirmMerge() {
     if (!mergePreview) return;
     setError("");
@@ -81,7 +91,7 @@ export default function AdminLocalitiesPage() {
     try {
       const d = await apiPost(
         "/localities/merge",
-        { district, target: mergePreview.target, sources: mergePreview.sources },
+        { pincode: mergePreview.pincode, target: mergePreview.target, sources: mergePreview.sources },
         getToken()
       );
       setNotice(`Merged into "${d.target}". ${d.propertiesUpdated} property(ies) updated, ${d.removed} removed.`);
@@ -93,7 +103,7 @@ export default function AdminLocalitiesPage() {
   }
 
   async function rename(row) {
-    const name = prompt(`Rename "${row.name}" to:`, row.name);
+    const name = prompt(`Rename "${row.name}" (pincode ${row.pincode}) to:`, row.name);
     if (name == null || !name.trim() || name.trim() === row.name) return;
     setError("");
     setNotice("");
@@ -108,8 +118,8 @@ export default function AdminLocalitiesPage() {
 
   async function remove(row) {
     const msg = row.property_count
-      ? `Delete "${row.name}"? ${row.property_count} property(ies) still use it (their text stays, it just leaves the dropdown).`
-      : `Delete "${row.name}"?`;
+      ? `Delete "${row.name}" (${row.pincode})? ${row.property_count} property(ies) still use it (their text stays, it just leaves the dropdown).`
+      : `Delete "${row.name}" (${row.pincode})?`;
     if (!confirm(msg)) return;
     setError("");
     setNotice("");
@@ -122,14 +132,13 @@ export default function AdminLocalitiesPage() {
     }
   }
 
-  const inputCls =
-    "rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand";
+  const inputCls = "rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand";
 
   return (
     <AdminShell active="localities">
       <h1 className="text-2xl font-bold text-slate-900">Localities</h1>
       <p className="mt-1 text-slate-500">
-        Merge duplicate or misspelled localities so each district stays clean.
+        Localities are scoped to a pincode. Merge duplicates within the same pincode to keep them clean.
       </p>
 
       {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -144,6 +153,16 @@ export default function AdminLocalitiesPage() {
           </select>
         </div>
         <div>
+          <label className="block text-sm font-medium text-slate-700">Pincode</label>
+          <input
+            value={pincodeFilter}
+            onChange={(e) => setPincodeFilter(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+            placeholder="optional"
+            className={`${inputCls} mt-1 w-28`}
+          />
+        </div>
+        <div>
           <label className="block text-sm font-medium text-slate-700">Search</label>
           <input
             value={q}
@@ -154,7 +173,7 @@ export default function AdminLocalitiesPage() {
           />
         </div>
         <button onClick={load} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-          Search
+          Apply
         </button>
       </div>
 
@@ -164,7 +183,7 @@ export default function AdminLocalitiesPage() {
           <label className="block text-sm font-medium text-slate-700">Merge selected into</label>
           <select value={target} onChange={(e) => setTarget(e.target.value)} className={`${inputCls} mt-1`}>
             <option value="">Choose target…</option>
-            {rows.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+            {rows.map((r) => <option key={r.id} value={r.id}>{r.name} — {r.pincode}</option>)}
           </select>
         </div>
         <button
@@ -175,7 +194,7 @@ export default function AdminLocalitiesPage() {
           Preview merge {selected.size > 0 ? `(${selected.size})` : ""}
         </button>
         <p className="text-xs text-slate-500">
-          Tick the duplicates below, choose the correct name as the target, then Merge.
+          Tick the duplicates, choose the correct name as target. Only rows in the target's pincode are merged.
         </p>
       </div>
 
@@ -191,6 +210,7 @@ export default function AdminLocalitiesPage() {
               <tr>
                 <th className="w-10 px-4 py-3"></th>
                 <th className="px-4 py-3 font-medium">Locality</th>
+                <th className="px-4 py-3 font-medium">Pincode</th>
                 <th className="px-4 py-3 font-medium">Used by</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
@@ -199,14 +219,15 @@ export default function AdminLocalitiesPage() {
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-slate-100">
                   <td className="px-4 py-3">
-                    <input type="checkbox" checked={selected.has(r.name)} onChange={() => toggle(r.name)} />
+                    <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)} />
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {r.name}
-                    {r.name === target && (
+                    {r.id === target && (
                       <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">target</span>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-slate-600">{r.pincode || "—"}</td>
                   <td className="px-4 py-3 text-slate-600">
                     {r.property_count} {r.property_count === 1 ? "property" : "properties"}
                   </td>
@@ -227,7 +248,8 @@ export default function AdminLocalitiesPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-900">Confirm merge</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Merging into <span className="font-semibold text-slate-900">{mergePreview.target}</span> ({district}).
+              Merging into <span className="font-semibold text-slate-900">{mergePreview.target}</span>{" "}
+              (pincode {mergePreview.pincode}).
             </p>
 
             <ul className="mt-4 max-h-48 space-y-1 overflow-auto text-sm">
