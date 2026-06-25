@@ -77,4 +77,44 @@ Notes:
 - The **backend is not a service** — it only runs while its terminal is open.
 - PostgreSQL **is** a background service (auto-starts), so the DB is always up.
 - More detail, env vars, conventions, and gotchas are in **`CLAUDE.md`**.
-```
+
+---
+
+## All npm scripts
+
+### Backend (`cd backend && npm run <name>`)
+
+**Everyday**
+| Script | Runs | What it does |
+|--------|------|--------------|
+| `dev` | `nodemon src/server.js` | API + chat with **auto-reload**. Day-to-day local run. |
+| `start` | `node src/server.js` | API **without** auto-reload — for production (run this under pm2/systemd). |
+
+**Database** (run when the schema or data changes)
+| Script | Runs | What it does |
+|--------|------|--------------|
+| `db:check` | `node src/db/check.js` | Verify the DB is reachable before migrating. |
+| `db:migrate` | `node src/db/migrate.js` | Apply pending SQL migrations from `src/db/migrations/`. **Idempotent** — safe to re-run. Run after pulling new migrations. |
+| `db:seed` | `node src/db/seed.js` | Insert optional demo listings/users. |
+| `db:seed-images` | `node src/db/seed-images.js` | Attach demo images to seeded listings. |
+
+**Occasional / one-time**
+| Script | Runs | What it does |
+|--------|------|--------------|
+| `storage:cors` | `node scripts/set-contabo-cors.js` | Apply the CORS policy to the Contabo bucket so the browser can upload directly. **Run once per bucket** (prod). Set `CORS_ALLOWED_ORIGINS` to your real frontend origin first. |
+| `smoke` | `node scripts/smoke-test.js` | Quick end-to-end smoke test against a running API. |
+
+> `npm run` scripts live in `package.json`. The separate `backend/scripts/` folder
+> just holds the `.js` files that `storage:cors` and `smoke` point at.
+
+### Frontend (`cd frontend && npm run <name>`)
+
+| Script | Runs | What it does |
+|--------|------|--------------|
+| `dev` | `next dev` | Local dev server on :3000 (hot-reload). Day-to-day. |
+| `build` | `next build` | Production build. |
+| `start` | `next start` | Serve the production build (after `build`). |
+| `lint` | `eslint` | Lint the code. |
+
+**Typical production run:** backend `npm start` (under a process manager) + frontend
+`npm run build` then `npm start`.
