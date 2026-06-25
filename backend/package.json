@@ -11,10 +11,12 @@
     "db:migrate": "node src/db/migrate.js",
     "db:seed": "node src/db/seed.js",
     "db:seed-images": "node src/db/seed-images.js",
+    "storage:cors": "node scripts/set-contabo-cors.js",
     "smoke": "node scripts/smoke-test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1073.0",
+    "@aws-sdk/s3-request-presigner": "^3.1075.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

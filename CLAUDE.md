@@ -106,8 +106,28 @@ Admin login is at `/admin/login` (separate session from regular users).
 - **OTP is server-side** (table `email_otps`, 10-min expiry). Signup requires a
   verified OTP. Don't reintroduce frontend-only OTP.
 - `@react-oauth/google` installed with `--legacy-peer-deps` (React 19 peer range).
-- Uploads currently land in `backend/uploads/` (local driver). Plan: move to Contabo
-  (S3-compatible) by switching `STORAGE_DRIVER` + `CONTABO_*` env — no code changes.
+- **Uploads are DIRECT-to-storage (presigned URLs), NOT through the backend.** The
+  browser asks `POST /api/uploads/presign`, PUTs the file straight to Contabo (or the
+  local `/api/uploads/local` sink in dev), then the form submits just the object
+  *keys* (`POST /properties/:id/images` `{keys}`, `POST /properties/:id/video`
+  `{key}`). The backend never buffers the bytes — this is what fixed slow/hung video
+  uploads that used to saturate the VPS and drop the DB connection. Don't reintroduce
+  multer/memory buffering for property media (avatars still use it — that's fine).
+- **Contabo bucket MUST have a CORS policy** allowing `PUT` from the frontend origin
+  with headers `Content-Type` + `x-amz-acl`, or every direct upload fails with a CORS
+  error in the browser (the presigned URL itself is valid — it's the bucket rejecting
+  the cross-origin PUT). Set it once per bucket via an S3 `PutBucketCors` call.
+- **Orphaned uploads** (attached but never submitted) are tracked in `pending_uploads`
+  and deleted by a background sweep (`services/uploadSweeper.js`, runs every 5 min).
+  TTL is the `pending_upload_ttl_minutes` setting (default 60), editable in Admin →
+  Settings, which also has a "Flush pending now" button. Removing an attachment or
+  cancelling the form calls `POST /api/uploads/cancel` for instant cleanup.
+- **Max upload sizes are admin-configurable** (`max_image_mb`/`max_video_mb` settings,
+  defaults 8/50, edited in Admin → Settings). Enforced in the browser before upload
+  AND server-side at presign. The form fetches them from `GET /api/uploads/limits`
+  and shows a live upload-progress % (XHR, not fetch — only XHR exposes progress).
+- Local-driver uploads land in `backend/uploads/`. Contabo is the prod driver
+  (`STORAGE_DRIVER=contabo` + `CONTABO_*` env) — same code path, presigned URLs.
 
 ## Roadmap / ideas (not yet built)
 - **AI roommate compatibility matching** (lifestyle profile + match score + Claude-

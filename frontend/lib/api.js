@@ -72,6 +72,33 @@ export async function apiUpload(path, formData, token) {
   return handle(res);
 }
 
+// Direct-to-storage upload. `presigned` is the object returned by
+// POST /uploads/presign — { uploadUrl, method, headers }. The file's bytes go
+// straight to object storage (Contabo), or the local sink in dev.
+//
+// Uses XMLHttpRequest (not fetch) because only XHR exposes upload progress.
+// `onProgress` is called with a 0–100 percentage as the file uploads.
+export function uploadToPresignedUrl(presigned, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(presigned.method || "PUT", presigned.uploadUrl);
+    for (const [k, v] of Object.entries(presigned.headers || {})) {
+      xhr.setRequestHeader(k, v);
+    }
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Upload failed (${xhr.status})`));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed (network or CORS)"));
+    xhr.send(file);
+  });
+}
+
 // Shared response handler: parse JSON and throw a readable error on failure.
 async function handle(res) {
   let data = null;

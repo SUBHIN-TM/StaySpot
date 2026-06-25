@@ -12,7 +12,12 @@
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const env = require('../config/env');
+
+// Presigned PUT URLs expire after 10 minutes — long enough to upload a video,
+// short enough that a leaked URL is useless soon after.
+const PRESIGN_EXPIRES_SECONDS = 10 * 60;
 
 // Contabo is S3-compatible but NOT AWS: it needs a custom endpoint and
 // path-style URLs (bucket in the path, not the hostname).
@@ -58,6 +63,34 @@ const contaboStorage = {
       })
     );
     return { key };
+  },
+
+  /**
+   * Direct-upload flow: hand the browser a presigned URL so it uploads the file
+   * straight to Contabo (the backend never touches the bytes). Returns the key
+   * plus everything the browser needs to PUT the file.
+   *
+   * The browser MUST send back the headers we return here verbatim — they are
+   * part of what the signature covers, so a mismatch is rejected by Contabo.
+   * @param {{ folder?: string, originalName?: string, mimeType?: string }} file
+   * @returns {Promise<{ key, uploadUrl, method, headers }>}
+   */
+  async presignPut(file) {
+    const key = buildKey(file.folder, file.originalName);
+    const contentType = file.mimeType || 'application/octet-stream';
+    const command = new PutObjectCommand({
+      Bucket: env.contabo.bucket,
+      Key: key,
+      ContentType: contentType,
+      ACL: 'public-read', // signed in — the browser must echo x-amz-acl below
+    });
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: PRESIGN_EXPIRES_SECONDS });
+    return {
+      key,
+      uploadUrl,
+      method: 'PUT',
+      headers: { 'Content-Type': contentType, 'x-amz-acl': 'public-read' },
+    };
   },
 
   /** Full public URL the client can load (CONTABO_PUBLIC_URL + key). */

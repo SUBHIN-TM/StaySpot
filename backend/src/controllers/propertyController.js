@@ -5,6 +5,7 @@ const storage = require('../storage');
 const { asyncHandler, ApiError } = require('../utils/http');
 const { publicUser, propertyImage } = require('../utils/serialize');
 const { getBool } = require('../services/settings');
+const { claimKeys } = require('../services/pendingUploads');
 
 // Assemble a property row with its images + owner summary.
 async function hydrate(propertyRow) {
@@ -240,26 +241,28 @@ const deleteProperty = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /api/properties/:id/images  (multipart: images[] — up to 10)
+// POST /api/properties/:id/images   body: { keys: [storageKey, …] }
+// The browser already uploaded the files straight to storage (see uploadController);
+// here we just attach the resulting object keys to the property. No bytes pass
+// through this request, so the transaction only does fast DB work.
 const uploadImages = asyncHandler(async (req, res) => {
   await loadOwnedProperty(req.params.id, req.user);
-  if (!req.files || !req.files.length) throw new ApiError(400, 'No images uploaded (field: "images")');
+  const keys = Array.isArray(req.body.keys) ? req.body.keys.filter(Boolean) : [];
+  if (!keys.length) throw new ApiError(400, 'No image keys provided (field: "keys")');
 
   const saved = await withTransaction(async (client) => {
-    const out = [];
+    const exec = (text, params) => client.query(text, params);
+    // Claim the objects so the orphan sweep leaves them alone (atomic with the inserts).
+    await claimKeys(req.user.id, keys, exec);
+
     // Continue sort_order from the current max.
     const max = await client.query(
       'SELECT COALESCE(MAX(sort_order), -1) AS m FROM property_images WHERE property_id = $1',
       [req.params.id]
     );
     let order = max.rows[0].m + 1;
-    for (const file of req.files) {
-      const { key } = await storage.save({
-        buffer: file.buffer,
-        originalName: file.originalname,
-        mimeType: file.mimetype,
-        folder: 'image',
-      });
+    const out = [];
+    for (const key of keys) {
       const ins = await client.query(
         `INSERT INTO property_images (property_id, image_key, sort_order)
          VALUES ($1, $2, $3) RETURNING *`,
@@ -273,24 +276,27 @@ const uploadImages = asyncHandler(async (req, res) => {
   res.status(201).json({ images: saved.map(propertyImage) });
 });
 
-// POST /api/properties/:id/video  (multipart: video)
+// POST /api/properties/:id/video   body: { key: storageKey }
+// The browser already uploaded the video straight to storage; attach its key.
 const uploadVideo = asyncHandler(async (req, res) => {
   const property = await loadOwnedProperty(req.params.id, req.user);
-  if (!req.file) throw new ApiError(400, 'No video uploaded (field: "video")');
+  const key = req.body && req.body.key;
+  if (!key) throw new ApiError(400, 'No video key provided (field: "key")');
 
   const oldKey = property.video_key;
-  const { key } = await storage.save({
-    buffer: req.file.buffer,
-    originalName: req.file.originalname,
-    mimeType: req.file.mimetype,
-    folder: 'video',
+  const updated = await withTransaction(async (client) => {
+    const exec = (text, params) => client.query(text, params);
+    await claimKeys(req.user.id, [key], exec);
+    const { rows } = await client.query(
+      'UPDATE properties SET video_key = $2, updated_at = now() WHERE id = $1 RETURNING *',
+      [req.params.id, key]
+    );
+    return rows[0];
   });
-  const { rows } = await query(
-    'UPDATE properties SET video_key = $2, updated_at = now() WHERE id = $1 RETURNING *',
-    [req.params.id, key]
-  );
-  if (oldKey) await storage.delete(oldKey).catch(() => {});
-  res.status(201).json({ property: await hydrate(rows[0]) });
+
+  // Drop the previous video file after the swap commits (best-effort).
+  if (oldKey && oldKey !== key) await storage.delete(oldKey).catch(() => {});
+  res.status(201).json({ property: await hydrate(updated) });
 });
 
 // DELETE /api/properties/:id/images/:imageId

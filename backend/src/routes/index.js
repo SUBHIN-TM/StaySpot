@@ -6,6 +6,7 @@ const router = express.Router();
 router.use('/auth', require('./authRoutes'));
 router.use('/users', require('./userRoutes'));
 router.use('/properties', require('./propertyRoutes'));
+router.use('/uploads', require('./uploadRoutes'));
 router.use('/roommate-posts', require('./roommateRoutes'));
 router.use('/favorites', require('./favoriteRoutes'));
 router.use('/chat', require('./chatRoutes'));

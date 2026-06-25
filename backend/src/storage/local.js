@@ -9,6 +9,7 @@
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const env = require('../config/env');
 
@@ -48,6 +49,21 @@ function buildKey(folder, originalName) {
   return `${safeFolder}/${uuidv4()}${extFromName(originalName)}`;
 }
 
+// The local driver has no real presigned URLs, so we emulate them: the browser
+// PUTs the file to OUR own /api/uploads/local sink, and we authenticate that
+// write with a short HMAC signature over the key (instead of a login token).
+// This keeps the frontend's direct-upload flow identical in dev and prod.
+function signKey(key) {
+  return crypto.createHmac('sha256', env.jwtSecret).update(key).digest('hex');
+}
+
+function verifyUploadSig(key, sig) {
+  if (!key || !sig) return false;
+  const expected = signKey(key);
+  // Constant-time compare (both hex strings of equal length).
+  return sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+}
+
 const localStorage = {
   driver: 'local',
 
@@ -70,6 +86,45 @@ const localStorage = {
     };
     await writeIndex(index);
 
+    return { key };
+  },
+
+  /**
+   * Direct-upload flow (local emulation of a presigned URL). Returns a key plus
+   * a signed PUT URL pointing at our own /api/uploads/local sink. See signKey().
+   * @param {{ folder?: string, originalName?: string, mimeType?: string }} file
+   * @returns {Promise<{ key, uploadUrl, method, headers }>}
+   */
+  async presignPut(file) {
+    const key = buildKey(file.folder, file.originalName);
+    const sig = signKey(key);
+    const uploadUrl =
+      `${env.publicBaseUrl}/api/uploads/local` +
+      `?key=${encodeURIComponent(key)}&sig=${sig}`;
+    const headers = file.mimeType ? { 'Content-Type': file.mimeType } : {};
+    return { key, uploadUrl, method: 'PUT', headers };
+  },
+
+  /** Validate the HMAC signature on a local direct-upload PUT. */
+  verifyUploadSig,
+
+  /**
+   * Write a buffer to an EXACT key (used by the local PUT sink — the key was
+   * already chosen by presignPut, so we don't generate a new one here).
+   */
+  async saveAtKey(key, buffer, mimeType) {
+    const dest = path.join(UPLOAD_DIR, key);
+    await fsp.mkdir(path.dirname(dest), { recursive: true });
+    await fsp.writeFile(dest, buffer);
+
+    const index = await readIndex();
+    index[key] = {
+      originalName: null,
+      mimeType: mimeType || 'application/octet-stream',
+      size: buffer.length,
+      createdAt: new Date().toISOString(),
+    };
+    await writeIndex(index);
     return { key };
   },
 

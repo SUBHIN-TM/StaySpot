@@ -4,15 +4,26 @@ const { Pool } = require('pg');
 const env = require('./env');
 
 // Prefer a single connection string; fall back to discrete PG* vars.
-const pool = env.databaseUrl
-  ? new Pool({ connectionString: env.databaseUrl })
-  : new Pool({
+const connection = env.databaseUrl
+  ? { connectionString: env.databaseUrl }
+  : {
       host: env.pg.host || 'localhost',
       port: env.pg.port || 5432,
       user: env.pg.user || 'postgres',
       password: env.pg.password || 'postgres',
       database: env.pg.database || 'staymate',
-    });
+    };
+
+// Pool tuning. The remote DB is occasionally flaky, so: keepAlive stops an idle
+// connection from being silently dropped by the network; connectionTimeoutMillis
+// makes a dead DB fail fast (10s) instead of hanging a request forever.
+const pool = new Pool({
+  ...connection,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  keepAlive: true,
+});
 
 pool.on('error', (err) => {
   // Idle client errors should not crash the process.

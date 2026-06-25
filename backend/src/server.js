@@ -7,6 +7,7 @@ const env = require('./config/env');
 const { createApp } = require('./app');
 const { registerChat } = require('./sockets/chat');
 const { pool } = require('./config/db');
+const { startSweeper } = require('./services/uploadSweeper');
 
 async function start() {
   // Fail fast if the database is unreachable.
@@ -28,6 +29,9 @@ async function start() {
   // Expose io to REST controllers so HTTP-sent messages also broadcast live.
   app.set('io', io);
   registerChat(io);
+
+  // Periodically delete orphaned (attached-but-never-submitted) uploads.
+  startSweeper();
 
   server.listen(env.port, () => {
     console.log(`\n  StayMate API  →  http://localhost:${env.port}`);
