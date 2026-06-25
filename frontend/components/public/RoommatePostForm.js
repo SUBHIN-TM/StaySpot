@@ -22,6 +22,9 @@ export default function RoommatePostForm({ existing }) {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false); // highlight required fields after a submit attempt
+
+  const titleErr = showErrors && !form.title.trim();
 
   function set(k, v) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -30,7 +33,8 @@ export default function RoommatePostForm({ existing }) {
   async function submit(e) {
     e.preventDefault();
     setError("");
-    if (!form.title.trim()) return setError("Please add a title.");
+    setShowErrors(true);
+    if (!form.title.trim()) return setError("Please fix the highlighted fields above.");
 
     const payload = {
       title: form.title.trim(),
@@ -60,16 +64,15 @@ export default function RoommatePostForm({ existing }) {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-
       <div>
         <label className={label}>Title *</label>
         <input
           value={form.title}
           onChange={(e) => set("title", e.target.value)}
           placeholder="e.g. Looking for a flatmate in Koramangala"
-          className={field}
+          className={`${field} ${titleErr ? "border-red-400" : ""}`}
         />
+        {titleErr && <p className="mt-1 text-xs text-red-600">Title is required.</p>}
       </div>
       <div>
         <label className={label}>Details</label>
@@ -96,6 +99,9 @@ export default function RoommatePostForm({ existing }) {
         <label className={label}>Move-in date</label>
         <input type="date" value={form.move_in_date} onChange={(e) => set("move_in_date", e.target.value)} className={field} />
       </div>
+
+      {/* Summary shown next to the button so the reason isn't hidden up top. */}
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="flex gap-3 pt-2">
         <button
