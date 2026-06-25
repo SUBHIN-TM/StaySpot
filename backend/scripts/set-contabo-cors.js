@@ -32,26 +32,40 @@ async function main() {
       accessKeyId: env.contabo.accessKey,
       secretAccessKey: env.contabo.secretKey,
     },
+    maxAttempts: 2, // fail fast instead of long silent retries
   });
 
-  await s3.send(
-    new PutBucketCorsCommand({
-      Bucket: env.contabo.bucket,
-      CORSConfiguration: {
-        CORSRules: [
-          {
-            AllowedMethods: ['GET', 'PUT', 'HEAD'],
-            AllowedOrigins: origins,
-            AllowedHeaders: ['*'], // covers Content-Type + x-amz-acl on the PUT
-            ExposeHeaders: ['ETag'],
-            MaxAgeSeconds: 3000,
-          },
-        ],
-      },
-    })
-  );
+  // Tell the user what's happening — otherwise a slow/blocked network looks
+  // identical to "stuck".
+  console.log(`[cors] connecting to ${env.contabo.endpoint} …`);
+  console.log(`[cors] bucket "${env.contabo.bucket}", origins: ${origins.join(', ')}`);
 
-  console.log(`[cors] applied to bucket "${env.contabo.bucket}" for origins: ${origins.join(', ')}`);
+  // Hard timeout so a blocked connection can't hang forever.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    await s3.send(
+      new PutBucketCorsCommand({
+        Bucket: env.contabo.bucket,
+        CORSConfiguration: {
+          CORSRules: [
+            {
+              AllowedMethods: ['GET', 'PUT', 'HEAD'],
+              AllowedOrigins: origins,
+              AllowedHeaders: ['*'], // covers Content-Type + x-amz-acl on the PUT
+              ExposeHeaders: ['ETag'],
+              MaxAgeSeconds: 3000,
+            },
+          ],
+        },
+      }),
+      { abortSignal: controller.signal }
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+
+  console.log(`[cors] ✓ applied to bucket "${env.contabo.bucket}" for origins: ${origins.join(', ')}`);
 }
 
 main().catch((err) => {
