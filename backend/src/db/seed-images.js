@@ -33,8 +33,7 @@ const DEMO_OWNER_EMAIL = 'owner@demo.com';
 // (e.g. an apartment gets apartment + lounge + kitchen). Only tags that
 // reliably resolve on loremflickr are used — some words (livingroom, interior,
 // dormitory, bathroom…) return HTTP 500 there, so we avoid them. 'lounge' is
-// our living-room stand-in; FALLBACK_TAG is a known-good last resort.
-const FALLBACK_TAG = 'bedroom';
+// our living-room stand-in. See FALLBACK_TAGS for the last-resort tag walk.
 const TAGS_BY_TYPE = {
   apartment: ['apartment', 'lounge', 'kitchen'],
   house: ['house', 'lounge', 'bedroom'],
@@ -66,14 +65,20 @@ async function download(url) {
   return { buffer: buf, mimeType };
 }
 
-// Fetch one photo for `tag`; if loremflickr hiccups (occasional 500 / rate
-// limit), retry once and then fall back to a known-good tag so the slot is
-// never left empty.
+// Reliable interior tags to fall back through if the requested one keeps
+// 500-ing (loremflickr's per-tag availability fluctuates minute to minute).
+const FALLBACK_TAGS = ['apartment', 'lounge', 'kitchen', 'studio', 'bedroom', 'house'];
+
+// Fetch one photo for `tag`. loremflickr 500s are transient/rate-limit, so we
+// retry the requested tag a few times (different lock each time), then walk
+// through other reliable tags — so a slot is essentially never left empty.
 async function fetchPhoto(tag, lock) {
   const attempts = [
     [tag, lock],
     [tag, lock + 1],
-    [FALLBACK_TAG, lock],
+    [tag, lock + 2],
+    // then try genuinely different tags (skip the one we already tried)
+    ...FALLBACK_TAGS.filter((t) => t !== tag).map((t, i) => [t, lock + 3 + i]),
   ];
   let lastErr;
   for (const [t, l] of attempts) {

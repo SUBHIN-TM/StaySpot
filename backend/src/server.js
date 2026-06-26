@@ -6,7 +6,7 @@ const { Server } = require('socket.io');
 const env = require('./config/env');
 const { createApp } = require('./app');
 const { registerChat } = require('./sockets/chat');
-const { pool } = require('./config/db');
+const { pool, startKeepWarm } = require('./config/db');
 const { startSweeper } = require('./services/uploadSweeper');
 const { logError } = require('./utils/logger');
 
@@ -53,6 +53,9 @@ async function start() {
     console.error('     Queries retry per-request and will recover when it returns.');
     console.error('     If this persists, check DATABASE_URL in backend/.env and the DB host.');
   }
+  // Keep a connection warm either way so requests skip the slow connect cost
+  // (and so we re-establish quickly once a blip clears).
+  startKeepWarm();
 
   const app = createApp();
   const server = http.createServer(app);

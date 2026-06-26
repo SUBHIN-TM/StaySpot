@@ -25,7 +25,11 @@ const pool = new Pool({
   // pool small avoids tripping that limit. keepAlive + idle reuse mean we open
   // new connections rarely once warmed up.
   max: 5,
-  idleTimeoutMillis: 30000,
+  // Keep pooled connections open indefinitely (0 = never auto-close on idle).
+  // Opening a NEW connection over the flaky network costs 5–10s; reusing a warm
+  // one costs ~0.27s. So we hold connections open and lean on keepAlive + the
+  // keep-warm pinger below to stop them going stale.
+  idleTimeoutMillis: 0,
   // A healthy connect to this DB is sub-second; 5s is plenty. Failing fast lets
   // withConnectRetry() retry a dropped connection quickly instead of stalling.
   connectionTimeoutMillis: 5000,
@@ -33,6 +37,19 @@ const pool = new Pool({
   // Tags our connections in pg_stat_activity so they're easy to spot/diagnose.
   application_name: 'staymate-backend',
 });
+
+// Keep at least one connection warm. Most page loads are slow ONLY because they
+// have to open a fresh connection over the lossy network; a tiny periodic ping
+// keeps a pooled connection alive so requests reuse it (~0.27s) instead of
+// paying the multi-second connect cost. unref() so it never blocks shutdown.
+let keepWarmTimer = null;
+function startKeepWarm(intervalMs = 20000) {
+  if (keepWarmTimer) return;
+  keepWarmTimer = setInterval(() => {
+    pool.query('SELECT 1').catch(() => {}); // ignore blips; just keeping it warm
+  }, intervalMs);
+  if (keepWarmTimer.unref) keepWarmTimer.unref();
+}
 
 pool.on('error', (err) => {
   // Idle client errors should not crash the process.
@@ -105,4 +122,4 @@ async function withTransaction(callback) {
   }
 }
 
-module.exports = { pool, query, withTransaction };
+module.exports = { pool, query, withTransaction, startKeepWarm };
