@@ -79,7 +79,7 @@ function Stars({ value }) {
   );
 }
 
-export default function Testimonials({ initialReviews = [] }) {
+export default function Testimonials({ initialReviews = [], prefillEnabled = true }) {
   const router = useRouter();
   const [reviews, setReviews] = useState(initialReviews);
   const [user, setUser] = useState(null);
@@ -120,6 +120,7 @@ export default function Testimonials({ initialReviews = [] }) {
     }
     setRating(n);
     setDone(false);
+    if (!prefillEnabled) return; // admin turned suggestions off
     setComment((prev) => {
       if (prev.trim() === "" || autofilledRef.current) {
         autofilledRef.current = true;
@@ -192,7 +193,9 @@ export default function Testimonials({ initialReviews = [] }) {
           </h3>
           <p className="text-sm mb-4" style={{ color: "#5A6B63" }}>
             {loggedIn
-              ? "Tap a star and we'll suggest a comment — edit it however you like."
+              ? prefillEnabled
+                ? "Tap a star and we'll suggest a comment — edit it however you like."
+                : "Tap a star and write a short review."
               : "Log in to leave a star rating and a short review."}
           </p>
 

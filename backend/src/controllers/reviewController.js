@@ -3,6 +3,7 @@
 const { query } = require('../config/db');
 const { asyncHandler, ApiError } = require('../utils/http');
 const { publicUser } = require('../utils/serialize');
+const { getBool } = require('../services/settings');
 
 // Shape one review row (joined with its author) for the API.
 function shape(r, userRow) {
@@ -39,6 +40,8 @@ const listReviews = asyncHandler(async (req, res) => {
     reviews,
     count: agg.rows[0].n,
     average: Number(agg.rows[0].avg),
+    // Whether the comment-suggestion prefill is enabled (admin setting, default on).
+    prefillEnabled: await getBool('review_prefill_enabled', true),
   });
 });
 

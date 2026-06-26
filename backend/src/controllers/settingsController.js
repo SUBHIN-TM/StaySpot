@@ -20,6 +20,11 @@ const updateSettings = asyncHandler(async (req, res) => {
     await setSetting('auto_approve_listings', auto_approve_listings ? 'true' : 'false');
   }
 
+  // Toggle the review comment-suggestion prefill (default on).
+  if (req.body.review_prefill_enabled !== undefined) {
+    await setSetting('review_prefill_enabled', req.body.review_prefill_enabled ? 'true' : 'false');
+  }
+
   if (pending_upload_ttl_minutes !== undefined) {
     const n = parseInt(pending_upload_ttl_minutes, 10);
     if (!Number.isFinite(n) || n < 1) {

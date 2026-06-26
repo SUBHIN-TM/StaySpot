@@ -11,6 +11,7 @@ import { getToken } from "@/lib/auth";
 
 export default function AdminSettingsPage() {
   const [autoApprove, setAutoApprove] = useState(false);
+  const [reviewPrefill, setReviewPrefill] = useState(true); // review_prefill_enabled
   const [ttl, setTtl] = useState("60"); // pending_upload_ttl_minutes
   const [maxImageMb, setMaxImageMb] = useState("8");
   const [maxVideoMb, setMaxVideoMb] = useState("50");
@@ -24,6 +25,7 @@ export default function AdminSettingsPage() {
   async function load() {
     const d = await apiGet("/settings", getToken());
     setAutoApprove(d.settings?.auto_approve_listings === "true");
+    setReviewPrefill(d.settings?.review_prefill_enabled !== "false"); // default on
     setTtl(d.settings?.pending_upload_ttl_minutes || "60");
     setMaxImageMb(d.settings?.max_image_mb || "8");
     setMaxVideoMb(d.settings?.max_video_mb || "50");
@@ -51,6 +53,21 @@ export default function AdminSettingsPage() {
       await apiPatch("/settings", { auto_approve_listings: next }, getToken());
     } catch (e) {
       setAutoApprove(!next); // revert on failure
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleReviewPrefill() {
+    const next = !reviewPrefill;
+    setReviewPrefill(next); // optimistic
+    setSaving(true);
+    setError("");
+    try {
+      await apiPatch("/settings", { review_prefill_enabled: next }, getToken());
+    } catch (e) {
+      setReviewPrefill(!next); // revert on failure
       setError(e.message);
     } finally {
       setSaving(false);
@@ -159,6 +176,48 @@ export default function AdminSettingsPage() {
             <span className="text-green-600">Automatic — listings publish instantly</span>
           ) : (
             <span className="text-amber-600">Manual — you approve each listing</span>
+          )}
+        </p>
+      </div>
+
+      {/* Review comment suggestions (prefill) */}
+      <div className={card}>
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <h2 className="font-semibold text-slate-900">Review comment suggestions</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              <strong>On:</strong> tapping a star on the reviews section drops a random
+              short comment into the box, which the user can edit.<br />
+              <strong>Off:</strong> the box stays empty and users write their own review.
+            </p>
+          </div>
+
+          {/* Toggle switch */}
+          <button
+            type="button"
+            onClick={toggleReviewPrefill}
+            disabled={loading || saving}
+            aria-pressed={reviewPrefill}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-50 ${
+              reviewPrefill ? "bg-brand" : "bg-slate-300"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                reviewPrefill ? "left-[22px]" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
+
+        <p className="mt-4 text-sm font-medium text-slate-600">
+          Status:{" "}
+          {loading ? (
+            "…"
+          ) : reviewPrefill ? (
+            <span className="text-green-600">On — suggestions are offered</span>
+          ) : (
+            <span className="text-amber-600">Off — users write their own</span>
           )}
         </p>
       </div>

@@ -40,21 +40,23 @@ async function getStats() {
 }
 
 // Real user reviews for the testimonials section. Empty list if backend is down.
+// Also returns whether the comment-suggestion prefill is enabled (admin setting).
 async function getReviews() {
   try {
     const data = await apiGet("/reviews?limit=12");
-    return data?.reviews || [];
+    return { reviews: data?.reviews || [], prefillEnabled: data?.prefillEnabled !== false };
   } catch {
-    return [];
+    return { reviews: [], prefillEnabled: true };
   }
 }
 
 export default async function HomePage() {
-  const [properties, stats, reviews] = await Promise.all([
+  const [properties, stats, reviewData] = await Promise.all([
     getFeatured(),
     getStats(),
     getReviews(),
   ]);
+  const { reviews, prefillEnabled } = reviewData;
 
   return (
     <>
@@ -67,7 +69,7 @@ export default async function HomePage() {
         <HowItWorks />
         <Features />
         <StatsBand stats={stats} />
-        <Testimonials initialReviews={reviews} />
+        <Testimonials initialReviews={reviews} prefillEnabled={prefillEnabled} />
         <CTA />
       </main>
       <Footer />
