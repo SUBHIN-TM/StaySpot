@@ -28,7 +28,7 @@ export default function StatsBand({ stats = {} }) {
           We&apos;re Just Getting Started
         </motion.h2>
         <motion.p initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.12 }} className="text-base mb-16" style={{ color: "#5A6B63" }}>
-          Building India&apos;s most trusted rental community.
+          Building Kerala&apos;s most trusted rental community.
         </motion.p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">

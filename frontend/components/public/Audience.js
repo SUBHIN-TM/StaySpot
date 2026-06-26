@@ -17,7 +17,7 @@ const CARDS = [
     color: "#5E9275",
     title: "For Seekers",
     sub: "Explore & Discover",
-    desc: "Explore admin-checked listings across India, filter by city, budget and property type, save favourites and connect instantly.",
+    desc: "Explore admin-checked listings across Kerala, filter by city, budget and property type, save favourites and connect instantly.",
     btn: "Explore Listings",
     href: "/properties",
     bg: "linear-gradient(145deg,#EDF4EF 0%,#E3EDE7 100%)",

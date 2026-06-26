@@ -24,7 +24,10 @@ async function getFeatured() {
   try {
     const data = await apiGet("/properties?limit=6");
     return data?.properties || [];
-  } catch {
+  } catch (err) {
+    // Log (don't swallow silently) so a real backend/API failure is visible in
+    // the server terminal instead of looking like "there are no listings".
+    console.warn("[home] failed to load featured listings:", err?.message || err);
     return [];
   }
 }
@@ -34,7 +37,8 @@ async function getFeatured() {
 async function getStats() {
   try {
     return await apiGet("/stats");
-  } catch {
+  } catch (err) {
+    console.warn("[home] failed to load stats:", err?.message || err);
     return { listings: 0, seekers: 0, owners: 0 };
   }
 }
@@ -45,7 +49,8 @@ async function getReviews() {
   try {
     const data = await apiGet("/reviews?limit=12");
     return { reviews: data?.reviews || [], prefillEnabled: data?.prefillEnabled !== false };
-  } catch {
+  } catch (err) {
+    console.warn("[home] failed to load reviews:", err?.message || err);
     return { reviews: [], prefillEnabled: true };
   }
 }

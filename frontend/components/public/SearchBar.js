@@ -8,6 +8,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { districtsOf, DEFAULT_STATE } from "@/lib/geo";
+import { startNavProgress } from "@/lib/navProgress";
 
 // Property types come straight from the backend schema's allowed values.
 const TYPES = [
@@ -33,6 +34,7 @@ export default function SearchBar() {
     if (district) params.set("district", district);
     if (locality.trim()) params.set("city", locality.trim());
     if (type) params.set("property_type", type);
+    startNavProgress(); // show the top loading bar right away
     router.push(`/properties?${params.toString()}`);
   }
 

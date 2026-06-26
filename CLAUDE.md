@@ -7,8 +7,8 @@
 
 ## What this is
 A marketplace to **find rooms, PGs, apartments, rentals AND roommates** ("find your
-next stay, roommate, or rental space in minutes"). India-focused (₹, cities like
-Bengaluru/Kochi). Three kinds of people:
+next stay, roommate, or rental space in minutes"). Kerala-focused (₹, cities like
+Kochi/Thiruvananthapuram). Three kinds of people:
 - **Seekers** (role `seeker`) — regular users looking for a place or a roommate.
 - **Owners** (role `owner`) — list & manage properties.
 - **Admin** (role `admin`) — moderates listings/users from an admin panel.
@@ -81,7 +81,7 @@ Admin login is at `/admin/login` (separate session from regular users).
 - **Listings:** owners create/edit with images + video + map link + type + persons +
   occupancy status. Public browse `/properties`, full detail page `/properties/[id]`
   (gallery carousel, video, map, contact owner).
-- **Structured location (canonical, India/Kerala):** `state` (locked to Kerala for
+- **Structured location (canonical, Kerala):** `state` (locked to Kerala for
   now, but a real field/dropdown so more states can be enabled later), `district`
   (dropdown of the 14 Kerala districts — bundled dataset in `backend/src/config/geo.js`
   + `frontend/lib/geo.js`, validated server-side), `pincode` (6-digit; **autofills

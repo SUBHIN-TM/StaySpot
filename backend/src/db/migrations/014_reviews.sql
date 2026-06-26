@@ -1,4 +1,4 @@
--- Platform reviews (the "Loved by renters across India" testimonials).
+-- Platform reviews (the "Loved by renters across Kerala" testimonials).
 --
 -- Site-level reviews written by real users (seekers / owners). One review per
 -- user (they can update it), a 1–5 star rating and a short comment. The public
@@ -31,7 +31,7 @@ sample (rn, rating, comment) AS (
     (2, 5, 'Messaging owners directly saved so much time — no brokers, no commissions. Moved in within a week.'),
     (3, 4, 'Loved how easy it was to compare rooms and find a compatible roommate before shifting in.'),
     (4, 5, 'Listing my property took just minutes and every enquiry felt genuine. StayMate simply works.'),
-    (5, 5, 'Clean, simple and trustworthy. Exactly what house-hunting in India needed.'),
+    (5, 5, 'Clean, simple and trustworthy. Exactly what house-hunting in Kerala needed.'),
     (6, 4, 'The chat and verified profiles made the whole process feel safe and friendly.')
 )
 INSERT INTO reviews (user_id, rating, comment)

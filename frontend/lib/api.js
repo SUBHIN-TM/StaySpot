@@ -17,13 +17,53 @@ export function imageUrl(key) {
   return `${API_BASE}/uploads/${key}`;
 }
 
+// How many extra tries a GET gets when the *connection* fails (not when the
+// server returns an HTTP error), plus a per-attempt timeout. This guards
+// against the classic intermittent failure of server-side fetches: Next's
+// fetch (undici) reuses a pooled keep-alive socket that the backend has since
+// closed, so the request dies with ECONNRESET / "fetch failed". A retry opens
+// a fresh socket and almost always succeeds — which is why the empty-state was
+// only showing up *sometimes*.
+const GET_RETRIES = 2;
+const GET_TIMEOUT_MS = 6000;
+
+// True only for transient connection/timeout failures that are worth retrying.
+// HTTP errors (thrown by handle() with a status message) are deterministic and
+// must NOT be retried.
+function isTransient(err) {
+  if (!err) return false;
+  if (err.name === "AbortError") return true; // our own timeout fired
+  if (err instanceof TypeError) return true; // undici wraps socket errors here
+  const code = err.cause?.code || err.code;
+  return ["ECONNRESET", "ECONNREFUSED", "UND_ERR_SOCKET", "ETIMEDOUT", "EPIPE"].includes(
+    code
+  );
+}
+
 // GET a JSON resource. Pass a token to send the Authorization header.
+// Safe to retry because GET is idempotent (unlike POST/PATCH/DELETE below).
 export async function apiGet(path, token) {
-  const res = await fetch(`${API}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    cache: "no-store", // always fetch fresh data (no caching)
-  });
-  return handle(res);
+  let lastErr;
+  for (let attempt = 0; attempt <= GET_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GET_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${API}${path}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: "no-store", // always fetch fresh data (no caching)
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      return await handle(res); // HTTP errors throw here and are NOT retried
+    } catch (err) {
+      clearTimeout(timer);
+      lastErr = err;
+      if (!isTransient(err) || attempt === GET_RETRIES) break;
+      // Brief backoff, then try again on a fresh connection.
+      await new Promise((r) => setTimeout(r, 150 * (attempt + 1)));
+    }
+  }
+  throw lastErr;
 }
 
 // POST JSON to the backend. Pass a token for protected routes.

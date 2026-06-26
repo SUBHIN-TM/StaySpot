@@ -64,7 +64,7 @@ export default function Footer() {
               <span className="font-bold text-lg text-white">StayMate</span>
             </div>
             <p className="text-xs leading-relaxed mb-5 max-w-xs" style={{ color: "rgba(255,255,255,.38)" }}>
-              India&apos;s most trusted platform for finding rooms, PGs, apartments and compatible roommates. Zero brokerage, 100% verified.
+              Kerala&apos;s most trusted platform for finding rooms, PGs, apartments and compatible roommates. Zero brokerage, 100% verified.
             </p>
             <div className="flex gap-2.5">
               {SOCIALS.map(({ I: Icon, href }, i) => (
@@ -99,7 +99,7 @@ export default function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8" style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}>
           <p className="text-xs" style={{ color: "rgba(255,255,255,.28)" }}>© StayMate {year}. All rights reserved.</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,.28)" }}>Made with ❤️ in India</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,.28)" }}>Made with ❤️ in Kerala</p>
         </div>
       </div>
     </footer>

@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import NavProgress from "@/components/NavProgress";
 
 // Brand typography (matches the design): Inter for body text, DM Sans for
 // headings. Both are exposed as CSS variables and wired up in globals.css.
@@ -36,7 +38,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${dmSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-cream text-ink">
+      {/* suppressHydrationWarning: some browser extensions (anti-tracker, etc.)
+          inject attributes onto <body> before React hydrates, which otherwise
+          logs harmless hydration-mismatch warnings in dev. */}
+      <body className="min-h-full flex flex-col bg-cream text-ink" suppressHydrationWarning>
+        {/* Top loading bar — instant feedback on every route change.
+            Wrapped in Suspense because it reads useSearchParams. */}
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         <Providers>{children}</Providers>
       </body>
     </html>

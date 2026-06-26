@@ -69,7 +69,7 @@ export default function Hero() {
           style={{ background: `${GOLD}28`, border: `1px solid ${GOLD}55`, color: GOLD, backdropFilter: "blur(12px)" }}
         >
           <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: GOLD }} />
-          India&apos;s Most Trusted Rental Platform
+          Kerala&apos;s Most Trusted Rental Platform
         </motion.div>
 
         {/* Headline */}
@@ -80,7 +80,7 @@ export default function Hero() {
           className="font-bold leading-none mb-5"
           style={{ fontSize: "clamp(40px,6.5vw,72px)", color: "white", textShadow: "0 4px 28px rgba(0,0,0,.28)", maxWidth: 880 }}
         >
-          India&apos;s Friendly Stay &amp;<br />
+          Kerala&apos;s Friendly Stay &amp;<br />
           <span style={{ color: GOLD }}>Roommate Finder</span>
         </motion.h1>
 
@@ -102,7 +102,7 @@ export default function Hero() {
           className="text-sm leading-relaxed mb-8"
           style={{ color: "rgba(255,255,255,.58)", maxWidth: 520 }}
         >
-          Browse rooms, PGs, apartments and rentals across India — every listing is admin-checked. Chat owners directly, find compatible roommates, and move in faster. All in one place.
+          Browse rooms, PGs, apartments and rentals across Kerala — every listing is admin-checked. Chat owners directly, find compatible roommates, and move in faster. All in one place.
         </motion.p>
 
         {/* Buttons */}

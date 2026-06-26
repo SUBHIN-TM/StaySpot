@@ -1,6 +1,6 @@
 "use client";
 
-// "Loved by renters across India" — REAL reviews from StayMate users (seekers &
+// "Loved by renters across Kerala" — REAL reviews from StayMate users (seekers &
 // owners), fetched on the server and passed in. Logged-in users can leave / edit
 // their own star rating + comment right here; logged-out users are sent to login.
 
@@ -169,7 +169,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
             What people say
           </motion.p>
           <motion.h2 initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.08 }} className="text-4xl font-bold" style={{ color: OLIVE }}>
-            Loved by renters across India
+            Loved by renters across Kerala
           </motion.h2>
           {avg && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5" style={{ background: "white", border: `1px solid ${LINE}` }}>

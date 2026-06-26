@@ -45,7 +45,7 @@ export default function CTA() {
             </motion.h2>
 
             <motion.p initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.14 }} className="text-base mb-8" style={{ color: "#5A6B63" }}>
-              Join thousands discovering rooms, rentals and roommates across India.
+              Join thousands discovering rooms, rentals and roommates across Kerala.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.18 }} className="flex flex-wrap gap-4 justify-center">
