@@ -19,10 +19,19 @@ const connection = env.databaseUrl
 // makes a dead DB fail fast (10s) instead of hanging a request forever.
 const pool = new Pool({
   ...connection,
-  max: 10,
+  // Smaller pool = fewer simultaneous new connections on startup/under load.
+  // The remote host's firewall rate-limits bursts of new connections to 5432
+  // (a burst of 8 gets ~3 dropped; spaced connects succeed), so keeping the
+  // pool small avoids tripping that limit. keepAlive + idle reuse mean we open
+  // new connections rarely once warmed up.
+  max: 5,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  // A healthy connect to this DB is sub-second; 5s is plenty. Failing fast lets
+  // withConnectRetry() retry a dropped connection quickly instead of stalling.
+  connectionTimeoutMillis: 5000,
   keepAlive: true,
+  // Tags our connections in pg_stat_activity so they're easy to spot/diagnose.
+  application_name: 'staymate-backend',
 });
 
 pool.on('error', (err) => {
@@ -32,13 +41,24 @@ pool.on('error', (err) => {
 
 // Connection-establishment failures: the DB refused/couldn't be reached, so no
 // statement ran yet — meaning a retry is SAFE (it can't double-run a write).
-// Our remote DB intermittently refuses new connections; a couple of quick
-// retries turn most of those transient blips into successes.
+// Our remote DB intermittently refuses new connections; a few quick retries
+// turn most of those transient blips into successes.
 const TRANSIENT_CONNECT = new Set(['ECONNREFUSED', 'ETIMEDOUT', 'ENETUNREACH', 'ENOTFOUND']);
+
+// pg-pool reports the two timeout failures we actually hit as plain Errors with
+// NO `.code` — so matching on code alone misses them. Catch them by message too.
+//   • "timeout exceeded when trying to connect"      (pool acquire timeout)
+//   • "Connection terminated due to connection timeout" (socket connect timeout)
+const TRANSIENT_MESSAGE = /timeout exceeded when trying to connect|connection terminated due to connection timeout/i;
+
+function isTransientConnect(err) {
+  if (!err) return false;
+  return TRANSIENT_CONNECT.has(err.code) || TRANSIENT_MESSAGE.test(err.message || '');
+}
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function withConnectRetry(fn, attempts = 3) {
+async function withConnectRetry(fn, attempts = 4) {
   let lastErr;
   for (let i = 0; i < attempts; i++) {
     try {
@@ -46,9 +66,11 @@ async function withConnectRetry(fn, attempts = 3) {
     } catch (err) {
       lastErr = err;
       // Only retry pre-execution connection errors; let real SQL errors through.
-      if (!TRANSIENT_CONNECT.has(err.code) || i === attempts - 1) throw err;
-      console.warn(`[db] ${err.code} — retrying (${i + 1}/${attempts - 1})`);
-      await sleep(250 * (i + 1)); // 250ms, 500ms backoff
+      if (!isTransientConnect(err) || i === attempts - 1) throw err;
+      console.warn(
+        `[db] transient connect failure (${err.code || err.message}) — retrying (${i + 1}/${attempts - 1})`
+      );
+      await sleep(300 * (i + 1)); // 300ms, 600ms, 900ms backoff
     }
   }
   throw lastErr;

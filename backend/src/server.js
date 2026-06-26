@@ -23,15 +23,35 @@ process.on('uncaughtException', (err) => {
   logError('uncaughtException', err);
 });
 
+// Try the initial DB handshake a few times before giving up. The remote DB sits
+// behind a flaky network that drops ~half of new connections, so a single
+// attempt fails far too often — a few retries almost always get through.
+async function connectWithRetry(attempts = 8) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await pool.query('SELECT 1');
+      return true;
+    } catch (err) {
+      console.warn(`[db] connect attempt ${i}/${attempts} failed: ${err.message}`);
+      if (i < attempts) {
+        await new Promise((r) => setTimeout(r, Math.min(500 * i, 3000)));
+      }
+    }
+  }
+  return false;
+}
+
 async function start() {
-  // Fail fast if the database is unreachable.
-  try {
-    await pool.query('SELECT 1');
+  if (await connectWithRetry()) {
     console.log('[db] connected');
-  } catch (err) {
-    console.error('[db] connection failed:', err.message);
-    console.error('     Check DATABASE_URL in backend/.env and that PostgreSQL is running.');
-    process.exit(1);
+  } else {
+    // Don't crash — the network/VPS may just be having a blip. Start anyway;
+    // every query retries on its own (see config/db.js) and will recover once
+    // the connection comes back, instead of leaving the API down.
+    console.error('[db] could NOT connect after retries — starting the API anyway.');
+    console.error('     The DB looks temporarily unreachable (flaky network/VPS).');
+    console.error('     Queries retry per-request and will recover when it returns.');
+    console.error('     If this persists, check DATABASE_URL in backend/.env and the DB host.');
   }
 
   const app = createApp();
