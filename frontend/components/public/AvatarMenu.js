@@ -86,6 +86,13 @@ export default function AvatarMenu({ user, onLogout }) {
           )}
 
           <Link
+            href="/wishlist"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            ❤️ Wishlist
+          </Link>
+          <Link
             href="/messages"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"

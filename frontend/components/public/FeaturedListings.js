@@ -1,46 +1,73 @@
-// "Fresh on StayMate" — the latest real listings from the database (passed in
-// from the server-rendered landing page). Restyled for the sunset palette; each
-// card reveals on scroll with a stagger. PropertyCard itself is unchanged.
+"use client";
+
+// "Featured Places" — the latest real listings from the database (passed in from
+// the server-rendered landing page). Cards reveal on scroll with a stagger; the
+// card visuals live in the shared PropertyCard component.
 
 import Link from "next/link";
+import { motion } from "motion/react";
+import { ArrowRight } from "lucide-react";
 import PropertyCard from "./PropertyCard";
-import Reveal from "./Reveal";
+import { GOLD, OLIVE, SAGE } from "./palette";
+
+const EASE = [0.22, 1, 0.36, 1];
 
 export default function FeaturedListings({ properties = [] }) {
   return (
-    <section className="bg-cream py-24">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
-        <Reveal className="flex flex-wrap items-end justify-between gap-4">
+    <section className="py-24 px-6" style={{ background: "var(--color-mist)" }}>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-end justify-between mb-12">
           <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-coral">
-              Fresh on StayMate
-            </span>
-            <h2 className="mt-1 text-3xl font-black text-ink sm:text-4xl">
-              Newest places to call home
-            </h2>
+            <motion.p
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.6 }}
+              className="text-sm font-bold uppercase tracking-widest mb-2"
+              style={{ color: GOLD }}
+            >
+              Handpicked for you
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.6 }}
+              transition={{ delay: 0.08 }}
+              className="text-4xl font-bold"
+              style={{ color: OLIVE }}
+            >
+              Featured Places
+            </motion.h2>
           </div>
           <Link
             href="/properties"
-            className="rounded-xl border border-ink/15 bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-grape/40 hover:text-grape"
+            className="hidden md:flex items-center gap-1 text-sm font-semibold hover:gap-2 transition-all"
+            style={{ color: SAGE }}
           >
-            View all listings →
+            View all <ArrowRight size={15} />
           </Link>
-        </Reveal>
+        </div>
 
         {properties.length === 0 ? (
-          <Reveal className="mt-12">
-            <p className="rounded-2xl border border-dashed border-ink/20 bg-white p-12 text-center text-ink/50">
-              No listings to show yet. Start the backend and seed it
-              (<code className="rounded bg-cream px-1.5 py-0.5">npm run db:seed</code> in the
-              backend folder) to see live properties here.
-            </p>
-          </Reveal>
+          <p
+            className="rounded-3xl border border-dashed p-12 text-center"
+            style={{ borderColor: "rgba(30,37,33,.2)", background: "white", color: "rgba(30,37,33,.5)" }}
+          >
+            No listings to show yet. Start the backend and seed it
+            (<code className="rounded px-1.5 py-0.5" style={{ background: "var(--color-mist)" }}>npm run db:seed</code>{" "}
+            in the backend folder) to see live properties here.
+          </p>
         ) : (
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((p, i) => (
-              <Reveal key={p.id} delay={(i % 3) * 100}>
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ delay: 0.06 + (i % 3) * 0.08, duration: 0.6, ease: EASE }}
+              >
                 <PropertyCard property={p} />
-              </Reveal>
+              </motion.div>
             ))}
           </div>
         )}

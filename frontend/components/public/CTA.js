@@ -1,42 +1,68 @@
-// Final call-to-action band before the footer. Bold animated sunset gradient.
+"use client";
+
+// Final call-to-action band before the footer. Warm cream panel with a soft gold
+// glow and floating house/building decorations.
 
 import Link from "next/link";
-import Reveal from "./Reveal";
+import { motion } from "motion/react";
+import { Home, Building2, ArrowRight } from "lucide-react";
+import { GOLD, SAGE, OLIVE, LINE } from "./palette";
+
+const EASE = [0.22, 1, 0.36, 1];
 
 export default function CTA() {
   return (
-    <section className="px-4 pb-24 sm:px-6 lg:px-10">
-      <Reveal>
-        <div className="gradient-pan relative mx-auto max-w-[1440px] overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-sun via-coral to-grape px-6 py-16 text-center text-white shadow-2xl shadow-coral/30 sm:py-20">
-          {/* faint floating rings */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-30">
-            <div className="floaty absolute -left-10 -top-10 h-40 w-40 rounded-full border border-white/40" />
-            <div className="floaty-slow absolute -bottom-12 right-6 h-56 w-56 rounded-full border border-white/30" />
+    <section className="py-24 px-6" style={{ background: "var(--color-cream)" }}>
+      <div className="max-w-4xl mx-auto">
+        <div
+          className="relative overflow-hidden rounded-3xl p-12 md:p-20 text-center"
+          style={{ background: "linear-gradient(145deg,#F5F0E8 0%,#EDE5D5 60%,#E4DBC8 100%)", border: `1px solid ${LINE}`, boxShadow: "0 28px 90px rgba(30,37,33,.10)" }}
+        >
+          <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at 50% -10%,${GOLD}28 0%,transparent 55%)` }} />
+
+          {/* Floating decorations */}
+          <div className="absolute right-10 top-6 pointer-events-none" style={{ animation: "floatSlow 8s ease-in-out infinite", opacity: 0.1 }}>
+            <Home size={96} color={SAGE} />
+          </div>
+          <div className="absolute left-8 bottom-6 pointer-events-none" style={{ animation: "floatSlow 11s ease-in-out infinite 2.5s", opacity: 0.08 }}>
+            <Building2 size={64} color={GOLD} />
           </div>
 
-          <h2 className="relative text-3xl font-black sm:text-5xl">
-            Ready to find your next home?
-          </h2>
-          <p className="relative mx-auto mt-4 max-w-xl text-white/90">
-            Browsing is free and needs no sign-up. Start exploring real, admin-checked
-            listings — or list your own place in minutes.
-          </p>
-          <div className="relative mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/properties"
-              className="rounded-2xl bg-white px-8 py-3.5 font-semibold text-ink transition hover:scale-[1.03] hover:shadow-lg"
+          <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.88 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.6, ease: EASE }}
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
+              style={{ background: `${SAGE}18`, border: `1.5px solid ${SAGE}30` }}
             >
-              Explore listings
-            </Link>
-            <Link
-              href="/owner/signup"
-              className="rounded-2xl border border-white/60 px-8 py-3.5 font-semibold text-white transition hover:bg-white/10"
-            >
-              List your property
-            </Link>
+              <Home size={28} color={SAGE} />
+            </motion.div>
+
+            <motion.h2 initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.1 }} className="text-4xl md:text-5xl font-bold mb-4" style={{ color: OLIVE }}>
+              Ready to Find Your<br /><span style={{ color: SAGE }}>Perfect Stay?</span>
+            </motion.h2>
+
+            <motion.p initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.14 }} className="text-base mb-8" style={{ color: "#5A6B63" }}>
+              Join thousands discovering rooms, rentals and roommates across India.
+            </motion.p>
+
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.18 }} className="flex flex-wrap gap-4 justify-center">
+              <Link href="/properties">
+                <motion.span whileHover={{ scale: 1.04, y: -3 }} whileTap={{ scale: 0.97 }} className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-white" style={{ background: SAGE, boxShadow: `0 10px 28px ${SAGE}55` }}>
+                  Explore Listings <ArrowRight size={18} />
+                </motion.span>
+              </Link>
+              <Link href="/owner/signup">
+                <motion.span whileHover={{ scale: 1.04, y: -3 }} whileTap={{ scale: 0.97 }} className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold" style={{ border: `1.5px solid ${SAGE}`, color: SAGE, background: "white" }}>
+                  Get Started
+                </motion.span>
+              </Link>
+            </motion.div>
           </div>
         </div>
-      </Reveal>
+      </div>
     </section>
   );
 }

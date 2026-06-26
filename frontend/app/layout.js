@@ -1,11 +1,18 @@
-import { Geist } from "next/font/google";
+import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 
-// Load the Geist font and expose it as a CSS variable (used in globals.css).
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Brand typography (matches the design): Inter for body text, DM Sans for
+// headings. Both are exposed as CSS variables and wired up in globals.css.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+});
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 // Site-wide SEO defaults. Individual pages can override title/description.
@@ -28,8 +35,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-white text-slate-900">
+    <html lang="en" className={`${inter.variable} ${dmSans.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-cream text-ink">
         <Providers>{children}</Providers>
       </body>
     </html>

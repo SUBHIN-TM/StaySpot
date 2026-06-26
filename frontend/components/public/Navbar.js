@@ -1,35 +1,48 @@
 "use client";
 
-// Top navigation bar shown on all public pages.
-// - Sunset palette (matches the landing page).
-// - Highlights the active tab based on the current URL (Home lights up on "/").
-// - When logged in, the right side shows a clickable avatar (with a dropdown for
-//   Edit profile / Log out). When logged out, it shows a "Log in" button.
+// Floating glass "pill" navbar shown on all public pages (matches the design).
+// - Transparent over the hero at the top; turns into a solid white pill once
+//   you scroll (scroll-aware).
+// - Highlights the active tab based on the current URL.
+// - When logged in, the right side shows the notification bell + avatar menu;
+//   when logged out, it shows a "Login" button.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Home, Menu, X as XIcon } from "lucide-react";
 import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
 import { apiGet } from "@/lib/api";
 import AvatarMenu from "./AvatarMenu";
 import NotificationBell from "@/components/NotificationBell";
+import { SAGE, GOLD, OLIVE, LINE } from "./palette";
+
+const EASE = [0.22, 1, 0.36, 1];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [user, setUser] = useState(null); // logged-in user (or null)
+  const [open, setOpen] = useState(false);   // mobile menu open
+  const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState(null);    // logged-in user (or null)
 
-  // On mount, show the cached user instantly for no flicker, then VALIDATE the
-  // token against the backend. localStorage alone can't be trusted — the account
-  // may have been deleted, blocked, or the DB switched (e.g. to a server with a
-  // different user set), in which case we must clear the stale session.
+  // Scroll-aware: solid pill once the user scrolls past the very top.
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 30);
+    fn();
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  // Show the cached user instantly, then validate the token against the backend
+  // (it may have been revoked, blocked, or point at a different DB).
   useEffect(() => {
     const token = getUserToken();
     if (!token) {
       setUser(null);
       return;
     }
-    setUser(getCurrentUser()); // optimistic render from cache
+    setUser(getCurrentUser());
     apiGet("/auth/me", token)
       .then((res) => {
         setUser(res.user);
@@ -41,61 +54,85 @@ export default function Navbar() {
       });
   }, []);
 
-  // Log out: clear storage and reload so the navbar resets.
   function logout() {
     clearUser();
     window.location.assign("/");
   }
 
-  // Links shown in the centre of the navbar.
   const links = [
     { href: "/", label: "Home" },
     { href: "/properties", label: "Explore" },
-    { href: "/roommates", label: "Find roommates" },
-    { href: "/owner", label: "For owners" },
+    { href: "/roommates", label: "Find Roommates" },
+    { href: "/owner", label: "For Owners" },
   ];
 
-  // The "/" tab is active only on the exact landing page; the others are active
-  // on their section and any sub-page (e.g. /properties/123 → Explore active).
   function isActive(href) {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   }
 
+  // The navbar floats transparently only over the landing hero. On every other
+  // page (no full-screen hero) it stays a solid white pill so it's readable.
+  const onHero = pathname === "/";
+  const solid = scrolled || !onHero;
+
+  const pillBg = solid ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.10)";
+  const txtCol = solid ? OLIVE : "rgba(255,255,255,0.92)";
+  const shadow = solid
+    ? "0 10px 48px rgba(30,37,33,0.14)"
+    : "0 4px 24px rgba(0,0,0,0.14)";
+
   return (
-    <header className="sticky top-0 z-50 border-b border-ink/10 bg-cream/80 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3.5 sm:px-6 lg:px-10">
+    <>
+    <motion.header
+      className="fixed top-0 inset-x-0 z-50 flex justify-center"
+      initial={{ y: -90, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.75, ease: EASE }}
+      style={{ paddingTop: scrolled ? 10 : 16, transition: "padding 0.3s ease" }}
+    >
+      <div
+        className="flex items-center w-full max-w-5xl mx-4"
+        style={{
+          background: pillBg,
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.22)",
+          borderRadius: 999,
+          boxShadow: shadow,
+          padding: scrolled ? "10px 22px" : "14px 26px",
+          transition: "all 0.35s ease",
+        }}
+      >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sun via-coral to-grape font-black text-white shadow-md shadow-coral/30">
-            S
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+          <span className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: SAGE }}>
+            <Home size={14} color="white" />
           </span>
-          <span className="text-xl font-black tracking-tight text-ink">StayMate</span>
+          <span className="font-bold text-base" style={{ color: solid ? OLIVE : "white" }}>
+            StayMate
+          </span>
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden items-center gap-1 md:flex">
+        {/* Links */}
+        <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
           {links.map((l) => {
             const active = isActive(l.href);
             return (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    active
-                      ? "bg-gradient-to-r from-sun/15 via-coral/15 to-grape/15 text-grape"
-                      : "text-ink/60 hover:bg-ink/5 hover:text-ink"
-                  }`}
-                >
-                  {l.label}
-                </Link>
-              </li>
+              <Link
+                key={l.href}
+                href={l.href}
+                className="text-sm font-medium transition-opacity duration-200 hover:opacity-100"
+                style={{ color: active ? GOLD : txtCol, opacity: active ? 1 : 0.72 }}
+              >
+                {l.label}
+              </Link>
             );
           })}
-        </ul>
+        </nav>
 
-        {/* Right side: avatar (logged in) or Log in button, + mobile menu button */}
-        <div className="flex items-center gap-2">
+        {/* Right side */}
+        <div className="hidden md:flex items-center gap-3 flex-shrink-0 ml-auto">
           {user ? (
             <>
               <NotificationBell token={getUserToken()} messagesPath="/messages" />
@@ -104,50 +141,94 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-gradient-to-r from-sun via-coral to-grape px-5 py-2 text-sm font-semibold text-white shadow-md shadow-coral/30 transition hover:shadow-lg hover:shadow-coral/40"
+              className="px-5 py-2 rounded-full text-sm font-semibold transition-colors"
+              style={{
+                border: `1.5px solid ${solid ? SAGE + "80" : "rgba(255,255,255,0.38)"}`,
+                color: solid ? SAGE : "white",
+                background: "transparent",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = GOLD;
+                e.currentTarget.style.borderColor = GOLD;
+                e.currentTarget.style.color = OLIVE;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = solid ? SAGE + "80" : "rgba(255,255,255,0.38)";
+                e.currentTarget.style.color = solid ? SAGE : "white";
+              }}
             >
-              Log in
+              Login
             </Link>
           )}
+        </div>
 
-          {/* Mobile menu button (for the nav links) */}
-          <button
-            onClick={() => setOpen(!open)}
-            className="rounded-lg p-2 text-ink md:hidden"
-            aria-label="Toggle menu"
+        {/* Hamburger */}
+        <button
+          className="md:hidden ml-auto"
+          onClick={() => setOpen(!open)}
+          style={{ color: solid ? OLIVE : "white" }}
+          aria-label="Toggle menu"
+        >
+          {open ? <XIcon size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {/* Mobile dropdown */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.97 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-20 left-4 right-4 rounded-2xl p-4 space-y-1"
+            style={{
+              background: "rgba(255,255,255,0.97)",
+              backdropFilter: "blur(20px)",
+              border: `1px solid ${LINE}`,
+              boxShadow: "0 24px 70px rgba(30,37,33,0.15)",
+            }}
           >
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-      </nav>
+            {links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-3 rounded-xl text-sm font-medium"
+                style={{ color: isActive(l.href) ? SAGE : OLIVE }}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <div className="pt-2" style={{ borderTop: `1px solid ${LINE}` }}>
+              {user ? (
+                <button
+                  onClick={() => { setOpen(false); logout(); }}
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-white"
+                  style={{ background: SAGE }}
+                >
+                  Log out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block text-center w-full py-3 rounded-xl text-sm font-semibold text-white"
+                  style={{ background: SAGE }}
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
 
-      {/* Mobile dropdown — just the nav links (with active highlight) */}
-      {open && (
-        <div className="border-t border-ink/10 bg-cream px-4 py-3 md:hidden">
-          <ul className="flex flex-col gap-1">
-            {links.map((l) => {
-              const active = isActive(l.href);
-              return (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    onClick={() => setOpen(false)}
-                    className={`block rounded-xl px-3 py-2 text-sm font-semibold transition ${
-                      active
-                        ? "bg-gradient-to-r from-sun/15 via-coral/15 to-grape/15 text-grape"
-                        : "text-ink/70 hover:bg-ink/5"
-                    }`}
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </header>
+    {/* On non-landing pages there's no full-screen hero behind the fixed pill,
+        so reserve space to keep page content from sliding underneath it. */}
+    {!onHero && <div aria-hidden style={{ height: 88 }} />}
+    </>
   );
 }

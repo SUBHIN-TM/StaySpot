@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
 import { saveUser, getNextPath } from "@/lib/userAuth";
+import { consumePendingWishlist } from "@/lib/wishlist";
 import PasswordInput from "@/components/PasswordInput";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,6 +52,7 @@ export default function SignupPage() {
     try {
       const data = await apiPost("/auth/google", { credential: credentialResponse.credential });
       saveUser(data.token, data.user);
+      await consumePendingWishlist(data.token); // save the heart they tapped, if any
       window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Google sign-up failed");
@@ -112,6 +114,7 @@ export default function SignupPage() {
         otp: otpInput, // the verified code
       });
       saveUser(data.token, data.user);
+      await consumePendingWishlist(data.token);
       window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Sign-up failed");

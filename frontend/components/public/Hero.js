@@ -1,130 +1,171 @@
-// Landing hero. Warm "sunset" palette with drifting colour blobs, a gradient
-// headline, and a wide horizontal row of live-stat cards (with icons) that count
-// up from the database. No search box here — search lives on the Explore page.
+"use client";
+
+// Full-screen hero with a slow cross-fading image slider, layered overlays and
+// glow orbs (matches the design). Headline, sub-copy, two CTAs and trust pills
+// fade up on load. The bottom dots let you jump between slides.
 
 import Link from "next/link";
-import CountUp from "./CountUp";
+import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { ArrowRight, Users, CheckCircle } from "lucide-react";
+import { SAGE, GOLD } from "./palette";
 
-export default function Hero({ stats = {} }) {
-  const { listings = 0, seekers = 0, owners = 0 } = stats;
+const EASE = [0.22, 1, 0.36, 1];
 
-  const chips = ["No login to browse", "Email-verified accounts", "Chat owners directly"];
+// Hero slideshow images (premium interiors).
+const HERO_IMGS = [
+  { src: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&h=1080&fit=crop&auto=format", alt: "Luxury bedroom suite" },
+  { src: "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=1920&h=1080&fit=crop&auto=format", alt: "Loft luxury living room" },
+  { src: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1920&h=1080&fit=crop&auto=format", alt: "Modern living room with large windows" },
+  { src: "https://images.unsplash.com/photo-1722605090433-41d1183a792d?w=1920&h=1080&fit=crop&auto=format", alt: "Premium kitchen" },
+  { src: "https://images.unsplash.com/photo-1776095582810-0200c3b3c97d?w=1920&h=1080&fit=crop&auto=format", alt: "Balcony city view" },
+  { src: "https://images.unsplash.com/photo-1750420556288-d0e32a6f517b?w=1920&h=1080&fit=crop&auto=format", alt: "Styled modern bedroom" },
+];
 
-  // Live numbers shown as a wide horizontal strip of cards, each with its own
-  // icon, gradient accent and gentle float.
-  const statCards = [
-    { value: listings, label: "Live listings", hint: "rooms, PGs & rentals", icon: "🏠", accent: "from-sun to-coral", spin: "floaty" },
-    { value: seekers, label: "Happy seekers", hint: "found their place", icon: "😊", accent: "from-coral to-grape", spin: "floaty-slow" },
-    { value: owners, label: "Trusted owners", hint: "listing with us", icon: "🤝", accent: "from-grape to-sun", spin: "floaty" },
-  ];
+const TRUST = ["No login to browse", "Email-verified accounts", "Chat owners directly"];
+
+export default function Hero() {
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setSlide((s) => (s + 1) % HERO_IMGS.length), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
-    <section className="relative overflow-hidden bg-cream">
-      {/* Drifting colour blobs */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="blob absolute -left-24 -top-24 h-80 w-80 rounded-full bg-sun/30 blur-3xl" />
+    <section className="relative w-full overflow-hidden" style={{ height: "100vh", minHeight: 700 }}>
+      {/* Image slider */}
+      {HERO_IMGS.map((img, i) => (
         <div
-          className="blob absolute -right-16 top-8 h-96 w-96 rounded-full bg-coral/30 blur-3xl"
-          style={{ animationDelay: "-5s" }}
-        />
-        <div
-          className="blob absolute -bottom-24 left-1/3 h-80 w-80 rounded-full bg-grape/20 blur-3xl"
-          style={{ animationDelay: "-9s" }}
-        />
-      </div>
-
-      <div className="relative mx-auto max-w-[1440px] px-4 pb-24 pt-16 sm:px-6 sm:pt-24 lg:px-10">
-        {/* Centered copy */}
-        <div className="mx-auto max-w-3xl text-center">
-          <span
-            className="rise inline-flex items-center gap-2 rounded-full border border-coral/30 bg-white/70 px-4 py-1.5 text-sm font-medium text-ink backdrop-blur"
-            style={{ animationDelay: "0ms" }}
-          >
-            <span className="h-2 w-2 animate-pulse rounded-full bg-coral" />
-            India&apos;s friendly stay &amp; roommate finder
-          </span>
-
-          <h1
-            className="rise mt-6 text-4xl font-black leading-[1.05] tracking-tight text-ink sm:text-6xl"
-            style={{ animationDelay: "80ms" }}
-          >
-            Find your next{" "}
-            <span className="bg-gradient-to-r from-sun via-coral to-grape bg-clip-text text-transparent">
-              stay, roommate
-            </span>{" "}
-            &amp; rental space
-          </h1>
-
-          <p
-            className="rise mx-auto mt-6 max-w-2xl text-lg text-ink/70"
-            style={{ animationDelay: "160ms" }}
-          >
-            Browse rooms, PGs, apartments and rentals across India — every listing
-            admin-checked. Chat owners directly, find compatible roommates, and move
-            in faster. All in one place.
-          </p>
-
-          {/* Actions */}
-          <div
-            className="rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
-            style={{ animationDelay: "240ms" }}
-          >
-            <Link
-              href="/properties"
-              className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sun via-coral to-grape bg-[length:200%_200%] px-7 py-3.5 font-semibold text-white shadow-lg shadow-coral/30 transition hover:bg-[position:100%] hover:shadow-xl hover:shadow-coral/40"
-            >
-              Explore listings
-              <span className="transition group-hover:translate-x-1">→</span>
-            </Link>
-            <Link
-              href="/roommates"
-              className="inline-flex items-center gap-2 rounded-2xl border border-ink/15 bg-white/80 px-7 py-3.5 font-semibold text-ink backdrop-blur transition hover:border-ink/30 hover:bg-white"
-            >
-              Find a roommate
-            </Link>
-          </div>
-
-          {/* Trust chips */}
-          <ul
-            className="rise mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-ink/60"
-            style={{ animationDelay: "320ms" }}
-          >
-            {chips.map((c) => (
-              <li key={c} className="flex items-center gap-1.5">
-                <span className="text-coral">✓</span> {c}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Wide horizontal stat strip — spacious, with icons */}
-        <div
-          className="rise mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-          style={{ animationDelay: "200ms" }}
+          key={i}
+          className="absolute inset-0"
+          style={{ opacity: i === slide ? 1 : 0, transition: "opacity 1s ease-in-out", zIndex: 0 }}
         >
-          {statCards.map((s, idx) => (
-            <div
-              key={s.label}
-              className={`${s.spin} flex items-center gap-5 rounded-3xl border border-white/70 bg-white/90 p-6 shadow-xl shadow-grape/10 backdrop-blur`}
-              style={{ animationDelay: `${idx * -2}s` }}
-            >
-              <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${s.accent} text-3xl shadow-md`}>
-                {s.icon}
-              </div>
-              <div className="min-w-0">
-                <div className="text-4xl font-black leading-none text-ink">
-                  <CountUp value={s.value} />
-                </div>
-                <div className="mt-1.5 font-semibold text-ink">{s.label}</div>
-                <div className="text-sm text-ink/50">{s.hint}</div>
-              </div>
-            </div>
-          ))}
+          <img
+            src={img.src}
+            alt={img.alt}
+            className="w-full h-full object-cover"
+            loading={i === 0 ? "eager" : "lazy"}
+          />
         </div>
+      ))}
+
+      {/* Overlays */}
+      <div className="absolute inset-0 z-10" style={{ background: "linear-gradient(180deg,rgba(30,37,33,.22) 0%,rgba(30,37,33,.52) 55%,rgba(30,37,33,.88) 100%)" }} />
+      <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(ellipse at center,transparent 30%,rgba(30,37,33,.38) 100%)" }} />
+
+      {/* Glow orbs */}
+      <div className="absolute z-10 pointer-events-none" style={{ top: "18%", left: "7%", width: 480, height: 480, borderRadius: "50%", background: `radial-gradient(circle,${GOLD}1A 0%,transparent 65%)`, animation: "glow-pulse 8s ease-in-out infinite" }} />
+      <div className="absolute z-10 pointer-events-none" style={{ bottom: "18%", right: "6%", width: 360, height: 360, borderRadius: "50%", background: `radial-gradient(circle,${SAGE}30 0%,transparent 65%)`, animation: "glow-pulse 10s ease-in-out infinite 3s" }} />
+
+      {/* Content */}
+      <div className="relative z-20 h-full flex flex-col justify-center items-center text-center px-6 pt-24">
+        {/* Pill badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.65, ease: EASE }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-medium"
+          style={{ background: `${GOLD}28`, border: `1px solid ${GOLD}55`, color: GOLD, backdropFilter: "blur(12px)" }}
+        >
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: GOLD }} />
+          India&apos;s Most Trusted Rental Platform
+        </motion.div>
+
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55, duration: 0.95, ease: EASE }}
+          className="font-bold leading-none mb-5"
+          style={{ fontSize: "clamp(40px,6.5vw,72px)", color: "white", textShadow: "0 4px 28px rgba(0,0,0,.28)", maxWidth: 880 }}
+        >
+          India&apos;s Friendly Stay &amp;<br />
+          <span style={{ color: GOLD }}>Roommate Finder</span>
+        </motion.h1>
+
+        {/* Subhead */}
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.75, duration: 0.6 }}
+          className="text-lg md:text-xl font-medium mb-3"
+          style={{ color: "rgba(255,255,255,.82)", maxWidth: 560 }}
+        >
+          Find your next stay, roommate &amp; rental space
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.88, duration: 0.6 }}
+          className="text-sm leading-relaxed mb-8"
+          style={{ color: "rgba(255,255,255,.58)", maxWidth: 520 }}
+        >
+          Browse rooms, PGs, apartments and rentals across India — every listing is admin-checked. Chat owners directly, find compatible roommates, and move in faster. All in one place.
+        </motion.p>
+
+        {/* Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, duration: 0.6 }}
+          className="flex flex-wrap gap-4 justify-center mb-7"
+        >
+          <Link href="/properties">
+            <motion.span
+              whileHover={{ scale: 1.04, y: -3 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-base text-white"
+              style={{ background: SAGE, boxShadow: `0 10px 32px ${SAGE}80` }}
+            >
+              Explore Listings <ArrowRight size={18} />
+            </motion.span>
+          </Link>
+          <Link href="/roommates">
+            <motion.span
+              whileHover={{ scale: 1.04, y: -3 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-base text-white"
+              style={{ background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.32)" }}
+            >
+              Find a Roommate <Users size={18} />
+            </motion.span>
+          </Link>
+        </motion.div>
+
+        {/* Trust pills */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.12, duration: 0.6 }}
+          className="flex flex-wrap gap-3 justify-center"
+        >
+          {TRUST.map((tag) => (
+            <motion.div
+              key={tag}
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+              style={{ background: "rgba(255,255,255,.10)", border: "1px solid rgba(255,255,255,.18)", color: "rgba(255,255,255,.88)", backdropFilter: "blur(8px)" }}
+            >
+              <CheckCircle size={13} color={GOLD} />
+              {tag}
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
 
-      {/* Bottom fade into the next (white) section */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
+      {/* Slide dots */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        {HERO_IMGS.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setSlide(i)}
+            aria-label={`Go to slide ${i + 1}`}
+            style={{ width: i === slide ? 26 : 8, height: 8, borderRadius: 999, background: i === slide ? GOLD : "rgba(255,255,255,.35)", transition: "all 0.35s ease", border: "none", cursor: "pointer" }}
+          />
+        ))}
+      </div>
     </section>
   );
 }

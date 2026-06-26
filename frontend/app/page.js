@@ -13,8 +13,8 @@ import Audience from "@/components/public/Audience";
 import FeaturedListings from "@/components/public/FeaturedListings";
 import HowItWorks from "@/components/public/HowItWorks";
 import Features from "@/components/public/Features";
-import Roadmap from "@/components/public/Roadmap";
 import StatsBand from "@/components/public/StatsBand";
+import Testimonials from "@/components/public/Testimonials";
 import CTA from "@/components/public/CTA";
 import { apiGet } from "@/lib/api";
 
@@ -39,21 +39,35 @@ async function getStats() {
   }
 }
 
+// Real user reviews for the testimonials section. Empty list if backend is down.
+async function getReviews() {
+  try {
+    const data = await apiGet("/reviews?limit=12");
+    return data?.reviews || [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [properties, stats] = await Promise.all([getFeatured(), getStats()]);
+  const [properties, stats, reviews] = await Promise.all([
+    getFeatured(),
+    getStats(),
+    getReviews(),
+  ]);
 
   return (
     <>
       <Navbar />
       <main className="bg-cream">
-        <Hero stats={stats} />
+        <Hero />
         <Marquee />
         <Audience />
         <FeaturedListings properties={properties} />
         <HowItWorks />
         <Features />
-        <Roadmap />
         <StatsBand stats={stats} />
+        <Testimonials initialReviews={reviews} />
         <CTA />
       </main>
       <Footer />

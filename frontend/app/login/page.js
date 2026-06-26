@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
 import { saveUser, getNextPath } from "@/lib/userAuth";
+import { consumePendingWishlist } from "@/lib/wishlist";
 import PasswordInput from "@/components/PasswordInput";
 
 export default function LoginPage() {
@@ -43,6 +44,7 @@ export default function LoginPage() {
     try {
       const data = await apiPost("/auth/google", { credential: credentialResponse.credential });
       saveUser(data.token, data.user);
+      await consumePendingWishlist(data.token); // save the heart they tapped, if any
       window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Sign-in failed");
@@ -57,6 +59,7 @@ export default function LoginPage() {
     try {
       const data = await apiPost("/auth/login", { identifier, password });
       saveUser(data.token, data.user);
+      await consumePendingWishlist(data.token);
       window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "Invalid username/email or password");
@@ -98,6 +101,7 @@ export default function LoginPage() {
     try {
       const data = await apiPost("/auth/otp-login", { identifier, code: otpInput });
       saveUser(data.token, data.user);
+      await consumePendingWishlist(data.token);
       window.location.assign(nextUrl);
     } catch (err) {
       setError(err.message || "OTP login failed");

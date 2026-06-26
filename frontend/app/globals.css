@@ -7,24 +7,37 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 @theme {
-  --color-brand: #2563eb;       /* primary blue (buttons, links) */
-  --color-brand-dark: #1d4ed8;  /* darker blue for hover states */
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-dm-sans);
 
-  /* ── Landing-page "soft light sunset" palette (warm grey base, dark text) ──
-     Used only by the public landing sections. Tailwind v4 turns each token
-     into utilities: bg-cream, text-ink, text-coral, from-sun, via-coral …
-     Background is a soft warm grey (NOT pure white); text is deep plum. */
-  --color-cream: #ece6dd;   /* soft warm light grey page background (not white) */
-  --color-ink:   #241245;   /* deep indigo-plum for headings/text              */
-  --color-sun:   #f59e0b;   /* amber  — gradient start                         */
-  --color-coral: #fb7185;   /* rose   — gradient middle                        */
-  --color-grape: #7c3aed;   /* violet — gradient end                           */
+  /* ── Brand palette — calm "sage & gold" theme ──────────────────────────────
+     Tailwind v4 turns each token into utilities: bg-cream, text-ink,
+     bg-sage, text-gold, border-line … Used across the whole public site. */
+  --color-sage:    #4A5A50;   /* deep sage — primary (buttons, links)          */
+  --color-sage-dark:#3C4A41;  /* darker sage for hover states                  */
+  --color-gold:    #D4A359;   /* muted gold — accent (eyebrows, highlights)    */
+  --color-olive:   #1E2521;   /* dark olive — headings / dark sections         */
+  --color-success: #5BAA6F;   /* success / "verified" green                    */
+  --color-line:    #E9E5DD;   /* hairline borders                              */
+  --color-mist:    #F6F6F4;   /* light-grey alternate section background       */
+
+  /* Primary semantic aliases (legacy names kept so existing pages recolor
+     coherently without rewriting every class):
+       brand  → sage (primary)   ink   → olive (text)
+       sun/coral → gold (accent) grape → sage (links/primary)
+       cream  → soft cream page background */
+  --color-brand: #4A5A50;
+  --color-brand-dark: #3C4A41;
+  --color-cream: #FAF6F0;
+  --color-ink:   #1E2521;
+  --color-sun:   #D4A359;
+  --color-coral: #D4A359;
+  --color-grape: #4A5A50;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a; /* slate-900 */
+  --background: #FAF6F0;
+  --foreground: #1E2521;
 }
 
 html {
@@ -36,6 +49,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Headings use DM Sans (the design's display face). Utility font classes still
+   override this where needed. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+}
+
+/* Hide scrollbars (matches the design's clean, chrome-less look). */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; }
 
 /* ───────────────────────────────────────────────────────────────────────────
    Landing-page animations. Plain CSS keyframes + small helper classes so the
@@ -70,6 +93,30 @@ body {
 /* Infinite horizontal marquee (track is duplicated, so -50% loops seamlessly). */
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee-track { animation: marquee 30s linear infinite; }
+.marquee-fast  { animation: marquee 38s linear infinite; }
+
+/* Soft pulsing glow orbs used behind the hero and dark panels. */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.12); }
+}
+
+/* Slow drifting float for decorative icons (CTA section). */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%      { transform: translateY(-14px) rotate(1.5deg); }
+  66%      { transform: translateY(-6px) rotate(-1deg); }
+}
+
+/* Gentle bob for the mock chat bubbles in the "Why StayMate" panel. */
+@keyframes chat-bounce-1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes chat-bounce-2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+/* Pulsing "online" dot. */
+@keyframes notification-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.35); opacity: 0.7; }
+}
 
 /* Animated multi-stop gradient (set background-size:200% on the element). */
 @keyframes gradient-pan {
@@ -88,7 +135,7 @@ body {
 .reveal.reveal-in { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .blob, .floaty, .floaty-slow, .rise, .marquee-track, .gradient-pan {
+  .blob, .floaty, .floaty-slow, .rise, .marquee-track, .marquee-fast, .gradient-pan {
     animation: none !important;
   }
   .reveal { opacity: 1 !important; transform: none !important; }
