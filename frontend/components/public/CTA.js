@@ -13,7 +13,7 @@ const EASE = [0.22, 1, 0.36, 1];
 export default function CTA() {
   return (
     <section className="py-24 px-6" style={{ background: "var(--color-cream)" }}>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div
           className="relative overflow-hidden rounded-3xl p-12 md:p-20 text-center"
           style={{ background: "linear-gradient(145deg,#F5F0E8 0%,#EDE5D5 60%,#E4DBC8 100%)", border: `1px solid ${LINE}`, boxShadow: "0 28px 90px rgba(30,37,33,.10)" }}
@@ -41,7 +41,8 @@ export default function CTA() {
             </motion.div>
 
             <motion.h2 initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.1 }} className="text-4xl md:text-5xl font-bold mb-4" style={{ color: OLIVE }}>
-              Ready to Find Your<br /><span style={{ color: SAGE }}>Perfect Stay?</span>
+              Ready to Find Your<br className="lg:hidden" />{" "}
+              <span style={{ color: SAGE }}>Perfect Stay?</span>
             </motion.h2>
 
             <motion.p initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ delay: 0.14 }} className="text-base mb-8" style={{ color: "#5A6B63" }}>
