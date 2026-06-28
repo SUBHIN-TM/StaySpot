@@ -69,10 +69,14 @@ export default function PropertyCard({ property }) {
             {formatRent(property.rent_amount)}
             <span className="text-xs font-normal" style={{ color: "#9AA6A0" }}> / mo</span>
           </span>
-          <div className="flex items-center gap-1">
-            <ShieldCheck size={12} color={SUCCESS} />
-            <span className="text-xs font-medium" style={{ color: SUCCESS }}>Verified</span>
-          </div>
+          {/* "Verified" shield shows ONLY when our team has physically visited
+              the place (admin field-visit). Approved-but-not-visited = no shield. */}
+          {property.field_visited && (
+            <div className="flex items-center gap-1">
+              <ShieldCheck size={12} color={SUCCESS} />
+              <span className="text-xs font-medium" style={{ color: SUCCESS }}>Verified</span>
+            </div>
+          )}
         </div>
         <span
           className="block w-full py-2.5 rounded-2xl text-sm font-semibold text-white text-center transition-transform group-hover:scale-[1.02]"

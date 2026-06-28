@@ -147,6 +147,15 @@ export default async function PropertyDetailPage({ params }) {
                     </span>
                   )}
                   <span className="font-medium capitalize text-slate-900">{p.owner?.name || "Owner"}</span>
+                  {/* Green tick = this owner's phone was verified by our team. */}
+                  {p.owner?.phone_verified && (
+                    <span
+                      title="Verified owner"
+                      className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
+                    >
+                      ✓ Verified
+                    </span>
+                  )}
                 </div>
 
                 {p.owner?.id && <ContactOwnerButton ownerId={p.owner.id} propertyId={p.id} />}

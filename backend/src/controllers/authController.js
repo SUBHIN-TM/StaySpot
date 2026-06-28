@@ -6,7 +6,7 @@ const env = require('../config/env');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
 const { asyncHandler, ApiError, withTimeout } = require('../utils/http');
-const { publicUser } = require('../utils/serialize');
+const { selfUser } = require('../utils/serialize');
 const { createOtp, checkOtp, consumeOtp } = require('../services/otp');
 const { sendOtpEmail, sendWelcomeEmail } = require('../services/mail');
 
@@ -120,7 +120,7 @@ const register = asyncHandler(async (req, res) => {
   );
 
   const token = signToken({ sub: user.id, role: user.role });
-  res.status(201).json({ token, user: publicUser(user) });
+  res.status(201).json({ token, user: selfUser(user) });
 });
 
 // POST /api/auth/login
@@ -139,7 +139,7 @@ const login = asyncHandler(async (req, res) => {
   if (!ok) throw new ApiError(401, 'Invalid username/email or password');
 
   const token = signToken({ sub: user.id, role: user.role });
-  res.json({ token, user: publicUser(user) });
+  res.json({ token, user: selfUser(user) });
 });
 
 // POST /api/auth/otp-login
@@ -159,13 +159,13 @@ const otpLogin = asyncHandler(async (req, res) => {
   await consumeOtp(user.email, 'login');
 
   const token = signToken({ sub: user.id, role: user.role });
-  res.json({ token, user: publicUser(user) });
+  res.json({ token, user: selfUser(user) });
 });
 
 // GET /api/auth/me
 const me = asyncHandler(async (req, res) => {
   const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
-  res.json({ user: publicUser(rows[0]) });
+  res.json({ user: selfUser(rows[0]) });
 });
 
 // POST /api/auth/google
@@ -192,6 +192,11 @@ const googleAuth = asyncHandler(async (req, res) => {
     payload = ticket.getPayload();
   } catch (err) {
     if (err.status === 504) throw err; // timeout → surface as 504, not "invalid token"
+    // TEMP DEBUG: print the real reason verification failed so we can diagnose the
+    // 401 (e.g. "Wrong recipient" = client-id/audience mismatch, "Token used too
+    // late" = clock skew). Remove once the Google sign-in issue is resolved.
+    console.error('[google-auth] verifyIdToken failed:', err.message);
+    console.error('[google-auth] backend audience (GOOGLE_CLIENT_ID):', env.googleClientId);
     throw new ApiError(401, 'Invalid Google token');
   }
 
@@ -239,7 +244,7 @@ const googleAuth = asyncHandler(async (req, res) => {
   }
 
   const token = signToken({ sub: user.id, role: user.role });
-  res.json({ token, user: publicUser(user) });
+  res.json({ token, user: selfUser(user) });
 });
 
 module.exports = { register, login, otpLogin, sendOtp, verifyOtp, me, googleAuth };

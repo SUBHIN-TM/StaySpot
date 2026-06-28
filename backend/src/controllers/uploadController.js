@@ -35,6 +35,8 @@ async function getLimits() {
   return {
     image: { allowed: ALLOWED.image, maxMb: imageMb, maxBytes: imageMb * 1024 * 1024 },
     video: { allowed: ALLOWED.video, maxMb: videoMb, maxBytes: videoMb * 1024 * 1024 },
+    // Verification proof reuses the (larger) video size cap.
+    proof: { allowed: ALLOWED.proof, maxMb: videoMb, maxBytes: videoMb * 1024 * 1024 },
   };
 }
 
@@ -48,8 +50,8 @@ const limits = asyncHandler(async (req, res) => {
 const presign = asyncHandler(async (req, res) => {
   const { folder, fileName, mimeType, size } = req.body || {};
 
-  if (folder !== 'image' && folder !== 'video') {
-    throw new ApiError(400, 'folder must be "image" or "video"');
+  if (folder !== 'image' && folder !== 'video' && folder !== 'proof') {
+    throw new ApiError(400, 'folder must be "image", "video" or "proof"');
   }
   const rules = (await getLimits())[folder];
   if (!mimeType || !rules.allowed.includes(mimeType)) {

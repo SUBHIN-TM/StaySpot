@@ -25,4 +25,13 @@ module.exports = {
     'video/quicktime', // .mov
     'video/x-matroska', // .mkv
   ],
+
+  // Admin-only VERIFICATION PROOF (owner phone-verify call + property field visit).
+  // Broader than listing media: photos, video, audio recordings, and PDFs.
+  proof: [
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska',
+    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/x-m4a',
+    'application/pdf',
+  ],
 };

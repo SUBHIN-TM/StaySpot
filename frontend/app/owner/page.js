@@ -6,7 +6,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import OwnerShell from "@/components/owner/OwnerShell";
-import { apiGet, apiDelete, imageUrl } from "@/lib/api";
+import OwnerVerifyBanner from "@/components/owner/OwnerVerifyBanner";
+import { apiGet, apiPost, apiDelete, imageUrl } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
 
 // Friendly label + colour for the occupancy status.
@@ -25,15 +26,22 @@ const APPROVAL = {
 
 export default function OwnerDashboard() {
   const [properties, setProperties] = useState([]);
+  const [me, setMe] = useState(null); // current owner (for phone-verification state)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null); // which card is being deleted
+  const [requestingId, setRequestingId] = useState(null); // which card is requesting a visit
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await apiGet("/properties/mine", getUserToken());
+        const token = getUserToken();
+        const [data, meRes] = await Promise.all([
+          apiGet("/properties/mine", token),
+          apiGet("/auth/me", token).catch(() => null), // non-fatal: banner just hides
+        ]);
         setProperties(data?.properties || []);
+        if (meRes?.user) setMe(meRes.user);
       } catch (e) {
         setError(e.message);
       } finally {
@@ -58,6 +66,20 @@ export default function OwnerDashboard() {
     }
   }
 
+  // Ask the team to prioritise the field visit that earns the Verified badge.
+  async function requestVisit(p) {
+    setRequestingId(p.id);
+    try {
+      await apiPost(`/properties/${p.id}/request-visit`, {}, getUserToken());
+      setProperties((prev) => prev.map((x) => (x.id === p.id ? { ...x, visit_requested: true } : x)));
+      alert("Request sent for property verification — our team will visit soon.");
+    } catch (e) {
+      alert(e.message || "Couldn’t send the request.");
+    } finally {
+      setRequestingId(null);
+    }
+  }
+
   return (
     <OwnerShell active="dashboard">
       <div className="flex items-center justify-between">
@@ -72,6 +94,9 @@ export default function OwnerDashboard() {
           + Add property
         </Link>
       </div>
+
+      {/* One-time phone verification (account-level). */}
+      {me && <OwnerVerifyBanner user={me} onChange={setMe} />}
 
       {error ? (
         <p className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">{error}</p>
@@ -88,11 +113,25 @@ export default function OwnerDashboard() {
           </Link>
         </div>
       ) : (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <>
+          {/* Explain the field-visit "Verified" badge so owners know it exists. */}
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <span className="font-semibold text-slate-800">🛡️ Verified badge:</span> Our team
+            personally visits listings to confirm they’re genuine. Once visited, your property shows
+            a green <span className="font-medium text-emerald-700">Verified</span> badge to seekers —
+            building trust and attracting more enquiries. We’ll reach out to schedule a visit.
+          </div>
+
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((p) => {
             const cover = p.images?.[0]?.image_url || imageUrl(p.images?.[0]?.image_key);
             const status = STATUS[p.occupancy_status] || STATUS.available;
-            const approval = APPROVAL[p.approval_status] || APPROVAL.pending;
+            // While the owner isn't phone-verified, listings can't be approved —
+            // show that instead of the usual approval status.
+            const needsVerify = me && !me.phone_verified;
+            const approval = needsVerify
+              ? { label: "Verify to publish", cls: "bg-amber-100 text-amber-700" }
+              : APPROVAL[p.approval_status] || APPROVAL.pending;
             return (
               <div key={p.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div className="relative h-40 bg-gradient-to-br from-emerald-100 to-slate-200">
@@ -115,6 +154,34 @@ export default function OwnerDashboard() {
                     📍 {p.city || "—"} · {p.property_type}
                     {p.max_persons ? ` · ${p.max_persons} persons` : ""}
                   </p>
+                  {/* Field-visit verification status + a way to request a faster visit. */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {p.field_visited ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                        🛡️ Verified
+                      </span>
+                    ) : (
+                      <>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                          Not verified
+                        </span>
+                        {p.visit_requested ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            ⏳ Visit requested
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => requestVisit(p)}
+                            disabled={requestingId === p.id}
+                            className="inline-flex items-center gap-1 rounded-full border border-emerald-300 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+                          >
+                            {requestingId === p.id ? "Sending…" : "⚡ Fasten verification"}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="font-bold text-emerald-700">
                       ₹{Number(p.rent_amount).toLocaleString("en-IN")}
@@ -141,7 +208,8 @@ export default function OwnerDashboard() {
               </div>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </OwnerShell>
   );

@@ -99,8 +99,23 @@ Admin login is at `/admin/login` (separate session from regular users).
   (Admin → Properties → click row → detail modal → Approve/Reject). A **Settings**
   toggle (`auto_approve_listings`) makes new listings publish instantly. Public pages
   show **only approved** listings; owners see each listing's status.
-- **Admin panel:** Dashboard, Properties (approve/reject/delete + detail modal),
-  Users, Owners (block/unblock + delete), **Localities** (merge/rename/delete to
+- **Trust layer (admin-driven, no Aadhaar/SMS) — TWO distinct signals (migration 015):**
+  - **Owner phone verification** (account-level, one-time): owner submits a 10-digit
+    number on `/owner` (`OwnerVerifyBanner`, locked `+91`; `POST /users/me/phone`) →
+    status "awaiting call" → an **admin calls them** and confirms in Admin → Owners
+    (**Verify phone** popup, optional note + proof file; `PATCH /users/:id/verify-phone`,
+    sets `users.phone_verified`). Drives the green **✓ Verified tick next to the owner
+    name**. **A listing can't be approved until its owner is phone-verified** (enforced
+    in `setApproval`, not just UI). The phone number is **never public** — see serializer
+    note in Gotchas.
+  - **Field visit** (property-level): our team physically visits the place; admin records
+    it in the Properties detail modal (**Record field visit**, remarks + photo/video/audio
+    proof; `PATCH /properties/:id/field-visit`, sets `properties.field_visited`). This — and
+    only this — drives the 🛡️ **"Verified" shield on the public `PropertyCard`** (approved
+    ≠ shield). Optional: admin can approve with or without a visit.
+- **Admin panel:** Dashboard, Properties (approve/reject/delete + detail modal, **owner-
+  verified + field-visit columns**, gated Approve, Record-field-visit), Users, Owners
+  (block/unblock + delete, **phone-verify**), **Localities** (merge/rename/delete to
   dedupe the per-district list), Messages, Settings. Responsive sidebar.
 - **Block users:** blocked accounts can't log in or use the API.
 - **Chat (REST + polling, Socket.io available):** seeker↔owner, seeker↔seeker
@@ -120,6 +135,18 @@ Admin login is at `/admin/login` (separate session from regular users).
   Brevo → Security → Authorized IPs (get IP via `https://api.ipify.org`).
 - **OTP is server-side** (table `email_otps`, 10-min expiry). Signup requires a
   verified OTP. Don't reintroduce frontend-only OTP.
+- **Three user serializers (`utils/serialize.js`) — pick the right one or you leak the
+  phone number.** `publicUser` (anyone: property owner on public pages, `GET /users/:id`)
+  **omits `mobile_number`** and includes `phone_verified`. `selfUser` = publicUser +
+  own `mobile_number` (use for the logged-in user's OWN object: all `auth/*` responses,
+  `PATCH /users/me`, avatar). `adminUser` = + number + verification audit (use for admin
+  `GET /users`, verify-phone). Property `hydrate(row, {forAdmin})` mirrors this: the
+  public shape strips `field_visit_remarks`/`field_visit_proof_keys`; `forAdmin:true`
+  keeps them and adds `field_visit_proof_urls`. **Don't put `mobile_number` back into
+  `publicUser`.**
+- **Verification proof uses a third presign folder, `proof`** (alongside `image`/`video`),
+  which also allows **audio + PDF** (`config/uploadTypes.js`). Same direct-to-storage
+  flow; keys are claimed via `claimKeys` so the sweep won't delete them.
 - `@react-oauth/google` installed with `--legacy-peer-deps` (React 19 peer range).
 - **Uploads are DIRECT-to-storage (presigned URLs), NOT through the backend.** The
   browser asks `POST /api/uploads/presign`, PUTs the file straight to Contabo (or the
@@ -158,7 +185,9 @@ Admin login is at `/admin/login` (separate session from regular users).
 ## Roadmap / ideas (not yet built)
 - **AI roommate compatibility matching** (lifestyle profile + match score + Claude-
   generated "why you match") — top idea, leverages roommate posts + Claude.
-- **Trust layer:** verified-property badge + AI scam detection on new listings.
+- **Trust layer:** ✅ verified-property badge (field visit) + owner phone verification
+  shipped (see Features). Still to do: **AI scam detection** on new listings; optionally
+  a self-serve DigiLocker KYC tier; cheap fraud signal (same phone → many listings).
 - **Post-move-in retention:** rent/expense split, flat group + chores board.
 - **Rename** "StayMate" (candidates discussed: Nestmate, Aangan, Basera) — do a single
   pass across logo text, titles, SEO metadata, email templates when chosen.

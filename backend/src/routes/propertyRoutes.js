@@ -18,6 +18,8 @@ router.get('/:id', ctrl.getProperty);
 router.post('/', requireAuth, requireRole('owner', 'admin'), ctrl.createProperty);
 router.patch('/:id', requireAuth, ctrl.updateProperty);
 router.patch('/:id/approval', requireAuth, requireRole('admin'), ctrl.setApproval);
+router.patch('/:id/field-visit', requireAuth, requireRole('admin'), ctrl.setFieldVisit);
+router.post('/:id/request-visit', requireAuth, ctrl.requestVisit); // owner asks to prioritise the visit
 router.delete('/:id', requireAuth, ctrl.deleteProperty);
 
 // Media is uploaded directly to storage by the browser; these just attach keys.

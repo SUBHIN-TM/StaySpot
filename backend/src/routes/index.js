@@ -15,6 +15,7 @@ router.use('/favorites', require('./favoriteRoutes'));
 router.use('/reviews', require('./reviewRoutes'));
 router.use('/chat', require('./chatRoutes'));
 router.use('/notifications', require('./notificationRoutes'));
+router.use('/audit', require('./auditRoutes'));
 router.use('/settings', require('./settingsRoutes'));
 router.use('/stats', require('./statsRoutes'));
 

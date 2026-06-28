@@ -7,6 +7,7 @@ const { publicUser, propertyImage } = require('../utils/serialize');
 const { getBool } = require('../services/settings');
 const { claimKeys } = require('../services/pendingUploads');
 const { resolveLocality } = require('../services/localities');
+const { recordAudit, diffChanges } = require('../services/audit');
 const geo = require('../config/geo');
 
 // Validate + normalise the canonical location fields from a request body.
@@ -33,20 +34,34 @@ function normalizeLocation(body) {
 }
 
 // Assemble a property row with its images + owner summary.
-async function hydrate(propertyRow) {
+// `forAdmin` exposes the internal field-visit proof/remarks; the public version
+// strips them (only the `field_visited` flag is public — it drives the badge).
+async function hydrate(propertyRow, { forAdmin = false } = {}) {
   const [images, owner] = await Promise.all([
     query('SELECT * FROM property_images WHERE property_id = $1 ORDER BY sort_order, created_at', [
       propertyRow.id,
     ]),
     query('SELECT * FROM users WHERE id = $1', [propertyRow.owner_id]),
   ]);
-  return {
+  const data = {
     ...propertyRow,
     rent_amount: Number(propertyRow.rent_amount),
     video_url: propertyRow.video_key ? storage.url(propertyRow.video_key) : null,
     images: images.rows.map(propertyImage),
-    owner: publicUser(owner.rows[0]),
+    owner: publicUser(owner.rows[0]), // includes owner.phone_verified, never the number
   };
+
+  // Field-visit proof + remarks are internal — only admins may see them.
+  if (forAdmin) {
+    const keys = Array.isArray(propertyRow.field_visit_proof_keys)
+      ? propertyRow.field_visit_proof_keys
+      : [];
+    data.field_visit_proof_urls = keys.map((k) => storage.url(k));
+  } else {
+    delete data.field_visit_remarks;
+    delete data.field_visit_proof_keys;
+  }
+  return data;
 }
 
 // GET /api/properties
@@ -138,11 +153,17 @@ const getProperty = asyncHandler(async (req, res) => {
 });
 
 // GET /api/properties/all  (admin: every property, incl. unavailable)
+// ?include_deleted=1 also returns soft-deleted listings (each keeps its
+// deleted_at so the admin UI can flag them).
 const listAll = asyncHandler(async (req, res) => {
-  const { rows } = await query(
-    'SELECT * FROM properties WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 200'
+  const includeDeleted = ['1', 'true', 'yes'].includes(
+    String(req.query.include_deleted || '').toLowerCase()
   );
-  const data = await Promise.all(rows.map(hydrate));
+  const where = includeDeleted ? '' : 'WHERE deleted_at IS NULL';
+  const { rows } = await query(
+    `SELECT * FROM properties ${where} ORDER BY created_at DESC LIMIT 200`
+  );
+  const data = await Promise.all(rows.map((r) => hydrate(r, { forAdmin: true })));
   res.json({ properties: data });
 });
 
@@ -183,10 +204,14 @@ const createProperty = asyncHandler(async (req, res) => {
   // Scoped to the pincode so it only appears under that pincode.
   const cityValue = city ? await resolveLocality(state, district, pincode, city) : null;
 
-  // If the admin enabled auto-approval, new listings go live immediately;
-  // otherwise they start as "pending" and wait for admin approval.
+  // If the admin enabled auto-approval, new listings go live immediately —
+  // BUT only for phone-verified owners. An unverified owner's listing always
+  // stays "pending" (it can't be approved until they're verified anyway), so
+  // auto-approve never bypasses the trust gate.
   const autoApprove = await getBool('auto_approve_listings', false);
-  const approval = autoApprove ? 'approved' : 'pending';
+  const ownerRow = await query('SELECT phone_verified FROM users WHERE id = $1', [req.user.id]);
+  const ownerVerified = !!ownerRow.rows[0]?.phone_verified;
+  const approval = autoApprove && ownerVerified ? 'approved' : 'pending';
 
   const { rows } = await query(
     `INSERT INTO properties
@@ -220,16 +245,127 @@ const createProperty = asyncHandler(async (req, res) => {
 });
 
 // PATCH /api/properties/:id/approval  (admin) — approve / reject / reset.
+// A listing can only be APPROVED (made public) once its owner's phone has been
+// verified — this is the gate the admin must clear first.
 const setApproval = asyncHandler(async (req, res) => {
   const { approval_status } = req.body || {};
   if (!['approved', 'rejected', 'pending'].includes(approval_status)) {
     throw new ApiError(400, 'approval_status must be approved, rejected, or pending');
   }
+
+  const existing = await query(
+    'SELECT owner_id, approval_status FROM properties WHERE id = $1 AND deleted_at IS NULL',
+    [req.params.id]
+  );
+  if (!existing.rows[0]) throw new ApiError(404, 'Property not found');
+
+  if (approval_status === 'approved') {
+    const owner = await query('SELECT phone_verified FROM users WHERE id = $1', [
+      existing.rows[0].owner_id,
+    ]);
+    if (!owner.rows[0]?.phone_verified) {
+      throw new ApiError(400, 'Verify the owner’s phone before approving this listing');
+    }
+  }
+
   const { rows } = await query(
     'UPDATE properties SET approval_status = $2, updated_at = now() WHERE id = $1 RETURNING *',
     [req.params.id, approval_status]
   );
-  if (!rows[0]) throw new ApiError(404, 'Property not found');
+  // Audit (admin moderation — doesn't count toward the owner's edit_count).
+  await recordAudit({
+    entityType: 'property', entityId: req.params.id, action: 'approval', actor: req.user,
+    changes: { approval_status: { before: existing.rows[0].approval_status, after: approval_status } },
+  });
+  res.json({ property: await hydrate(rows[0], { forAdmin: true }) });
+});
+
+// PATCH /api/properties/:id/field-visit  (admin)
+// Record that our team physically visited the place. Body:
+//   { field_visited?: bool (default true), remarks?: string, proof_keys?: [key, …] }
+// Proof files (photos / video / audio) are uploaded direct-to-storage first;
+// here we just attach their keys (claimed so the sweep leaves them alone).
+const setFieldVisit = asyncHandler(async (req, res) => {
+  const { remarks } = req.body || {};
+  const visited = req.body?.field_visited === undefined ? true : !!req.body.field_visited;
+  const proofKeys = Array.isArray(req.body?.proof_keys) ? req.body.proof_keys.filter(Boolean) : [];
+
+  const existing = await query(
+    'SELECT id FROM properties WHERE id = $1 AND deleted_at IS NULL',
+    [req.params.id]
+  );
+  if (!existing.rows[0]) throw new ApiError(404, 'Property not found');
+
+  const updated = await withTransaction(async (client) => {
+    const exec = (text, params) => client.query(text, params);
+    if (proofKeys.length) await claimKeys(req.user.id, proofKeys, exec);
+    const { rows } = await client.query(
+      `UPDATE properties
+          SET field_visited = $2,
+              field_visit_at = CASE WHEN $2 THEN now() ELSE NULL END,
+              field_visit_remarks = $3,
+              field_visit_proof_keys = $4::jsonb,
+              visit_requested = CASE WHEN $2 THEN FALSE ELSE visit_requested END,
+              updated_at = now()
+        WHERE id = $1
+        RETURNING *`,
+      [req.params.id, visited, remarks || null, JSON.stringify(proofKeys)]
+    );
+    return rows[0];
+  });
+
+  await recordAudit({
+    entityType: 'property', entityId: req.params.id, action: 'field_visit', actor: req.user,
+    changes: { field_visited: visited, remarks: remarks || null, proof_count: proofKeys.length },
+  });
+  res.json({ property: await hydrate(updated, { forAdmin: true }) });
+});
+
+// POST /api/properties/:id/request-visit  (owner)
+// Owner asks us to prioritise the field visit that earns the "Verified" badge.
+// Flags the listing and notifies every admin. Idempotent.
+const requestVisit = asyncHandler(async (req, res) => {
+  const property = await loadOwnedProperty(req.params.id, req.user);
+  // Already visited/verified — nothing to request.
+  if (property.field_visited) {
+    return res.json({ property: await hydrate(property) });
+  }
+
+  const { rows } = await query(
+    `UPDATE properties
+        SET visit_requested = TRUE, visit_requested_at = now(), updated_at = now()
+      WHERE id = $1
+      RETURNING *`,
+    [req.params.id]
+  );
+
+  // Notify all admins (best-effort — don't fail the request if this hiccups).
+  try {
+    const [owner, admins] = await Promise.all([
+      query('SELECT name FROM users WHERE id = $1', [req.user.id]),
+      query("SELECT id FROM users WHERE role = 'admin'"),
+    ]);
+    const ownerName = owner.rows[0]?.name || 'An owner';
+    for (const a of admins.rows) {
+      await query(
+        `INSERT INTO notifications (user_id, title, message, type, data)
+         VALUES ($1, $2, $3, 'general', $4)`,
+        [
+          a.id,
+          'Field visit requested',
+          `${ownerName} requested verification for "${property.title}"`,
+          JSON.stringify({ property_id: property.id }),
+        ]
+      );
+    }
+  } catch (err) {
+    console.error('visit-request notification failed:', err.message);
+  }
+
+  await recordAudit({
+    entityType: 'property', entityId: property.id, action: 'visit_request',
+    actor: req.user, countsAsEdit: true,
+  });
   res.json({ property: await hydrate(rows[0]) });
 });
 
@@ -299,6 +435,15 @@ const updateProperty = asyncHandler(async (req, res) => {
     params
   );
 
+  // Audit: log the field-level before/after diff for admin review.
+  const changes = diffChanges(owned, req.body, fields);
+  if (Object.keys(changes).length) {
+    await recordAudit({
+      entityType: 'property', entityId: req.params.id, action: 'update',
+      actor: req.user, changes, countsAsEdit: true,
+    });
+  }
+
   res.json({ property: await hydrate(rows[0]) });
 });
 
@@ -312,6 +457,9 @@ const deleteProperty = asyncHandler(async (req, res) => {
     'UPDATE properties SET deleted_at = now(), updated_at = now() WHERE id = $1',
     [req.params.id]
   );
+  await recordAudit({
+    entityType: 'property', entityId: req.params.id, action: 'delete', actor: req.user,
+  });
   res.json({ ok: true });
 });
 
@@ -347,6 +495,10 @@ const uploadImages = asyncHandler(async (req, res) => {
     return out;
   });
 
+  await recordAudit({
+    entityType: 'property', entityId: req.params.id, action: 'image_add', actor: req.user,
+    changes: { count: keys.length, urls: keys.map((k) => storage.url(k)) }, countsAsEdit: true,
+  });
   res.status(201).json({ images: saved.map(propertyImage) });
 });
 
@@ -370,6 +522,10 @@ const uploadVideo = asyncHandler(async (req, res) => {
 
   // Drop the previous video file after the swap commits (best-effort).
   if (oldKey && oldKey !== key) await storage.delete(oldKey).catch(() => {});
+  await recordAudit({
+    entityType: 'property', entityId: req.params.id, action: 'video_set', actor: req.user,
+    changes: { url: storage.url(key) }, countsAsEdit: true,
+  });
   res.status(201).json({ property: await hydrate(updated) });
 });
 
@@ -382,6 +538,10 @@ const deleteImage = asyncHandler(async (req, res) => {
   );
   if (!rows[0]) throw new ApiError(404, 'Image not found');
   await storage.delete(rows[0].image_key).catch(() => {});
+  await recordAudit({
+    entityType: 'property', entityId: req.params.id, action: 'image_remove', actor: req.user,
+    changes: { image_id: req.params.imageId, image_key: rows[0].image_key }, countsAsEdit: true,
+  });
   res.json({ ok: true });
 });
 
@@ -411,5 +571,5 @@ const reorderImages = asyncHandler(async (req, res) => {
 
 module.exports = {
   listProperties, listAll, listMine, getProperty, createProperty, updateProperty,
-  setApproval, deleteProperty, uploadImages, uploadVideo, deleteImage, reorderImages,
+  setApproval, setFieldVisit, requestVisit, deleteProperty, uploadImages, uploadVideo, deleteImage, reorderImages,
 };
