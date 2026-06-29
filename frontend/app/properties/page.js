@@ -75,22 +75,21 @@ export default async function PropertiesPage({ searchParams }) {
           </p>
 
           <div className="mt-6">
+            {/* The results grid lives INSIDE PropertyFilters (the filter panel is
+                the first tile). So here we pass the cards directly; the empty /
+                error states get a column span so they sit beside the filter tile. */}
             <PropertyFilters initial={initial} resultCount={properties.length}>
               {error ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
+                <p className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700 lg:col-span-2 xl:col-span-3">
                   Couldn’t load listings: {error}. Is the backend running on port 4000?
                 </p>
               ) : properties.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-ink/20 bg-white p-12 text-center">
+                <div className="rounded-2xl border border-dashed border-ink/20 bg-white p-12 text-center lg:col-span-2 xl:col-span-3">
                   <p className="text-lg font-semibold text-ink">No stays match these filters</p>
                   <p className="mt-1 text-ink/50">Try widening your budget, clearing amenities, or a different district.</p>
                 </div>
               ) : (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {properties.map((p) => (
-                    <PropertyCard key={p.id} property={p} />
-                  ))}
-                </div>
+                properties.map((p) => <PropertyCard key={p.id} property={p} />)
               )}
             </PropertyFilters>
           </div>

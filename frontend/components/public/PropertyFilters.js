@@ -114,7 +114,8 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
   const groupLabel = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/50";
 
   const Panel = (
-    <div className="space-y-6">
+    // Single column — the filter tile is one card wide, so everything stacks.
+    <div className="space-y-5">
       {/* District */}
       <div>
         <label className={groupLabel}>District</label>
@@ -130,6 +131,24 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
         <select className={input} value={type} onChange={(e) => { setType(e.target.value); apply({ type: e.target.value }); }}>
           <option value="">Any type</option>
           {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      </div>
+
+      {/* Availability */}
+      <div>
+        <label className={groupLabel}>Availability</label>
+        <select className={input} value={occupancy} onChange={(e) => { setOccupancy(e.target.value); apply({ occupancy: e.target.value }); }}>
+          <option value="">Any</option>
+          {OCCUPANCY.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
+
+      {/* Furnishing */}
+      <div>
+        <label className={groupLabel}>Furnishing</label>
+        <select className={input} value={furnishing} onChange={(e) => { setFurnishing(e.target.value); apply({ furnishing: e.target.value }); }}>
+          <option value="">Any</option>
+          {FURNISHING.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
       </div>
 
@@ -153,24 +172,6 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
             onKeyDown={(e) => e.key === "Enter" && apply()}
           />
         </div>
-      </div>
-
-      {/* Availability */}
-      <div>
-        <label className={groupLabel}>Availability</label>
-        <select className={input} value={occupancy} onChange={(e) => { setOccupancy(e.target.value); apply({ occupancy: e.target.value }); }}>
-          <option value="">Any</option>
-          {OCCUPANCY.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </div>
-
-      {/* Furnishing */}
-      <div>
-        <label className={groupLabel}>Furnishing</label>
-        <select className={input} value={furnishing} onChange={(e) => { setFurnishing(e.target.value); apply({ furnishing: e.target.value }); }}>
-          <option value="">Any</option>
-          {FURNISHING.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
-        </select>
       </div>
 
       {/* Amenities */}
@@ -257,11 +258,10 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
         </div>
       )}
 
-      {/* ── Body: sidebar filters + results ── */}
-      <div className="mt-6 lg:grid lg:grid-cols-[260px_1fr] lg:gap-8">
-        {/* Sidebar (desktop) / drawer (mobile) */}
-        <aside className={`${open ? "block" : "hidden"} lg:block`}>
-          <div className="rounded-2xl border border-line bg-white p-5 lg:sticky lg:top-6">
+      {/* ── Mobile filter drawer (below the search bar; lg uses the in-grid tile) ── */}
+      {open && (
+        <aside className="mt-4 lg:hidden">
+          <div className="rounded-2xl border border-line bg-white p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-bold text-ink">Filters</h2>
               {activeCount > 0 && (
@@ -271,19 +271,37 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
               )}
             </div>
             {Panel}
-            {/* Mobile-only apply/close */}
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="mt-5 w-full rounded-xl bg-sage py-2.5 text-sm font-semibold text-white lg:hidden"
+              className="mt-5 w-full rounded-xl bg-sage py-2.5 text-sm font-semibold text-white"
             >
               Show {resultCount} {resultCount === 1 ? "result" : "results"}
             </button>
           </div>
         </aside>
+      )}
 
-        {/* Results (server-rendered cards) */}
-        <div className="mt-6 lg:mt-0">{children}</div>
+      {/* ── Results grid. On large screens the filter panel is the FIRST tile:
+           one card wide and two cards tall (lg:row-span-2). On full (xl) screens
+           the grid is 4 columns, so 3 cards sit beside the filter across the
+           first two rows; once the filter ends the grid returns to full rows of
+           four. Grid auto-placement keeps every card aligned. ── */}
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <aside className="hidden rounded-2xl border border-line bg-white p-5 lg:row-span-2 lg:flex lg:flex-col">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-ink">Filters</h2>
+            {activeCount > 0 && (
+              <button type="button" onClick={clearAll} className="text-xs font-semibold text-sage hover:underline">
+                Reset
+              </button>
+            )}
+          </div>
+          {Panel}
+        </aside>
+
+        {/* Results (server-rendered cards / empty / error state) */}
+        {children}
       </div>
     </div>
   );
