@@ -10,6 +10,14 @@ import { apiPatch, apiDelete } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import AdminFieldVisitModal from "./AdminFieldVisitModal";
 import AuditHistoryModal from "./AuditHistoryModal";
+import {
+  AMENITY_LABEL,
+  FURNISHING_LABEL,
+  PETS_LABEL,
+  ELECTRICITY_LABEL,
+  PREFERRED_TENANT_LABEL,
+  FOOD_LABEL,
+} from "@/lib/listingMeta";
 
 const STATUS = {
   pending: "bg-amber-100 text-amber-700",
@@ -125,7 +133,25 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
             <Detail label="Field visit" value={p.field_visited ? "📍 Visited" : "No"} />
             {!p.field_visited && p.visit_requested && <Detail label="Visit requested" value="⚡ Yes" />}
             <Detail label="Available" value={p.is_available ? "Yes" : "No"} />
+            {p.furnishing && <Detail label="Furnishing" value={FURNISHING_LABEL[p.furnishing]} />}
+            {p.preferred_tenant && <Detail label="Preferred tenant" value={PREFERRED_TENANT_LABEL[p.preferred_tenant]} />}
+            {p.electricity_billing && <Detail label="Electricity" value={ELECTRICITY_LABEL[p.electricity_billing]} />}
+            {p.pets_allowed && <Detail label="Pets" value={PETS_LABEL[p.pets_allowed]} />}
+            {p.food_included && <Detail label="Food" value={FOOD_LABEL[p.food_included]} />}
           </dl>
+
+          {Array.isArray(p.amenities) && p.amenities.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Amenities</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {p.amenities.map((a) => (
+                  <span key={a} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                    {AMENITY_LABEL[a] || a}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {p.field_visited && (
             <div className="mt-6 border-t border-slate-100 pt-4">
               <h3 className="text-base font-bold tracking-tight text-slate-900">Field Visit Details</h3>

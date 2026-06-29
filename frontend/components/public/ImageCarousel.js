@@ -49,16 +49,19 @@ export default function ImageCarousel({ images = [], alt = "", heightClass = "h-
       onTouchEnd={onTouchEnd}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={images[index]} alt={alt} className="h-full w-full object-cover" />
+      {/* Zoom only the image on card hover (group/card lives on PropertyCard's
+          Link). The arrows are siblings, so they stay put inside the card. */}
+      <img src={images[index]} alt={alt} className="h-full w-full object-cover transition-transform duration-700 group-hover/card:scale-105" />
 
       {multiple && (
         <>
-          {/* Prev / next arrows (visible on hover for desktop) */}
+          {/* Prev / next arrows: only become VISIBLE on hover. They never scale,
+              so they stay fixed at their inset position inside the card. */}
           <button
             type="button"
             onClick={(e) => { stop(e); go(index - 1); }}
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-slate-700 shadow group-hover:block hover:bg-white"
+            className="absolute left-6 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-slate-700 shadow group-hover:block hover:bg-white"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 15l-5-5 5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
@@ -66,7 +69,7 @@ export default function ImageCarousel({ images = [], alt = "", heightClass = "h-
             type="button"
             onClick={(e) => { stop(e); go(index + 1); }}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-slate-700 shadow group-hover:block hover:bg-white"
+            className="absolute right-6 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/80 p-1.5 text-slate-700 shadow group-hover:block hover:bg-white"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 5l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>

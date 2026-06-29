@@ -183,9 +183,17 @@ const createProperty = asyncHandler(async (req, res) => {
     title, description, property_type, rent_amount,
     latitude, longitude, address, city,
     map_link, max_persons, occupancy_status, landmark,
+    furnishing, pets_allowed, electricity_billing, preferred_tenant, food_included,
   } = req.body || {};
 
   if (!title || !String(title).trim()) throw new ApiError(400, 'Title is required');
+
+  // Amenities is a free multi-select list — keep only non-empty strings.
+  // The policy/furnishing fields are optional single-selects: '' means "not set".
+  const amenities = Array.isArray(req.body?.amenities)
+    ? req.body.amenities.filter((a) => typeof a === 'string' && a.trim())
+    : [];
+  const orNull = (v) => (v === '' || v == null ? null : v);
 
   // Numbers can't be negative.
   const rent = rent_amount != null && rent_amount !== '' ? Number(rent_amount) : 0;
@@ -217,8 +225,10 @@ const createProperty = asyncHandler(async (req, res) => {
     `INSERT INTO properties
        (owner_id, title, description, property_type, rent_amount,
         latitude, longitude, address, state, district, city, pincode, landmark,
-        map_link, max_persons, occupancy_status, approval_status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+        map_link, max_persons, occupancy_status, approval_status,
+        amenities, furnishing, pets_allowed, electricity_billing, preferred_tenant, food_included)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
+             $18,$19,$20,$21,$22,$23)
      RETURNING *`,
     [
       req.user.id,
@@ -238,6 +248,12 @@ const createProperty = asyncHandler(async (req, res) => {
       persons,
       occupancy_status || 'available',
       approval,
+      amenities,
+      orNull(furnishing),
+      orNull(pets_allowed),
+      orNull(electricity_billing),
+      orNull(preferred_tenant),
+      orNull(food_included),
     ]
   );
 
@@ -413,10 +429,23 @@ const updateProperty = asyncHandler(async (req, res) => {
     if (pin) req.body.city = await resolveLocality(st, dist, pin, req.body.city);
   }
 
+  // Amenities/policy normalisation: '' on a single-select means "not set" → NULL
+  // (so it doesn't break the CHECK constraints), and amenities must be a clean
+  // string array.
+  for (const f of ['furnishing', 'pets_allowed', 'electricity_billing', 'preferred_tenant', 'food_included']) {
+    if (req.body[f] === '') req.body[f] = null;
+  }
+  if (req.body.amenities !== undefined) {
+    req.body.amenities = Array.isArray(req.body.amenities)
+      ? req.body.amenities.filter((a) => typeof a === 'string' && a.trim())
+      : [];
+  }
+
   const fields = [
     'title', 'description', 'property_type', 'rent_amount',
     'latitude', 'longitude', 'address', 'state', 'district', 'city', 'pincode',
     'landmark', 'is_available', 'map_link', 'max_persons', 'occupancy_status',
+    'amenities', 'furnishing', 'pets_allowed', 'electricity_billing', 'preferred_tenant', 'food_included',
   ];
   const sets = [];
   const params = [req.params.id];

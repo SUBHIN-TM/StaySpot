@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete, uploadToPresignedUrl } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
 import { STATE_LIST, DEFAULT_STATE, districtsOf } from "@/lib/geo";
+import { AMENITIES, FURNISHING, PETS, ELECTRICITY, PREFERRED_TENANT, FOOD } from "@/lib/listingMeta";
 
 // Fallback caps used only until the server's limits load (server re-validates anyway).
 const FALLBACK_LIMITS = {
@@ -32,7 +33,7 @@ const FAILED_MSG = "Some attachments failed to upload — remove and re-add them
 // Capitalize the first letter of each word (mirrors the backend's normaliser).
 const capitalizeWords = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
-const TYPES = ["room", "apartment", "house", "pg", "hostel", "shared"];
+const TYPES = ["room", "apartment", "house", "villa", "pg", "hostel", "shared"];
 const STATUSES = [
   { value: "available", label: "Available" },
   { value: "partially_occupied", label: "Partially occupied" },
@@ -61,7 +62,25 @@ export default function PropertyForm({ existing }) {
     landmark: existing?.landmark || "",
     address: existing?.address || "",
     map_link: existing?.map_link || "",
+    // Amenities + policies (all optional). amenities is a multi-select array.
+    amenities: existing?.amenities || [],
+    furnishing: existing?.furnishing || "",
+    pets_allowed: existing?.pets_allowed || "",
+    electricity_billing: existing?.electricity_billing || "",
+    preferred_tenant: existing?.preferred_tenant || "",
+    food_included: existing?.food_included || "",
   });
+
+  // Toggle an amenity in/out of the multi-select list.
+  function toggleAmenity(value) {
+    setForm((f) => {
+      const has = (f.amenities || []).includes(value);
+      const amenities = has
+        ? f.amenities.filter((a) => a !== value)
+        : [...(f.amenities || []), value];
+      return { ...f, amenities };
+    });
+  }
 
   // Pincode → district autofill state.
   const [pinLoading, setPinLoading] = useState(false);
@@ -558,6 +577,79 @@ export default function PropertyForm({ existing }) {
       <div>
         <label className={label}>Google Maps link</label>
         <input value={form.map_link} onChange={(e) => set("map_link", e.target.value)} placeholder="https://maps.google.com/?q=…" className={field} />
+      </div>
+
+      {/* Features & policies — ALL optional. Amenities is a multi-select (tap the
+          chips); furnishing + the policies are single-select dropdowns. */}
+      <div className="rounded-xl border border-slate-200 p-4 space-y-5">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">Features &amp; policies</h3>
+          <p className="text-xs text-slate-500">Optional — fill in whatever applies to help seekers.</p>
+        </div>
+
+        <div>
+          <label className={label}>
+            Amenities <span className="font-normal text-slate-400">(tap to select all that apply)</span>
+          </label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {AMENITIES.map((a) => {
+              const on = (form.amenities || []).includes(a.value);
+              return (
+                <button
+                  type="button"
+                  key={a.value}
+                  onClick={() => toggleAmenity(a.value)}
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                    on
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-300 text-slate-600 hover:border-slate-400"
+                  }`}
+                >
+                  {on ? "✓ " : ""}
+                  {a.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className={label}>Furnishing</label>
+            <select value={form.furnishing} onChange={(e) => set("furnishing", e.target.value)} className={field}>
+              <option value="">Not specified</option>
+              {FURNISHING.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Pets</label>
+            <select value={form.pets_allowed} onChange={(e) => set("pets_allowed", e.target.value)} className={field}>
+              <option value="">Not specified</option>
+              {PETS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Electricity bill</label>
+            <select value={form.electricity_billing} onChange={(e) => set("electricity_billing", e.target.value)} className={field}>
+              <option value="">Not specified</option>
+              {ELECTRICITY.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Preferred tenant</label>
+            <select value={form.preferred_tenant} onChange={(e) => set("preferred_tenant", e.target.value)} className={field}>
+              <option value="">Any</option>
+              {PREFERRED_TENANT.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Food (PG / hostel)</label>
+            <select value={form.food_included} onChange={(e) => set("food_included", e.target.value)} className={field}>
+              <option value="">Not specified</option>
+              {FOOD.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Existing images (edit mode) — reorderable, first one is the cover */}

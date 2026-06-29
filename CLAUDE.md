@@ -80,7 +80,18 @@ Admin login is at `/admin/login` (separate session from regular users).
 - **Roles:** seeker / owner / admin. Owner area at `/owner` (emerald), admin at `/admin`.
 - **Listings:** owners create/edit with images + video + map link + type + persons +
   occupancy status. Public browse `/properties`, full detail page `/properties/[id]`
-  (gallery carousel, video, map, contact owner).
+  (gallery carousel, video, map, contact owner). Rental **types**: room, apartment,
+  house, villa, pg, hostel, shared (UI list in `PropertyForm`/`SearchBar`; backend
+  doesn't CHECK the value). The top-left card badge shows **occupancy status**, colour-
+  coded green/yellow/red (available/partially_occupied/occupied), next to a neutral
+  type pill.
+- **Amenities & policies (optional, migration 018):** owners can tag a listing with a
+  fixed multi-select **amenities** checklist (`amenities text[]`) plus single-select
+  **furnishing** + policies (`pets_allowed`, `electricity_billing`, `preferred_tenant`,
+  `food_included` — each `'' → NULL`, guarded by CHECK constraints). The fixed option
+  lists + value→label maps live in ONE shared file, `frontend/lib/listingMeta.js`,
+  imported by the owner form (input), property detail page, public card (top-3 chips),
+  and admin detail modal — keep labels there so they stay consistent everywhere.
 - **Structured location (canonical, Kerala):** `state` (locked to Kerala for
   now, but a real field/dropdown so more states can be enabled later), `district`
   (dropdown of the 14 Kerala districts — bundled dataset in `backend/src/config/geo.js`

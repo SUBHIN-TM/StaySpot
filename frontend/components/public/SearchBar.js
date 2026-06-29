@@ -16,6 +16,7 @@ const TYPES = [
   { value: "room", label: "Room" },
   { value: "apartment", label: "Apartment" },
   { value: "house", label: "House" },
+  { value: "villa", label: "Villa" },
   { value: "pg", label: "PG" },
   { value: "hostel", label: "Hostel" },
   { value: "shared", label: "Shared" },

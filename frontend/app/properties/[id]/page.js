@@ -11,6 +11,16 @@ import Footer from "@/components/public/Footer";
 import ImageCarousel from "@/components/public/ImageCarousel";
 import ContactOwnerButton from "@/components/public/ContactOwnerButton";
 import { apiGet } from "@/lib/api";
+import {
+  AMENITY_LABEL,
+  AMENITY_ICON,
+  AMENITY_FALLBACK_ICON,
+  FURNISHING_LABEL,
+  PETS_LABEL,
+  ELECTRICITY_LABEL,
+  PREFERRED_TENANT_LABEL,
+  FOOD_LABEL,
+} from "@/lib/listingMeta";
 
 const OCCUPANCY = {
   available: { label: "Available", cls: "bg-green-100 text-green-700" },
@@ -62,6 +72,21 @@ export default async function PropertyDetailPage({ params }) {
   const occ = OCCUPANCY[p.occupancy_status] || OCCUPANCY.available;
   const rent = `₹${Number(p.rent_amount).toLocaleString("en-IN")}`;
 
+  // Amenities the owner ticked (with icons), and the "good to know" policy rows
+  // that were actually set.
+  const amenities = (p.amenities || []).map((a) => ({
+    key: a,
+    Icon: AMENITY_ICON[a] || AMENITY_FALLBACK_ICON,
+    label: AMENITY_LABEL[a] || a,
+  }));
+  const policies = [
+    p.furnishing && { label: "Furnishing", value: FURNISHING_LABEL[p.furnishing] },
+    p.preferred_tenant && { label: "Preferred tenant", value: PREFERRED_TENANT_LABEL[p.preferred_tenant] },
+    p.electricity_billing && { label: "Electricity", value: ELECTRICITY_LABEL[p.electricity_billing] },
+    p.pets_allowed && { label: "Pets", value: PETS_LABEL[p.pets_allowed] },
+    p.food_included && { label: "Food", value: FOOD_LABEL[p.food_included] },
+  ].filter(Boolean);
+
   return (
     <>
       <Navbar />
@@ -112,6 +137,37 @@ export default async function PropertyDetailPage({ params }) {
               <div className="mt-6">
                 <h2 className="text-lg font-semibold text-slate-900">About this place</h2>
                 <p className="mt-2 whitespace-pre-line text-slate-600">{p.description}</p>
+              </div>
+            )}
+
+            {amenities.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold text-slate-900">Amenities</h2>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {amenities.map(({ key, Icon, label }) => (
+                    <span
+                      key={key}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700"
+                    >
+                      <Icon size={15} strokeWidth={2} />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {policies.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold text-slate-900">Good to know</h2>
+                <dl className="mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2">
+                  {policies.map((row) => (
+                    <div key={row.label} className="flex justify-between border-b border-slate-100 py-1.5">
+                      <dt className="text-sm text-slate-500">{row.label}</dt>
+                      <dd className="text-sm font-medium text-slate-800">{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             )}
 
