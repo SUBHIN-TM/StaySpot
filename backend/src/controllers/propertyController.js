@@ -86,7 +86,7 @@ const listProperties = asyncHandler(async (req, res) => {
   } = req.query;
 
   const page = Math.max(1, parseInt(req.query.page || '1', 10));
-  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '10', 10)));
   const offset = (page - 1) * limit;
 
   // Public list shows only available, admin-approved AND not-deleted listings.
@@ -151,6 +151,13 @@ const listProperties = asyncHandler(async (req, res) => {
   }
   // (default stays newest-first: p.created_at DESC)
 
+  // Total matching rows (for pagination) — same WHERE/params, no LIMIT/OFFSET.
+  // Run this BEFORE pushing limit/offset so `params` holds only filter values.
+  const countSql = `SELECT COUNT(*)::int AS total FROM properties p WHERE ${where.join(' AND ')}`;
+  const countRes = await query(countSql, params);
+  const total = countRes.rows[0]?.total || 0;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
   params.push(limit, offset);
   const sql = `
     SELECT p.*${distanceSelect}
@@ -161,7 +168,7 @@ const listProperties = asyncHandler(async (req, res) => {
 
   const { rows } = await query(sql, params);
   const data = await Promise.all(rows.map(hydrate));
-  res.json({ page, limit, count: data.length, properties: data });
+  res.json({ page, limit, count: data.length, total, total_pages: totalPages, properties: data });
 });
 
 // GET /api/properties/:id

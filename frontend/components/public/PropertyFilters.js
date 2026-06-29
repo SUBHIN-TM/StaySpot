@@ -34,6 +34,10 @@ const SORTS = [
   { value: "price_low", label: "Price: low → high" },
   { value: "price_high", label: "Price: high → low" },
 ];
+// Page-size options. Must match ALLOWED_LIMITS / DEFAULT_LIMIT in page.js.
+// The chosen size is kept in the URL (omitted when it's the default).
+const DEFAULT_LIMIT = 10;
+const PER_PAGE = [10, 20, 30, 50];
 
 const DISTRICTS = districtsOf(DEFAULT_STATE);
 
@@ -49,6 +53,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
   const [furnishing, setFurnishing] = useState(initial.furnishing || "");
   const [amenities, setAmenities] = useState(initial.amenities || []);
   const [sort, setSort] = useState(initial.sort || "");
+  const [perPage, setPerPage] = useState(initial.limit || DEFAULT_LIMIT);
   const [open, setOpen] = useState(false); // mobile drawer
 
   // Build the URL query from a full snapshot of the filter state and navigate.
@@ -63,6 +68,9 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
     if (state.furnishing) p.set("furnishing", state.furnishing);
     if (state.amenities?.length) p.set("amenities", state.amenities.join(","));
     if (state.sort) p.set("sort", state.sort);
+    // Keep the chosen page size in the URL (omit when it's the default). Note:
+    // we never carry `page` here, so any change resets back to page 1.
+    if (state.perPage && state.perPage !== DEFAULT_LIMIT) p.set("limit", state.perPage);
     const qs = p.toString();
     router.push(qs ? `/properties?${qs}` : "/properties", { scroll: false });
   }
@@ -70,7 +78,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
   // Apply the current state plus any immediate override (used by the dropdowns
   // and amenity chips so they don't wait for a setState to flush).
   function apply(overrides = {}) {
-    go({ q, district, type, minRent, maxRent, occupancy, furnishing, amenities, sort, ...overrides });
+    go({ q, district, type, minRent, maxRent, occupancy, furnishing, amenities, sort, perPage, ...overrides });
   }
 
   function toggleAmenity(value) {
@@ -84,7 +92,8 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
   function clearAll() {
     setQ(""); setDistrict(""); setType(""); setMinRent(""); setMaxRent("");
     setOccupancy(""); setFurnishing(""); setAmenities([]); setSort("");
-    router.push("/properties", { scroll: false });
+    // Keep the page size; only the filters are cleared.
+    go({ q: "", district: "", type: "", minRent: "", maxRent: "", occupancy: "", furnishing: "", amenities: [], sort: "", perPage });
   }
 
   // Active-filter chips (label + how to clear that one).
@@ -230,6 +239,16 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
           {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
 
+        {/* Page size — changing it resets to page 1 (handled in go()). */}
+        <select
+          className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-sage"
+          value={perPage}
+          onChange={(e) => { const v = Number(e.target.value); setPerPage(v); apply({ perPage: v }); }}
+          aria-label="Results per page"
+        >
+          {PER_PAGE.map((n) => <option key={n} value={n}>{n} / page</option>)}
+        </select>
+
         {/* Mobile: open the filter drawer */}
         <button
           type="button"
@@ -284,10 +303,10 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
 
       {/* ── Results grid. On large screens the filter panel is the FIRST tile:
            one card wide and two cards tall (lg:row-span-2). On full (xl) screens
-           the grid is 4 columns, so 3 cards sit beside the filter across the
+           the grid is 5 columns, so 4 cards sit beside the filter across the
            first two rows; once the filter ends the grid returns to full rows of
-           four. Grid auto-placement keeps every card aligned. ── */}
-      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+           five. Grid auto-placement keeps every card aligned. ── */}
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <aside className="hidden rounded-2xl border border-line bg-white p-5 lg:row-span-2 lg:flex lg:flex-col">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold text-ink">Filters</h2>
