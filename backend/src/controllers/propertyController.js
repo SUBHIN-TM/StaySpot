@@ -79,6 +79,10 @@ const listProperties = asyncHandler(async (req, res) => {
     lng,
     radius_km,
     owner_id,
+    occupancy_status,
+    furnishing,
+    amenities,
+    sort,
   } = req.query;
 
   const page = Math.max(1, parseInt(req.query.page || '1', 10));
@@ -101,6 +105,19 @@ const listProperties = asyncHandler(async (req, res) => {
   if (min_rent) { params.push(Number(min_rent)); where.push(`p.rent_amount >= $${i++}`); }
   if (max_rent) { params.push(Number(max_rent)); where.push(`p.rent_amount <= $${i++}`); }
   if (owner_id) { params.push(owner_id); where.push(`p.owner_id = $${i++}`); }
+  if (occupancy_status) { params.push(occupancy_status); where.push(`p.occupancy_status = $${i++}`); }
+  if (furnishing) { params.push(furnishing); where.push(`p.furnishing = $${i++}`); }
+
+  // Amenities: comma-separated list; keep listings that have ALL of them
+  // (Postgres array containment, p.amenities @> selected).
+  const amenityList = String(amenities || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (amenityList.length) {
+    params.push(amenityList);
+    where.push(`p.amenities @> $${i++}::text[]`);
+  }
 
   // Radius search via the Haversine formula (km). Requires lat, lng, radius_km.
   let distanceSelect = '';
@@ -127,7 +144,12 @@ const listProperties = asyncHandler(async (req, res) => {
         sin(radians($${latIdx})) * sin(radians(p.latitude))
       )) <= $${i++}`);
     orderBy = 'distance_km ASC';
+  } else if (sort === 'price_low') {
+    orderBy = 'p.rent_amount ASC, p.created_at DESC';
+  } else if (sort === 'price_high') {
+    orderBy = 'p.rent_amount DESC, p.created_at DESC';
   }
+  // (default stays newest-first: p.created_at DESC)
 
   params.push(limit, offset);
   const sql = `

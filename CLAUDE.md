@@ -92,6 +92,14 @@ Admin login is at `/admin/login` (separate session from regular users).
   lists + value→label maps live in ONE shared file, `frontend/lib/listingMeta.js`,
   imported by the owner form (input), property detail page, public card (top-3 chips),
   and admin detail modal — keep labels there so they stay consistent everywhere.
+- **Browse filters & search (`/properties`):** the page is a server component that
+  reads ALL filters from the URL and forwards them to `GET /api/properties`; the
+  interactive shell `components/public/PropertyFilters.js` (client) WRAPS the
+  server-rendered cards as `children` so search/sort/sidebar/active-chips share state
+  while cards stay server-rendered. Backend `listProperties` supports: `q`, `district`,
+  `city`, `property_type`, `min_rent`/`max_rent`, `occupancy_status`, `furnishing`,
+  `amenities` (CSV → `p.amenities @> $n::text[]`, must have ALL), and `sort`
+  (`price_low`/`price_high`, else newest). Radius/geo sort still wins when lat/lng given.
 - **Structured location (canonical, Kerala):** `state` (locked to Kerala for
   now, but a real field/dropdown so more states can be enabled later), `district`
   (dropdown of the 14 Kerala districts — bundled dataset in `backend/src/config/geo.js`
