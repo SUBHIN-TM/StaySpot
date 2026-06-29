@@ -39,8 +39,10 @@ export default function PropertyCard({ property }) {
   const occ = OCCUPANCY[property.occupancy_status] || OCCUPANCY.available;
   const place = [property.city, property.district].filter(Boolean).join(", ") || "—";
 
-  // A balanced set of feature chips for the card (max 4): capacity first (max
-  // persons), then furnishing, then amenities. FULL list lives on the detail page.
+  // A balanced set of feature chips for the card: capacity first (max persons),
+  // then furnishing, then amenities. Capped at 3 and kept on ONE row (no wrap) —
+  // the FULL list lives on the detail page.
+  const MAX_CHIPS = 3;
   const featureChips = [];
   if (property.max_persons) {
     featureChips.push({
@@ -57,7 +59,7 @@ export default function PropertyCard({ property }) {
     });
   }
   for (const a of property.amenities || []) {
-    if (featureChips.length >= 4) break;
+    if (featureChips.length >= MAX_CHIPS) break;
     featureChips.push({ key: a, Icon: AMENITY_ICON[a] || AMENITY_FALLBACK_ICON, label: AMENITY_LABEL[a] || a });
   }
   const totalFeatures =
@@ -119,11 +121,11 @@ export default function PropertyCard({ property }) {
         </div>
         {/* A few feature chips (icon + label) — full list on the detail page. */}
         {featureChips.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
+          <div className="flex flex-nowrap items-center gap-1.5 mb-4 overflow-hidden">
             {featureChips.map(({ key, Icon, label }) => (
               <span
                 key={key}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap"
                 style={{ background: "var(--color-line)", color: "#5B6B63" }}
               >
                 <Icon size={12} strokeWidth={2} />
@@ -131,7 +133,7 @@ export default function PropertyCard({ property }) {
               </span>
             ))}
             {moreFeatures > 0 && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium" style={{ color: "#9AA6A0" }}>
+              <span className="inline-flex shrink-0 items-center px-2 py-1 rounded-full text-[11px] font-medium whitespace-nowrap" style={{ color: "#9AA6A0" }}>
                 +{moreFeatures} more
               </span>
             )}
