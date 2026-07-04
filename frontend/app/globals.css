@@ -44,6 +44,135 @@ html {
   scroll-behavior: smooth; /* smooth scroll for in-page anchor links */
 }
 
+/* Premium auth backdrop: a deep sage/olive gradient with a soft gold glow at the
+   top — used behind all sign-in / sign-up / profile cards so the auth flow feels
+   branded and consistent (dark green + gold). */
+.auth-bg {
+  /* Project-related photographic backdrop (self-hosted sage/gold interior) with a
+     light overlay so the floating card stays readable. Fallback colour shows if the
+     image can't load. */
+  background-color: #2A332C;
+  background-image:
+    linear-gradient(155deg, rgba(30, 37, 33, 0.28), rgba(30, 37, 33, 0.48)),
+    url("/auth-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Styled dropdown — hides the native arrow and draws a custom chevron with a clear
+   gap from the right edge (so the icon isn't jammed against the border). */
+.app-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235B6B63' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 15px;
+  padding-right: 2.4rem;
+}
+
+/* Dark "galaxy" page backdrop — deep olive/black base with sage-green & gold nebula
+   glows and a scattered starfield. Content on top must use light text; white cards
+   pop against it. Fixed so the stars stay put while the page scrolls. */
+.galaxy-bg {
+  /* Soft, low-glare warm greige — muted so it's easy on the eyes (no bright cream
+     or white hotspots), with just gentle gold + sage tints for warmth. */
+  background-color: #E7E3D6;
+  background-image:
+    radial-gradient(1000px 620px at 85% -4%, rgba(196, 150, 82, 0.14), transparent 58%),
+    radial-gradient(900px 600px at 10% 6%, rgba(74, 90, 80, 0.10), transparent 58%),
+    radial-gradient(1000px 760px at 55% 118%, rgba(60, 74, 64, 0.12), transparent 55%),
+    linear-gradient(180deg, #E9E5D9 0%, #DED9C8 100%);
+  background-attachment: fixed;
+}
+
+/* Soft "sky / clouds" page backdrop blending the brand palette — sage-green and gold
+   glows, bright white cloud highlights, and a subtle dark depth at the edges. Stays
+   light so cards and dark text remain readable. Fixed so it feels like open sky. */
+.sky-bg {
+  background-color: #F5F5EF;
+  background-image:
+    radial-gradient(1000px 620px at 10% -6%, rgba(74, 90, 80, 0.24), transparent 55%),
+    radial-gradient(940px 620px at 92% 4%, rgba(212, 163, 89, 0.24), transparent 55%),
+    radial-gradient(1200px 820px at 50% 118%, rgba(30, 37, 33, 0.18), transparent 55%),
+    radial-gradient(720px 520px at 72% 52%, rgba(255, 255, 255, 0.75), transparent 60%),
+    radial-gradient(620px 480px at 24% 72%, rgba(255, 255, 255, 0.6), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Frosted-glass panel — a translucent card with a strong backdrop blur and a bright
+   top edge highlight, so it reads as real glass floating over the photo backdrop. */
+.glass-card {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(22px) saturate(125%);
+  -webkit-backdrop-filter: blur(22px) saturate(125%);
+}
+.glass-card-soft {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Owner "Add / edit property" page backdrop — the same self-hosted interior photo,
+   fixed behind the page so the white form card floats over it. Overlay keeps the
+   light page heading + card readable. */
+.owner-form-bg {
+  background-color: #24302A;
+  background-image:
+    linear-gradient(160deg, rgba(30, 37, 33, 0.30), rgba(30, 37, 33, 0.45)),
+    url("/auth-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* OWNER auth backdrop — SAME photo, but with a stronger EMERALD-tinted overlay so the
+   owner pages still read as visually distinct (alongside the emerald "Owner Portal"
+   banner). */
+.auth-bg-owner {
+  background-color: #14261B;
+  background-image:
+    linear-gradient(155deg, rgba(6, 60, 34, 0.55), rgba(10, 40, 24, 0.72)),
+    url("/auth-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Dark auth CARD that sits on the .auth-bg backdrop — deep olive/sage panel with
+   a hairline light border and gold-tinted inputs, so the sign-in flow is dark
+   (not a bright white box) and matches the chat aesthetic. */
+.auth-card {
+  background: linear-gradient(160deg, #2C362E 0%, #222A24 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+/* Inputs inside the dark card: dark translucent field, light text + placeholder. */
+.auth-card input,
+.auth-card textarea,
+.auth-card select {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.auth-card input::placeholder,
+.auth-card textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+/* Native <option> lists render on the OS surface — keep them dark-on-light so
+   they stay readable regardless of the card theme. */
+.auth-card select option {
+  color: #1E2521;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

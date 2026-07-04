@@ -42,13 +42,13 @@ export default function RoommatePostActions({ post, onDeleted }) {
     <div className="flex gap-2">
       <Link
         href={`/roommates/${post.id}/edit`}
-        className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        className="rounded-lg border border-ink/15 px-3.5 py-1.5 text-sm font-medium text-ink/70 transition-colors hover:border-grape/40 hover:text-grape"
       >
         Edit
       </Link>
       <button
         onClick={del}
-        className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+        className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
       >
         Delete
       </button>

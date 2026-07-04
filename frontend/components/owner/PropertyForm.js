@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiPatch, apiDelete, uploadToPresignedUrl } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
 import { STATE_LIST, DEFAULT_STATE, districtsOf } from "@/lib/geo";
-import { AMENITIES, FURNISHING, PETS, ELECTRICITY, PREFERRED_TENANT, FOOD } from "@/lib/listingMeta";
+import { AMENITIES, FURNISHING, PETS, ELECTRICITY, PREFERRED_TENANT, FOOD, PROPERTY_TYPES } from "@/lib/listingMeta";
 
 // Fallback caps used only until the server's limits load (server re-validates anyway).
 const FALLBACK_LIMITS = {
@@ -33,11 +33,23 @@ const FAILED_MSG = "Some attachments failed to upload — remove and re-add them
 // Capitalize the first letter of each word (mirrors the backend's normaliser).
 const capitalizeWords = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
-const TYPES = ["room", "apartment", "house", "villa", "pg", "hostel", "shared"];
 const STATUSES = [
   { value: "available", label: "Available" },
   { value: "partially_occupied", label: "Partially occupied" },
   { value: "occupied", label: "Occupied" },
+];
+
+// Rotating palette so the amenity chips are colourful (not all one grey), each
+// with its own hue — filled solid when selected, a soft tint when not.
+const CHIP_COLORS = [
+  "#4A5A50", // sage
+  "#B07C1E", // deep gold
+  "#3E8E57", // green
+  "#2F6FB0", // blue
+  "#6D4FB8", // violet
+  "#B84A80", // pink
+  "#1E9A8B", // teal
+  "#C05A3C", // terracotta
 ];
 
 let pickSeq = 0; // local id generator for picked items
@@ -401,12 +413,16 @@ export default function PropertyForm({ existing }) {
     }
   }
 
+  // Soft warm styling so the form blends into the muted greige page background.
   const field =
-    "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition-colors focus:border-brand";
-  const label = "block text-sm font-medium text-slate-700";
+    "mt-1.5 w-full rounded-lg border border-[#D4A359]/30 bg-white/90 px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink/40 focus:border-brand focus:ring-2 focus:ring-brand/20";
+  const label = "block text-sm font-medium text-ink/80";
+  const card =
+    "rounded-2xl border border-[#D4A359]/22 bg-[#F4F1E7]/70 p-5 shadow-[0_6px_24px_rgba(74,90,80,0.10)] backdrop-blur-md sm:p-6";
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-5 lg:max-w-4xl">
+      <div className={`${card} space-y-5`}>
       <div>
         <label className={label}>Title *</label>
         <input
@@ -426,8 +442,8 @@ export default function PropertyForm({ existing }) {
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label className={label}>Rental type</label>
-          <select value={form.property_type} onChange={(e) => set("property_type", e.target.value)} className={`${field} capitalize`}>
-            {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          <select value={form.property_type} onChange={(e) => set("property_type", e.target.value)} className={`${field} app-select`}>
+            {PROPERTY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
         <div>
@@ -471,7 +487,7 @@ export default function PropertyForm({ existing }) {
             onChange={(e) => set("state", e.target.value)}
             disabled
             title="More states coming soon"
-            className={`${field} cursor-not-allowed bg-slate-100 text-slate-500`}
+            className={`${field} cursor-not-allowed bg-mist text-ink/50`}
           >
             {STATE_LIST.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -488,7 +504,7 @@ export default function PropertyForm({ existing }) {
           {pinErr ? (
             <p className="mt-1 text-xs text-red-600">Enter a valid 6-digit pincode.</p>
           ) : (
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-ink/50">
               {pinLoading ? "Looking up…" : pinNote || "Enter this first — it fills the district."}
             </p>
           )}
@@ -499,7 +515,7 @@ export default function PropertyForm({ existing }) {
             value={form.district}
             onChange={(e) => set("district", e.target.value)}
             disabled={!pincodeReady || pinLoading}
-            className={`${field} ${!pincodeReady || pinLoading ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""} ${
+            className={`${field} ${!pincodeReady || pinLoading ? "cursor-not-allowed bg-mist text-ink/40" : ""} ${
               distErr ? "border-red-400" : ""
             }`}
           >
@@ -523,7 +539,7 @@ export default function PropertyForm({ existing }) {
             value={localityOther ? "__other__" : localityOptions.includes(form.city) ? form.city : ""}
             onChange={(e) => onLocalitySelect(e.target.value)}
             disabled={locationLocked}
-            className={`${field} ${locationLocked ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
+            className={`${field} ${locationLocked ? "cursor-not-allowed bg-mist text-ink/40" : ""}`}
           >
             <option value="">{locationLocked ? "Select a district first" : "Select locality"}</option>
             {localityOptions.map((l) => <option key={l} value={l}>{l}</option>)}
@@ -543,7 +559,7 @@ export default function PropertyForm({ existing }) {
               <datalist id="locality-other-list">
                 {localityOptions.map((l) => <option key={l} value={l} />)}
               </datalist>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-ink/50">
                 New locality will be saved under pincode{" "}
                 <span className="font-medium">{form.pincode}</span>.
               </p>
@@ -557,7 +573,7 @@ export default function PropertyForm({ existing }) {
             onChange={(e) => set("landmark", e.target.value)}
             disabled={locationLocked}
             placeholder="e.g. near Infopark"
-            className={`${field} ${locationLocked ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
+            className={`${field} ${locationLocked ? "cursor-not-allowed bg-mist text-ink/40" : ""}`}
           />
         </div>
       </div>
@@ -570,7 +586,7 @@ export default function PropertyForm({ existing }) {
           disabled={locationLocked}
           rows={4}
           placeholder="House / building, street, area…"
-          className={`${field} ${locationLocked ? "cursor-not-allowed bg-slate-100 text-slate-400" : ""}`}
+          className={`${field} ${locationLocked ? "cursor-not-allowed bg-mist text-ink/40" : ""}`}
         />
       </div>
 
@@ -581,29 +597,31 @@ export default function PropertyForm({ existing }) {
 
       {/* Features & policies — ALL optional. Amenities is a multi-select (tap the
           chips); furnishing + the policies are single-select dropdowns. */}
-      <div className="rounded-xl border border-slate-200 p-4 space-y-5">
+      <div className="rounded-xl border border-[#D4A359]/18 bg-[#EFE9D9]/50 p-4 space-y-5">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Features &amp; policies</h3>
-          <p className="text-xs text-slate-500">Optional — fill in whatever applies to help seekers.</p>
+          <h3 className="text-sm font-semibold text-ink">Features &amp; policies</h3>
+          <p className="text-xs text-ink/50">Optional — fill in whatever applies to help seekers.</p>
         </div>
 
         <div>
           <label className={label}>
-            Amenities <span className="font-normal text-slate-400">(tap to select all that apply)</span>
+            Amenities <span className="font-normal text-ink/40">(tap to select all that apply)</span>
           </label>
           <div className="mt-2 flex flex-wrap gap-2">
-            {AMENITIES.map((a) => {
+            {AMENITIES.map((a, i) => {
               const on = (form.amenities || []).includes(a.value);
+              const c = CHIP_COLORS[i % CHIP_COLORS.length];
               return (
                 <button
                   type="button"
                   key={a.value}
                   onClick={() => toggleAmenity(a.value)}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                  className="rounded-full border px-3 py-1.5 text-sm font-medium transition hover:-translate-y-0.5 hover:shadow-sm"
+                  style={
                     on
-                      ? "border-brand bg-brand/5 text-brand"
-                      : "border-slate-300 text-slate-600 hover:border-slate-400"
-                  }`}
+                      ? { borderColor: c, background: c, color: "#fff", boxShadow: `0 4px 12px ${c}55` }
+                      : { borderColor: `${c}66`, background: `${c}14`, color: c }
+                  }
                 >
                   {on ? "✓ " : ""}
                   {a.label}
@@ -656,7 +674,7 @@ export default function PropertyForm({ existing }) {
       {isEdit && existingImages.length > 0 && (
         <div>
           <label className={label}>Current photos</label>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-ink/50">
             The first photo is the{" "}
             <span className="font-medium text-brand">cover</span> seekers see first. Use ◀ ▶
             to arrange.
@@ -681,7 +699,7 @@ export default function PropertyForm({ existing }) {
       <div>
         <label className={label}>{isEdit ? "Add more photos" : "Photos"}</label>
         {!isEdit && (
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-ink/50">
             The first photo is the{" "}
             <span className="font-medium text-brand">cover</span> seekers see first. Use ◀ ▶
             to arrange.
@@ -712,11 +730,11 @@ export default function PropertyForm({ existing }) {
             addImages(e.target.files);
             e.target.value = ""; // allow re-picking the same file
           }}
-          className="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:font-medium file:text-white hover:file:bg-brand-dark"
+          className="mt-2 block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:font-medium file:text-ink hover:file:bg-brand-dark"
         />
-        <p className="mt-1 text-xs text-slate-400">Max {limits.image.maxMb} MB per photo.</p>
+        <p className="mt-1 text-xs text-ink/40">Max {limits.image.maxMb} MB per photo.</p>
         {isEdit && images.length > 0 && (
-          <p className="mt-1 text-xs text-slate-500">New photos are added after the current ones.</p>
+          <p className="mt-1 text-xs text-ink/50">New photos are added after the current ones.</p>
         )}
       </div>
 
@@ -730,13 +748,13 @@ export default function PropertyForm({ existing }) {
             pickVideo(e.target.files[0] || null);
             e.target.value = "";
           }}
-          className="mt-1 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:font-medium file:text-white hover:file:bg-slate-800"
+          className="mt-1 block w-full text-sm text-ink/70 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:font-medium file:text-ink hover:file:bg-brand-dark"
         />
         {video && (
           <p className="mt-1 flex items-center gap-2 text-xs">
-            <span className="max-w-[16rem] truncate text-slate-600">{video.name}</span>
+            <span className="max-w-[16rem] truncate text-ink/70">{video.name}</span>
             {video.status === "uploading" && (
-              <span className="text-slate-500">uploading… {video.progress ?? 0}%</span>
+              <span className="text-ink/50">uploading… {video.progress ?? 0}%</span>
             )}
             {video.status === "done" && <span className="text-brand">ready ✓</span>}
             {video.status === "error" && <span className="text-red-600">upload failed</span>}
@@ -753,9 +771,9 @@ export default function PropertyForm({ existing }) {
             />
           </div>
         )}
-        <p className="mt-1 text-xs text-slate-400">Max {limits.video.maxMb} MB.</p>
+        <p className="mt-1 text-xs text-ink/40">Max {limits.video.maxMb} MB.</p>
         {existing?.video_url && !video && (
-          <p className="mt-1 text-xs text-slate-500">A video is already uploaded.</p>
+          <p className="mt-1 text-xs text-ink/50">A video is already uploaded.</p>
         )}
       </div>
 
@@ -768,17 +786,18 @@ export default function PropertyForm({ existing }) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-brand px-6 py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          className="rounded-lg bg-brand px-6 py-2.5 font-semibold text-ink hover:bg-brand-dark disabled:opacity-60"
         >
           {loading ? "Saving…" : isEdit ? "Save changes" : "Create listing"}
         </button>
         <button
           type="button"
           onClick={handleCancel}
-          className="rounded-lg border border-slate-300 px-6 py-2.5 font-medium text-slate-600 hover:bg-slate-50"
+          className="rounded-lg border border-slate-300 px-6 py-2.5 font-medium text-ink/70 hover:bg-mist"
         >
           Cancel
         </button>
+      </div>
       </div>
     </form>
   );
@@ -788,21 +807,21 @@ export default function PropertyForm({ existing }) {
 // `status`/`progress` (optional) show an upload overlay for newly-picked images.
 function PhotoTile({ src, index, total, isCover, status, progress, onMove, onRemove }) {
   return (
-    <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200">
+    <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-line">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" className="h-full w-full object-cover" />
       {isCover && (
-        <span className="absolute left-0 top-0 rounded-br-md bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-white">
+        <span className="absolute left-0 top-0 rounded-br-md bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-ink">
           Cover
         </span>
       )}
       {status === "uploading" && (
-        <span className="absolute inset-0 grid place-items-center bg-black/50 text-xs font-semibold text-white">
+        <span className="absolute inset-0 grid place-items-center bg-black/50 text-xs font-semibold text-ink">
           {progress ?? 0}%
         </span>
       )}
       {status === "error" && (
-        <span className="absolute inset-0 grid place-items-center bg-red-600/70 text-[10px] font-medium text-white">
+        <span className="absolute inset-0 grid place-items-center bg-red-600/70 text-[10px] font-medium text-ink">
           failed
         </span>
       )}
@@ -810,11 +829,11 @@ function PhotoTile({ src, index, total, isCover, status, progress, onMove, onRem
         type="button"
         onClick={onRemove}
         title="Remove"
-        className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-red-600 text-xs text-white"
+        className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-red-600 text-xs text-ink"
       >
         ✕
       </button>
-      <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/45 text-white">
+      <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/45 text-ink">
         <button
           type="button"
           disabled={index === 0}

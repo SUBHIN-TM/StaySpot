@@ -9,14 +9,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home } from "lucide-react";
+import { Home, ExternalLink } from "lucide-react";
 import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
 import { apiGet } from "@/lib/api";
 import NotificationBell from "@/components/NotificationBell";
 import OwnerAvatarMenu from "@/components/owner/OwnerAvatarMenu";
 import { SAGE, GOLD, OLIVE, LINE, CREAM } from "@/components/public/palette";
 
-export default function OwnerShell({ active, children }) {
+export default function OwnerShell({ active, children, bgClass }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState(null);
@@ -74,18 +74,19 @@ export default function OwnerShell({ active, children }) {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: CREAM }}>
-      {/* Sticky top bar */}
-      <header
-        className="sticky top-0 z-40"
-        style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderBottom: `1px solid ${LINE}`,
-        }}
-      >
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+    <div className={`min-h-screen ${bgClass || ""}`} style={bgClass ? undefined : { background: CREAM }}>
+      {/* Floating, detached "pill" top bar (matches the landing page navbar). */}
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4 sm:pt-4">
+        <div
+          className="mx-auto flex h-14 w-full max-w-6xl items-center gap-4 rounded-full px-4 sm:px-6"
+          style={{
+            background: "linear-gradient(155deg, rgba(255,255,255,0.92), rgba(255,255,255,0.8))",
+            backdropFilter: "blur(22px) saturate(130%)",
+            WebkitBackdropFilter: "blur(22px) saturate(130%)",
+            border: "1px solid rgba(255,255,255,0.65)",
+            boxShadow: "0 16px 44px rgba(30,37,33,0.2), inset 0 1px 0 rgba(255,255,255,0.6)",
+          }}
+        >
           {/* Logo + OWNER pill */}
           <Link href="/owner" className="flex flex-shrink-0 items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: SAGE }}>
@@ -93,10 +94,13 @@ export default function OwnerShell({ active, children }) {
             </span>
             <span className="font-bold" style={{ color: OLIVE }}>StayMate</span>
             <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
-              style={{ background: `${GOLD}26`, color: "#9A6B18" }}
+              className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white"
+              style={{
+                background: "linear-gradient(135deg, #D4A359, #B07C1E)",
+                boxShadow: "0 2px 8px rgba(176,124,30,0.45)",
+              }}
             >
-              OWNER
+              Owner
             </span>
           </Link>
 
@@ -108,8 +112,8 @@ export default function OwnerShell({ active, children }) {
                 <Link
                   key={l.key}
                   href={l.href}
-                  className="text-sm font-medium transition-opacity hover:opacity-100"
-                  style={{ color: on ? GOLD : OLIVE, opacity: on ? 1 : 0.72 }}
+                  className="text-sm font-semibold transition-colors"
+                  style={{ color: on ? "#9A6B18" : OLIVE }}
                 >
                   {l.label}
                 </Link>
@@ -121,10 +125,10 @@ export default function OwnerShell({ active, children }) {
           <div className="ml-auto flex items-center gap-2 sm:gap-3 md:ml-0">
             <Link
               href="/"
-              className="hidden items-center gap-1 text-sm font-medium transition-opacity hover:opacity-80 lg:flex"
+              className="hidden items-center gap-1.5 text-sm font-semibold transition-opacity hover:opacity-80 lg:flex"
               style={{ color: SAGE }}
             >
-              View public site ↗
+              View public site <ExternalLink size={14} />
             </Link>
             <NotificationBell token={getUserToken()} messagesPath="/messages" />
             <OwnerAvatarMenu user={user} onLogout={logout} />

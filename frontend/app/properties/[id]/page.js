@@ -6,6 +6,7 @@
 // ───────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import Navbar from "@/components/public/Navbar";
 import Footer from "@/components/public/Footer";
 import ImageCarousel from "@/components/public/ImageCarousel";
@@ -59,8 +60,8 @@ export default async function PropertyDetailPage({ params }) {
         <main className="mx-auto max-w-3xl px-4 py-20 text-center">
           <h1 className="text-2xl font-bold text-slate-900">Listing not found</h1>
           <p className="mt-2 text-slate-500">It may have been removed or is no longer available.</p>
-          <Link href="/properties" className="mt-6 inline-block font-semibold text-brand hover:underline">
-            ← Back to listings
+          <Link href="/properties" className="mt-6 inline-flex items-center gap-1.5 font-semibold text-brand hover:underline">
+            <ArrowLeft size={16} /> Back to listings
           </Link>
         </main>
         <Footer />
@@ -91,8 +92,8 @@ export default async function PropertyDetailPage({ params }) {
     <>
       <Navbar />
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <Link href="/properties" className="text-sm font-medium text-brand hover:underline">
-          ← Back to listings
+        <Link href="/properties" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline">
+          <ArrowLeft size={15} /> Back to listings
         </Link>
 
         {/* Gallery */}

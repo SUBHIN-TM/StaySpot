@@ -83,9 +83,9 @@ export default async function PropertiesPage({ searchParams }) {
   };
 
   return (
-    <>
+    <div className="galaxy-bg min-h-screen">
       <Navbar />
-      <main className="min-h-screen bg-cream">
+      <main>
         <div className="mx-auto max-w-[1760px] px-4 py-10 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-baseline gap-x-3">
             <h1 className="text-3xl font-bold text-ink">{heading}</h1>
@@ -121,6 +121,6 @@ export default async function PropertiesPage({ searchParams }) {
         </div>
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

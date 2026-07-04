@@ -1,7 +1,9 @@
 // A single roommate-post card. Used by /roommates and /roommates/mine.
 // `onDeleted` is optional — passed through to the actions (used by "My posts").
 
+import { MapPin, CalendarDays, Home, Search, BedDouble, Users, Building2 } from "lucide-react";
 import RoommatePostActions from "./RoommatePostActions";
+import { PROPERTY_TYPE_LABEL } from "@/lib/listingMeta";
 
 function fmtDate(d) {
   if (!d) return null;
@@ -12,47 +14,111 @@ function fmtDate(d) {
   }
 }
 
-export default function RoommatePostCard({ post, onDeleted }) {
-  return (
-    <div className="rounded-2xl border border-ink/10 bg-white p-5 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-grape/10">
-      <h2 className="text-lg font-semibold text-ink">{post.title}</h2>
+// Labels for the clarifier fields.
+const POST_TYPE = {
+  have_place: { label: "Has a place", Icon: Home, cls: "bg-green-100 text-green-700" },
+  seeking: { label: "Looking to share", Icon: Search, cls: "bg-coral/15 text-coral" },
+};
+const ROOM_TYPE = { private: "Private room", shared: "Shared room", entire: "Entire place" };
+const PLACE_TYPE = PROPERTY_TYPE_LABEL; // shared list (lib/listingMeta)
 
-      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-        {post.preferred_location && (
-          <span className="rounded-full bg-coral/10 px-2.5 py-1 font-medium text-coral">
-            📍 {post.preferred_location}
+export default function RoommatePostCard({ post, onDeleted }) {
+  const initial = (post.user?.name || "U").charAt(0).toUpperCase();
+  const pt = POST_TYPE[post.post_type];
+  const basis = post.budget_basis === "total" ? "total" : "per person";
+  // People sharing range + computed total range (budget is per person).
+  const pMin = post.persons || null;
+  const pMax = post.persons_max && post.persons_max !== pMin ? post.persons_max : null;
+  const inr = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
+  const peopleLabel = pMin ? (pMax ? `${pMin}–${pMax} sharing` : `${pMin} sharing`) : null;
+  let totalLabel = null;
+  if (post.budget != null && pMin) {
+    const lo = Number(post.budget) * Number(pMin);
+    const hi = pMax ? Number(post.budget) * Number(pMax) : null;
+    totalLabel = hi ? `Total ${inr(lo)}–${inr(hi)}/mo` : `Total ${inr(lo)}/mo`;
+  }
+
+  return (
+    <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-ink/10 bg-white p-6 shadow-sm transition-[box-shadow,border-color] duration-300 hover:border-grape/45 hover:shadow-xl hover:shadow-grape/15 hover:ring-2 hover:ring-grape/25 sm:p-7">
+      {/* Top gradient accent line */}
+      <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sun via-coral to-grape" />
+
+      {/* Header: poster + prominent budget */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sun via-coral to-grape text-base font-bold text-white shadow ring-2 ring-white">
+            {post.user?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={post.user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+            ) : (
+              initial
+            )}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold capitalize text-ink">{post.user?.name || "User"}</p>
+            {fmtDate(post.created_at) && (
+              <p className="text-xs text-ink/45">Posted {fmtDate(post.created_at)}</p>
+            )}
+          </div>
+        </div>
+
+        {post.budget != null && (
+          <div className="shrink-0 rounded-2xl bg-grape/8 px-3.5 py-2 text-right ring-1 ring-grape/15">
+            <p className="text-lg font-bold leading-none text-grape">
+              ₹{Number(post.budget).toLocaleString("en-IN")}
+            </p>
+            <p className="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-ink/45">{basis} / month</p>
+          </div>
+        )}
+      </div>
+
+      {/* Post-type badge + title */}
+      {pt && (
+        <span className={`mt-5 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${pt.cls}`}>
+          <pt.Icon size={12} /> {pt.label}
+        </span>
+      )}
+      <h2 className={`${pt ? "mt-2" : "mt-5"} text-xl font-bold leading-snug text-ink`}>{post.title}</h2>
+
+      {/* Meta chips */}
+      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        {PLACE_TYPE[post.place_type] && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 font-medium text-ink/70">
+            <Building2 size={13} /> {PLACE_TYPE[post.place_type]}
           </span>
         )}
-        {post.budget != null && (
-          <span className="rounded-full bg-cream px-2.5 py-1 font-medium text-ink/60">
-            💰 ₹{Number(post.budget).toLocaleString("en-IN")}/mo
+        {ROOM_TYPE[post.room_type] && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-grape/10 px-3 py-1.5 font-medium text-grape">
+            <BedDouble size={13} /> {ROOM_TYPE[post.room_type]}
+          </span>
+        )}
+        {peopleLabel && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 font-medium text-ink/60">
+            <Users size={13} /> {peopleLabel}
+          </span>
+        )}
+        {totalLabel && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-sun/15 px-3 py-1.5 font-semibold text-[#9A6B18]">
+            {totalLabel}
+          </span>
+        )}
+        {post.preferred_location && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-coral/10 px-3 py-1.5 font-medium text-coral">
+            <MapPin size={13} /> {post.preferred_location}
           </span>
         )}
         {fmtDate(post.move_in_date) && (
-          <span className="rounded-full bg-cream px-2.5 py-1 font-medium text-ink/60">
-            📅 from {fmtDate(post.move_in_date)}
+          <span className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 font-medium text-ink/60">
+            <CalendarDays size={13} /> {post.post_type === "have_place" ? "Available" : "Move-in"} {fmtDate(post.move_in_date)}
           </span>
         )}
       </div>
 
       {post.description && (
-        <p className="mt-3 line-clamp-3 text-sm text-ink/60">{post.description}</p>
+        <p className="mt-4 line-clamp-3 flex-1 text-sm leading-relaxed text-ink/65">{post.description}</p>
       )}
 
-      <div className="mt-4 flex items-center justify-between border-t border-ink/10 pt-4">
-        <span className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sun via-coral to-grape text-xs font-bold text-white">
-            {post.user?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-            ) : (
-              (post.user?.name || "U").charAt(0).toUpperCase()
-            )}
-          </span>
-          <span className="text-sm font-medium capitalize text-ink/70">
-            {post.user?.name || "User"}
-          </span>
-        </span>
+      <div className="mt-6 flex items-center justify-end border-t border-ink/10 pt-4">
         <RoommatePostActions post={post} onDeleted={onDeleted} />
       </div>
     </div>

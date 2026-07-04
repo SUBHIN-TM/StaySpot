@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import Navbar from "@/components/public/Navbar";
 import RoommatePostCard from "@/components/public/RoommatePostCard";
 import { apiGet } from "@/lib/api";
@@ -84,8 +85,8 @@ export default function MyRoommatePostsPage() {
           </div>
         )}
 
-        <Link href="/roommates" className="mt-8 inline-block text-sm text-ink/50 hover:text-coral">
-          ← Back to all roommates
+        <Link href="/roommates" className="mt-8 inline-flex items-center gap-1.5 text-sm text-ink/50 hover:text-coral">
+          <ArrowLeft size={15} /> Back to all roommates
         </Link>
         </div>
       </main>

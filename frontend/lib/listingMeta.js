@@ -9,6 +9,23 @@ import {
   Dumbbell, Sun, Sofa, Tag,
 } from "lucide-react";
 
+// Property / place types — the ONE shared list used by the owner property form,
+// the public search bar, AND the roommate post form (place type). Add a new type
+// here and it shows up in all three. Values are the snake_case strings stored in
+// the DB (no DB CHECK — it's validated in the app), labels are what users see.
+export const PROPERTY_TYPES = [
+  { value: "room", label: "Room" },
+  { value: "apartment", label: "Apartment" },
+  { value: "house", label: "House" },
+  { value: "villa", label: "Villa" },
+  { value: "studio", label: "Studio" },
+  { value: "pg", label: "PG" },
+  { value: "hostel", label: "Hostel" },
+  { value: "shared", label: "Shared" },
+];
+export const PROPERTY_TYPE_VALUES = PROPERTY_TYPES.map((t) => t.value);
+export const PROPERTY_TYPE_LABEL = Object.fromEntries(PROPERTY_TYPES.map((t) => [t.value, t.label]));
+
 // Multi-select amenities checklist (recommended + optional, all opt-in).
 export const AMENITIES = [
   { value: "wifi", label: "Free WiFi" },

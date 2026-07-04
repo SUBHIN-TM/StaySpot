@@ -33,7 +33,11 @@ export default function MessageUserButton({ userId, label = "Message", className
     setLoading(true);
     try {
       const d = await apiPost("/chat/conversations", { other_user_id: userId }, getUserToken());
-      router.push(`/messages?c=${d.conversation_id}`);
+      // Open the floating chat widget on this conversation (no /messages page).
+      window.dispatchEvent(
+        new CustomEvent("staymate:open-chat", { detail: { conversationId: d.conversation_id } })
+      );
+      setLoading(false);
     } catch (e) {
       alert(e.message);
       setLoading(false);

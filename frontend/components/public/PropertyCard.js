@@ -72,8 +72,8 @@ export default function PropertyCard({ property }) {
       // On hover we only HIGHLIGHT the card (brand outline + stronger shadow) —
       // no zoom or movement. The base border/shadow are inline styles, so the
       // highlight uses `outline` (a separate property that follows the radius).
-      className="group/card block rounded-3xl overflow-hidden bg-white transition-all duration-300 shadow-[0_4px_20px_rgba(30,37,33,.07)] hover:outline hover:outline-2 hover:[outline-color:var(--color-brand)] hover:shadow-[0_10px_30px_rgba(30,37,33,.16)]"
-      style={{ border: "1px solid var(--color-line)" }}
+      className="group/card block rounded-3xl overflow-hidden bg-[#FBF5E8]/85 backdrop-blur-md transition-all duration-300 shadow-[0_6px_22px_rgba(74,90,80,.10)] hover:outline hover:outline-2 hover:[outline-color:var(--color-brand)] hover:shadow-[0_12px_34px_rgba(74,90,80,.18)]"
+      style={{ border: "1px solid rgba(212,163,89,0.28)" }}
     >
       {/* Image + badges. The zoom-on-hover is applied to the image itself
           (inside the carousel) — NOT to a wrapper — so the arrows don't scale
@@ -126,7 +126,7 @@ export default function PropertyCard({ property }) {
               <span
                 key={key}
                 className="inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap"
-                style={{ background: "var(--color-line)", color: "#5B6B63" }}
+                style={{ background: "rgba(212,163,89,0.16)", color: "#6B5B36" }}
               >
                 <Icon size={12} strokeWidth={2} />
                 {label}

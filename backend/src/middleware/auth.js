@@ -30,13 +30,21 @@ async function requireAuth(req, res, next) {
   //    (which made it look like a fresh login had failed).
   try {
     const { rows } = await query(
-      'SELECT id, email, role, name, is_blocked FROM users WHERE id = $1',
+      'SELECT id, email, role, name, is_blocked, last_seen_at FROM users WHERE id = $1',
       [decoded.sub]
     );
     if (!rows[0]) return next(new ApiError(401, 'User no longer exists'));
     if (rows[0].is_blocked) return next(new ApiError(403, 'Your account has been blocked'));
 
     req.user = rows[0];
+
+    // Presence: bump last_seen_at at most once a minute (drives the chat "online"
+    // dot). Best-effort and non-blocking — never delays or fails the request.
+    const seen = rows[0].last_seen_at ? new Date(rows[0].last_seen_at).getTime() : 0;
+    if (Date.now() - seen > 60 * 1000) {
+      query('UPDATE users SET last_seen_at = now() WHERE id = $1', [rows[0].id]).catch(() => {});
+    }
+
     next();
   } catch (err) {
     return next(err); // e.g. DB unreachable → handled as a 500, not a 401

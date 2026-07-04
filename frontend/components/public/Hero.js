@@ -65,8 +65,8 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.65, ease: EASE }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-medium"
-          style={{ background: `${GOLD}28`, border: `1px solid ${GOLD}55`, color: GOLD, backdropFilter: "blur(12px)" }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold"
+          style={{ background: "transparent", border: `1px solid ${GOLD}66`, color: GOLD }}
         >
           <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: GOLD }} />
           Kerala&apos;s Most Trusted Rental Platform

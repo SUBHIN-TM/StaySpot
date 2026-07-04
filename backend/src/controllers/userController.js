@@ -7,6 +7,16 @@ const { asyncHandler, ApiError } = require('../utils/http');
 const { publicUser, selfUser, adminUser } = require('../utils/serialize');
 const { claimKeys } = require('../services/pendingUploads');
 const { recordAudit, diffChanges } = require('../services/audit');
+const { createOtp, checkOtp, consumeOtp } = require('../services/otp');
+const { sendOtpEmail } = require('../services/mail');
+
+// Mask an email for confirmation UIs, e.g. "jo***@gmail.com".
+function maskEmail(email) {
+  const [name, domain] = String(email || '').split('@');
+  if (!domain) return email;
+  const shown = name.slice(0, 2);
+  return `${shown}${'*'.repeat(Math.max(1, name.length - 2))}@${domain}`;
+}
 
 // GET /api/users/:id  (public profile)
 const getUser = asyncHandler(async (req, res) => {
@@ -18,7 +28,7 @@ const getUser = asyncHandler(async (req, res) => {
 // PATCH /api/users/me  (update own profile)
 // Editable: name, username, password (all optional — only sent fields change).
 const updateMe = asyncHandler(async (req, res) => {
-  const { name, username, password, gender, occupation } = req.body || {};
+  const { name, username, password, otp, gender, occupation } = req.body || {};
 
   // If changing the username, make sure no one else has it.
   let cleanUsername = null;
@@ -31,11 +41,15 @@ const updateMe = asyncHandler(async (req, res) => {
     if (clash.rows[0]) throw new ApiError(409, 'That username is already taken');
   }
 
-  // If changing the password, validate and hash it.
+  // If changing the password, validate, and require an email-OTP that the user
+  // confirmed first (POST /users/me/password-otp). This protects against someone
+  // changing the password on an unlocked/hijacked session.
   let password_hash = null;
   if (password) {
     if (String(password).length < 6)
       throw new ApiError(400, 'Password must be at least 6 characters');
+    const ok = await checkOtp(req.user.email, 'password_change', otp);
+    if (!ok) throw new ApiError(400, 'Enter the verification code we emailed you to change your password');
     password_hash = await hashPassword(String(password));
   }
 
@@ -58,6 +72,9 @@ const updateMe = asyncHandler(async (req, res) => {
     [req.user.id, name ?? null, cleanUsername, password_hash, gender ?? null, occupation ?? null]
   );
 
+  // Password changed successfully → burn the one-time code so it can't be reused.
+  if (password) await consumeOtp(req.user.email, 'password_change');
+
   const changes = diffChanges(before, rows[0], ['name', 'username', 'gender', 'occupation']);
   if (password) changes.password = { changed: true };
   if (Object.keys(changes).length) {
@@ -66,6 +83,88 @@ const updateMe = asyncHandler(async (req, res) => {
       actor: req.user, changes, countsAsEdit: true,
     });
   }
+  res.json({ user: selfUser(rows[0]) });
+});
+
+// POST /api/users/me/password-otp
+// Emails the logged-in user a one-time code to authorize a password change.
+const sendPasswordOtp = asyncHandler(async (req, res) => {
+  const { rows } = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+  const email = rows[0]?.email;
+  if (!email) throw new ApiError(404, 'User not found');
+  const code = await createOtp(email, 'password_change');
+  await sendOtpEmail(email, code);
+  res.json({ sent: true, email: maskEmail(email) });
+});
+
+// POST /api/users/me/become-owner
+// Upgrade a seeker account to an owner (an "owner" can do everything a seeker
+// can, plus list properties — so it's just a role promotion on the SAME account,
+// keeping their email, favourites, chats, etc.). Idempotent for existing owners;
+// admins are never changed.
+const becomeOwner = asyncHandler(async (req, res) => {
+  const cur = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+  const me = cur.rows[0];
+  if (!me) throw new ApiError(404, 'User not found');
+  if (me.role === 'admin') throw new ApiError(403, 'Admin accounts can’t become owners');
+  if (me.role === 'owner') return res.json({ user: selfUser(me) }); // already an owner
+
+  const { rows } = await query(
+    "UPDATE users SET role = 'owner', updated_at = now() WHERE id = $1 RETURNING *",
+    [req.user.id]
+  );
+  await recordAudit({
+    entityType: 'user', entityId: req.user.id, action: 'update',
+    actor: req.user, changes: { role: { from: 'seeker', to: 'owner' } }, countsAsEdit: true,
+  });
+  res.json({ user: selfUser(rows[0]) });
+});
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// POST /api/users/me/email-otp  { email }
+// Emails a one-time code to the NEW address so we can confirm the user owns it
+// before switching their login email.
+const sendEmailChangeOtp = asyncHandler(async (req, res) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  if (!EMAIL_RE.test(email)) throw new ApiError(400, 'Enter a valid email address');
+
+  const me = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+  if (me.rows[0]?.email === email) throw new ApiError(400, 'That is already your email');
+
+  const taken = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
+  if (taken.rows[0]) throw new ApiError(409, 'An account with this email already exists');
+
+  const code = await createOtp(email, 'email_change');
+  await sendOtpEmail(email, code);
+  res.json({ sent: true, email: maskEmail(email) });
+});
+
+// PATCH /api/users/me/email  { email, otp }
+// Verify the code we sent to the NEW address, then switch the login email.
+const changeEmail = asyncHandler(async (req, res) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  const otp = req.body?.otp;
+  if (!EMAIL_RE.test(email)) throw new ApiError(400, 'Enter a valid email address');
+
+  const taken = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
+  if (taken.rows[0]) throw new ApiError(409, 'An account with this email already exists');
+
+  const ok = await checkOtp(email, 'email_change', otp);
+  if (!ok) throw new ApiError(400, 'Enter the verification code we emailed to the new address');
+
+  const { rows } = await query(
+    'UPDATE users SET email = $2, updated_at = now() WHERE id = $1 RETURNING *',
+    [req.user.id, email]
+  );
+  await consumeOtp(email, 'email_change');
+
+  await recordAudit({
+    entityType: 'user', entityId: req.user.id, action: 'update',
+    actor: req.user, changes: { email: { changed: true } }, countsAsEdit: true,
+  });
+
+  // The JWT is keyed by user id (not email), so the session stays valid.
   res.json({ user: selfUser(rows[0]) });
 });
 
@@ -224,6 +323,6 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  getUser, updateMe, submitPhone, uploadAvatar,
+  getUser, updateMe, sendPasswordOtp, sendEmailChangeOtp, changeEmail, becomeOwner, submitPhone, uploadAvatar,
   listUsers, verifyPhone, deleteUser, setBlocked,
 };

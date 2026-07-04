@@ -8,7 +8,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Heart, MessageCircle, UserPen, LogOut, LayoutDashboard } from "lucide-react";
+import { Heart, UserPen, LogOut, LayoutDashboard } from "lucide-react";
 import { SAGE, GOLD, OLIVE, LINE, CREAM } from "./palette";
 
 function initials(name = "") {
@@ -106,7 +106,6 @@ export default function AvatarMenu({ user, onLogout }) {
               <MenuLink href="/owner" icon={LayoutDashboard} label="Owner dashboard" onClick={() => setOpen(false)} accent />
             )}
             <MenuLink href="/wishlist" icon={Heart} label="Wishlist" onClick={() => setOpen(false)} />
-            <MenuLink href="/messages" icon={MessageCircle} label="Messages" onClick={() => setOpen(false)} />
             <MenuLink href="/profile" icon={UserPen} label="Edit profile" onClick={() => setOpen(false)} />
 
             <div className="my-1" style={{ borderTop: `1px solid ${LINE}` }} />

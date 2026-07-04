@@ -110,26 +110,26 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
+    <div className="grid min-h-screen place-items-center auth-bg px-4 py-6">
+      <div className="w-full max-w-md rounded-2xl auth-card p-6">
         {/* Logo */}
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
             S
           </span>
-          <span className="text-xl font-bold text-slate-900">StayMate</span>
+          <span className="text-xl font-bold text-white">StayMate</span>
         </Link>
 
-        <h1 className="text-center text-xl font-semibold text-slate-900">Welcome back</h1>
-        <p className="mt-1 text-center text-sm text-slate-500">
+        <h1 className="text-center text-xl font-semibold text-white">Welcome back</h1>
+        <p className="mt-1 text-center text-sm text-white/60">
           Sign in to save favourites and message owners.
         </p>
 
         {error && (
-          <p className="mt-5 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">{error}</p>
+          <p className="mt-5 flex items-center justify-center gap-2 rounded-lg border border-red-400/30 bg-red-500/15 px-3 py-2.5 text-center text-sm font-medium text-red-200">{error}</p>
         )}
         {info && !error && (
-          <p className="mt-5 rounded-lg bg-blue-50 px-3 py-2 text-center text-sm text-brand">{info}</p>
+          <p className="mt-5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2.5 text-center text-sm font-medium text-gold">{info}</p>
         )}
 
         {/* 1. Google */}
@@ -143,20 +143,20 @@ export default function LoginPage() {
               width="320"
             />
           ) : (
-            <p className="text-sm text-slate-400">Google sign-in isn’t configured yet.</p>
+            <p className="text-sm text-white/45">Google sign-in isn’t configured yet.</p>
           )}
         </div>
 
         {/* Divider */}
-        <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" />
+        <div className="my-6 flex items-center gap-3 text-xs text-white/45">
+          <span className="h-px flex-1 bg-white/10" />
           OR
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-white/10" />
         </div>
 
         {/* Username / email (shared) */}
         <div>
-          <label className="block text-sm font-medium text-slate-700">Username or email</label>
+          <label className="block text-sm font-medium text-white/80">Username or email</label>
           <input
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
@@ -164,8 +164,8 @@ export default function LoginPage() {
             // Once a code is sent it's locked — use "Edit" below to change it.
             readOnly={mode === "otp" && otpSent}
             className={
-              "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand" +
-              (mode === "otp" && otpSent ? " cursor-not-allowed bg-slate-100 text-slate-500" : "")
+              "mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold" +
+              (mode === "otp" && otpSent ? " cursor-not-allowed bg-white/5 text-white/60" : "")
             }
           />
         </div>
@@ -174,12 +174,12 @@ export default function LoginPage() {
         {mode === "password" && (
           <form onSubmit={handlePasswordLogin} className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Password</label>
+              <label className="block text-sm font-medium text-white/80">Password</label>
               <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+                className="mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold"
               />
             </div>
             <button
@@ -192,7 +192,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setMode("otp"); setError(""); setInfo(""); }}
-              className="w-full text-center text-sm font-medium text-brand hover:underline"
+              className="w-full text-center text-sm font-medium text-gold hover:underline"
             >
               Log in with OTP instead
             </button>
@@ -207,21 +207,21 @@ export default function LoginPage() {
                 type="button"
                 onClick={sendOtp}
                 disabled={sending}
-                className="w-full rounded-lg bg-slate-900 py-2.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                className="w-full rounded-lg bg-gold py-2.5 font-semibold text-ink hover:bg-gold/90 disabled:opacity-60"
               >
                 {sending ? "Sending…" : "Send OTP to my email"}
               </button>
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Enter the code</label>
+                  <label className="block text-sm font-medium text-white/80">Enter the code</label>
                   <input
                     value={otpInput}
                     onChange={(e) => setOtpInput(e.target.value)}
                     placeholder="6-digit code from your email"
                     inputMode="numeric"
                     maxLength={6}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 tracking-widest outline-none focus:border-brand"
+                    className="mt-1 w-full rounded-lg border border-white/15 px-3 py-2 tracking-widest outline-none focus:border-gold"
                   />
                 </div>
                 <button
@@ -239,14 +239,14 @@ export default function LoginPage() {
                     type="button"
                     onClick={sendOtp}
                     disabled={sending}
-                    className="font-medium text-brand hover:underline disabled:opacity-60"
+                    className="font-medium text-gold hover:underline disabled:opacity-60"
                   >
                     {sending ? "Sending…" : "Resend code"}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setOtpSent(false); setOtpInput(""); setError(""); setInfo(""); }}
-                    className="font-medium text-slate-500 hover:underline"
+                    className="font-medium text-white/60 hover:underline"
                   >
                     Edit email/username
                   </button>
@@ -256,18 +256,18 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setMode("password"); setOtpSent(false); setOtpInput(""); setError(""); setInfo(""); }}
-              className="w-full text-center text-sm font-medium text-brand hover:underline"
+              className="w-full text-center text-sm font-medium text-gold hover:underline"
             >
               Use password instead
             </button>
           </div>
         )}
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-white/60">
           New to StayMate?{" "}
           <Link
             href={nextUrl !== "/" ? `/signup?next=${encodeURIComponent(nextUrl)}` : "/signup"}
-            className="font-medium text-brand hover:underline"
+            className="font-medium text-gold hover:underline"
           >
             Create an account
           </Link>

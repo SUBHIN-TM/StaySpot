@@ -26,7 +26,7 @@ export default function EditPropertyPage() {
   }, [id]);
 
   return (
-    <OwnerShell active="dashboard">
+    <OwnerShell active="dashboard" bgClass="galaxy-bg">
       <h1 className="text-2xl font-bold text-ink">Edit property</h1>
       <p className="mt-1 mb-6 text-ink/60">Update your listing details.</p>
       {error ? (

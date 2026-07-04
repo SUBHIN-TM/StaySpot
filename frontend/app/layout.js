@@ -3,6 +3,7 @@ import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import NavProgress from "@/components/NavProgress";
+import ChatWidget from "@/components/chat/ChatWidget";
 
 // Brand typography (matches the design): Inter for body text, DM Sans for
 // headings. Both are exposed as CSS variables and wired up in globals.css.
@@ -48,6 +49,9 @@ export default function RootLayout({ children }) {
           <NavProgress />
         </Suspense>
         <Providers>{children}</Providers>
+        {/* Site-wide floating chat widget (role-aware; hides itself on auth
+            and full-chat pages). */}
+        <ChatWidget />
       </body>
     </html>
   );

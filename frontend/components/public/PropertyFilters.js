@@ -119,7 +119,8 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
 
   // ── shared styles ──
   const input =
-    "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-sage";
+    "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-sage";
+  const selectCls = `${input} app-select`; // adds the custom chevron + right gap
   const groupLabel = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/50";
 
   const Panel = (
@@ -128,7 +129,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
       {/* District */}
       <div>
         <label className={groupLabel}>District</label>
-        <select className={input} value={district} onChange={(e) => { setDistrict(e.target.value); apply({ district: e.target.value }); }}>
+        <select className={selectCls} value={district} onChange={(e) => { setDistrict(e.target.value); apply({ district: e.target.value }); }}>
           <option value="">Any district</option>
           {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
@@ -137,7 +138,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
       {/* Type */}
       <div>
         <label className={groupLabel}>Rental type</label>
-        <select className={input} value={type} onChange={(e) => { setType(e.target.value); apply({ type: e.target.value }); }}>
+        <select className={selectCls} value={type} onChange={(e) => { setType(e.target.value); apply({ type: e.target.value }); }}>
           <option value="">Any type</option>
           {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
@@ -146,7 +147,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
       {/* Availability */}
       <div>
         <label className={groupLabel}>Availability</label>
-        <select className={input} value={occupancy} onChange={(e) => { setOccupancy(e.target.value); apply({ occupancy: e.target.value }); }}>
+        <select className={selectCls} value={occupancy} onChange={(e) => { setOccupancy(e.target.value); apply({ occupancy: e.target.value }); }}>
           <option value="">Any</option>
           {OCCUPANCY.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -155,7 +156,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
       {/* Furnishing */}
       <div>
         <label className={groupLabel}>Furnishing</label>
-        <select className={input} value={furnishing} onChange={(e) => { setFurnishing(e.target.value); apply({ furnishing: e.target.value }); }}>
+        <select className={selectCls} value={furnishing} onChange={(e) => { setFurnishing(e.target.value); apply({ furnishing: e.target.value }); }}>
           <option value="">Any</option>
           {FURNISHING.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
@@ -232,7 +233,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
         </form>
 
         <select
-          className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-sage"
+          className="app-select rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-sage"
           value={sort}
           onChange={(e) => { setSort(e.target.value); apply({ sort: e.target.value }); }}
         >
@@ -241,12 +242,12 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
 
         {/* Page size — changing it resets to page 1 (handled in go()). */}
         <select
-          className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-sage"
+          className="app-select rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition-colors focus:border-sage"
           value={perPage}
           onChange={(e) => { const v = Number(e.target.value); setPerPage(v); apply({ perPage: v }); }}
           aria-label="Results per page"
         >
-          {PER_PAGE.map((n) => <option key={n} value={n}>{n} / page</option>)}
+          {PER_PAGE.map((n) => <option key={n} value={n}>{n} - Page</option>)}
         </select>
 
         {/* Mobile: open the filter drawer */}
@@ -280,7 +281,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
       {/* ── Mobile filter drawer (below the search bar; lg uses the in-grid tile) ── */}
       {open && (
         <aside className="mt-4 lg:hidden">
-          <div className="rounded-2xl border border-line bg-white p-5">
+          <div className="rounded-2xl border border-[#D4A359]/25 bg-[#FCF6E9]/85 p-5 shadow-sm backdrop-blur-md">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-bold text-ink">Filters</h2>
               {activeCount > 0 && (
@@ -307,7 +308,7 @@ export default function PropertyFilters({ initial = {}, resultCount = 0, childre
            first two rows; once the filter ends the grid returns to full rows of
            five. Grid auto-placement keeps every card aligned. ── */}
       <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <aside className="hidden rounded-2xl border border-line bg-white p-5 lg:row-span-2 lg:flex lg:flex-col">
+        <aside className="hidden rounded-2xl border border-[#D4A359]/25 bg-[#FCF6E9]/80 p-5 shadow-sm backdrop-blur-md lg:row-span-2 lg:flex lg:flex-col">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold text-ink">Filters</h2>
             {activeCount > 0 && (

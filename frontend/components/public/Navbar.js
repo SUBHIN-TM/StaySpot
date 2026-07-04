@@ -77,7 +77,7 @@ export default function Navbar() {
   const solid = scrolled || !onHero;
 
   const pillBg = solid ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.10)";
-  const txtCol = solid ? OLIVE : "rgba(255,255,255,0.92)";
+  const txtCol = solid ? OLIVE : "#ffffff";
   const shadow = solid
     ? "0 10px 48px rgba(30,37,33,0.14)"
     : "0 4px 24px rgba(0,0,0,0.14)";
@@ -122,8 +122,8 @@ export default function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className="text-sm font-medium transition-opacity duration-200 hover:opacity-100"
-                style={{ color: active ? GOLD : txtCol, opacity: active ? 1 : 0.72 }}
+                className="text-sm font-semibold transition-colors duration-200"
+                style={{ color: active ? GOLD : txtCol }}
               >
                 {l.label}
               </Link>

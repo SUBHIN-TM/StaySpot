@@ -21,8 +21,17 @@ function publicUser(u) {
     is_blocked: u.is_blocked ?? false,
     avatar_url: u.avatar_url ?? null, // single image field (Google pic or uploaded photo URL)
     phone_verified: u.phone_verified ?? false,
+    // Presence for the chat "online" dot: admins are ALWAYS shown online (support
+    // is always available); everyone else is online if seen in the last 3 minutes.
+    online: u.role === 'admin' ? true : isRecentlySeen(u.last_seen_at),
     created_at: u.created_at,
   };
+}
+
+// True if last_seen_at is within the presence window (3 minutes).
+function isRecentlySeen(ts) {
+  if (!ts) return false;
+  return Date.now() - new Date(ts).getTime() < 3 * 60 * 1000;
 }
 
 // The account owner viewing their OWN profile — adds their own phone number

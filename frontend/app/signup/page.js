@@ -87,7 +87,7 @@ export default function SignupPage() {
     try {
       await apiPost("/auth/verify-otp", { email, code: otpInput, purpose: "signup" });
       setEmailVerified(true);
-      setUsername(email); // prefill username with the email
+      setUsername(email.split("@")[0]); // prefill username with the email's local part (before @)
       setInfo("Email verified — finish creating your account.");
     } catch (err) {
       setError(err.message || "Invalid or expired code");
@@ -123,26 +123,26 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
+    <div className="grid min-h-screen place-items-center auth-bg px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl auth-card p-6">
         {/* Logo */}
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
             S
           </span>
-          <span className="text-xl font-bold text-slate-900">StayMate</span>
+          <span className="text-xl font-bold text-white">StayMate</span>
         </Link>
 
-        <h1 className="text-center text-xl font-semibold text-slate-900">Create your account</h1>
-        <p className="mt-1 text-center text-sm text-slate-500">
+        <h1 className="text-center text-xl font-semibold text-white">Create your account</h1>
+        <p className="mt-1 text-center text-sm text-white/60">
           Join StayMate to save favourites and message owners.
         </p>
 
         {error && (
-          <p className="mt-5 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">{error}</p>
+          <p className="mt-5 flex items-center justify-center gap-2 rounded-lg border border-red-400/30 bg-red-500/15 px-3 py-2.5 text-center text-sm font-medium text-red-200">{error}</p>
         )}
         {info && !error && (
-          <p className="mt-5 rounded-lg bg-blue-50 px-3 py-2 text-center text-sm text-brand">{info}</p>
+          <p className="mt-5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2.5 text-center text-sm font-medium text-gold">{info}</p>
         )}
 
         {/* Google sign-up */}
@@ -157,33 +157,33 @@ export default function SignupPage() {
               width="320"
             />
           ) : (
-            <p className="text-sm text-slate-400">Google sign-up isn’t configured yet.</p>
+            <p className="text-sm text-white/45">Google sign-up isn’t configured yet.</p>
           )}
         </div>
 
         {/* Divider */}
-        <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" />
+        <div className="my-6 flex items-center gap-3 text-xs text-white/45">
+          <span className="h-px flex-1 bg-white/10" />
           OR SIGN UP WITH EMAIL
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-white/10" />
         </div>
 
         {/* Manual sign-up */}
         <form onSubmit={handleSignup} className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">Name</label>
+            <label className="block text-sm font-medium text-white/80">Name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your full name"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+              className="mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold"
             />
           </div>
 
           {/* Email + verify */}
           <div>
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className="block text-sm font-medium text-white/80">Email</label>
             <div className="mt-1 flex gap-2">
               <input
                 type="email"
@@ -191,7 +191,7 @@ export default function SignupPage() {
                 disabled={emailVerified}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@gmail.com"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand disabled:bg-slate-100"
+                className="w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold disabled:bg-white/5"
               />
               {emailVerified ? (
                 <span className="grid place-items-center rounded-lg bg-green-100 px-3 text-sm font-medium text-green-700">
@@ -202,7 +202,7 @@ export default function SignupPage() {
                   type="button"
                   onClick={sendOtp}
                   disabled={loading}
-                  className="shrink-0 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                  className="shrink-0 rounded-lg bg-gold px-3 text-sm font-medium text-ink hover:bg-gold/90 disabled:opacity-60"
                 >
                   {otpSent ? "Resend" : "Verify"}
                 </button>
@@ -213,13 +213,13 @@ export default function SignupPage() {
           {/* OTP input (shown after sending, until verified) */}
           {otpSent && !emailVerified && (
             <div>
-              <label className="block text-sm font-medium text-slate-700">Enter the code</label>
+              <label className="block text-sm font-medium text-white/80">Enter the code</label>
               <div className="mt-1 flex gap-2">
                 <input
                   value={otpInput}
                   onChange={(e) => setOtpInput(e.target.value)}
                   placeholder="6-digit code from your email"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+                  className="w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold"
                 />
                 <button
                   type="button"
@@ -237,29 +237,29 @@ export default function SignupPage() {
           {emailVerified && (
             <>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Username</label>
+                <label className="block text-sm font-medium text-white/80">Username</label>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Password</label>
+                <label className="block text-sm font-medium text-white/80">Password</label>
                 <PasswordInput
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Confirm password</label>
+                <label className="block text-sm font-medium text-white/80">Confirm password</label>
                 <PasswordInput
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Re-enter password"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+                  className="mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold"
                 />
               </div>
               <button
@@ -273,11 +273,11 @@ export default function SignupPage() {
           )}
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-white/60">
           Already have an account?{" "}
           <Link
             href={nextUrl !== "/" ? `/login?next=${encodeURIComponent(nextUrl)}` : "/login"}
-            className="font-medium text-brand hover:underline"
+            className="font-medium text-gold hover:underline"
           >
             Log in
           </Link>

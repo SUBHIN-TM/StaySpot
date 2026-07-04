@@ -8,19 +8,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { districtsOf, DEFAULT_STATE } from "@/lib/geo";
+import { PROPERTY_TYPES } from "@/lib/listingMeta";
 import { startNavProgress } from "@/lib/navProgress";
 
-// Property types come straight from the backend schema's allowed values.
-const TYPES = [
-  { value: "", label: "Any type" },
-  { value: "room", label: "Room" },
-  { value: "apartment", label: "Apartment" },
-  { value: "house", label: "House" },
-  { value: "villa", label: "Villa" },
-  { value: "pg", label: "PG" },
-  { value: "hostel", label: "Hostel" },
-  { value: "shared", label: "Shared" },
-];
+// Property types come from the ONE shared list (lib/listingMeta), plus "Any".
+const TYPES = [{ value: "", label: "Any type" }, ...PROPERTY_TYPES];
 
 export default function SearchBar() {
   const router = useRouter();

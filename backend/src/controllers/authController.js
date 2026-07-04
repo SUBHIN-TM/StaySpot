@@ -21,6 +21,23 @@ function maskEmail(email) {
   return `${shown}@${domain}`;
 }
 
+// Default username derived from an email: the local part BEFORE the "@"
+// (e.g. "john.doe@gmail.com" → "john.doe"), lowercased.
+function usernameFromEmail(email) {
+  return String(email || '').split('@')[0].toLowerCase() || 'user';
+}
+
+// Find a free username starting from `base`, appending 2, 3, … on collisions.
+async function uniqueUsername(base) {
+  let candidate = base;
+  for (let n = 2; n < 10000; n++) {
+    const { rows } = await query('SELECT 1 FROM users WHERE username = $1', [candidate]);
+    if (!rows[0]) return candidate;
+    candidate = `${base}${n}`;
+  }
+  return `${base}${Date.now()}`;
+}
+
 // Client used to verify Google ID tokens against our OAuth client id.
 const googleClient = new OAuth2Client(env.googleClientId);
 
@@ -82,8 +99,11 @@ const register = asyncHandler(async (req, res) => {
   // The email must have been verified via OTP first.
   const otpOk = await checkOtp(cleanEmail, 'signup', otp);
   if (!otpOk) throw new ApiError(400, 'Please verify your email with the code we sent');
-  // Default the username to the email if one wasn't provided.
-  const cleanUsername = (username && String(username).trim()) || cleanEmail;
+  // Username: use what they typed, else default to the email's local part
+  // (before "@"), made unique — NOT the full email.
+  const cleanUsername = (username && String(username).trim())
+    ? String(username).trim().toLowerCase()
+    : await uniqueUsername(usernameFromEmail(cleanEmail));
 
   // Don't allow duplicate accounts.
   const existing = await query('SELECT id FROM users WHERE email = $1 OR username = $2', [
@@ -220,13 +240,15 @@ const googleAuth = asyncHandler(async (req, res) => {
     // username defaults to the email; password is a random hash they never use
     // (they always sign in via Google).
     const randomPassword = await hashPassword(`google:${googleId}:${name}`);
-    // Google's basic profile usually omits gender — save it if present, else null.
-    const gender = payload.gender || null;
+    // Note: Google's ID token doesn't include gender (it's not in the basic
+    // profile), so we don't set it here — users add it later in Edit profile.
+    // Username defaults to the email's local part (before "@"), made unique.
+    const uname = await uniqueUsername(usernameFromEmail(email));
     const created = await query(
-      `INSERT INTO users (email, username, name, role, google_id, avatar_url, password_hash, gender)
-       VALUES ($1, $1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (email, username, name, role, google_id, avatar_url, password_hash)
+       VALUES ($1, $7, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [email, name, desiredRole, googleId, avatar, randomPassword, gender]
+      [email, name, desiredRole, googleId, avatar, randomPassword, uname]
     );
     user = created.rows[0];
   } else {
