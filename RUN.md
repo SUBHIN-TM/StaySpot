@@ -80,6 +80,46 @@ Notes:
 
 ---
 
+## Updating a running server (redeploy)
+
+For when you push new code and want a **live** server to pick it up. Do it in this
+order so the API never runs against an out of date database.
+
+SSH into the server, then from the repo root:
+
+```bash
+git pull                       # 1. get the new code
+
+# 2. Backend
+cd backend
+npm install                    # only if dependencies changed
+npm run db:migrate             # apply any new migrations (safe to re-run)
+pm2 restart parppidam-api      # restart the API (or: sudo systemctl restart <your-api-service>)
+
+# 3. Frontend
+cd ../frontend
+npm install                    # only if dependencies changed
+npm run build                  # rebuild the production bundle
+pm2 restart parppidam-web      # restart the web app (or: sudo systemctl restart <your-web-service>)
+```
+
+4. **Changed an env value** (for example `MAIL_FROM_NAME`)? Edit the **server's**
+   `.env` first, then restart that service. The server keeps its own `.env`; your
+   local one is git ignored and does not travel with `git pull`.
+5. **Changed nginx config?** Reload it: `sudo nginx -t && sudo systemctl reload nginx`.
+
+Checks and cautions:
+- Run `db:migrate` **before** restarting the API whenever a change needs a new
+  column or table, so the new code never hits an old schema.
+- A normal update does **not** change the database name (`staymate`), the browser
+  storage keys, or the admin login email. Leave those alone.
+- Confirm it came back up: `curl http://localhost:4000/health` → `{"status":"ok"}`.
+  App side errors (5xx) are viewable at `GET /api/log-error` (see `CLAUDE.md`).
+- Replace `parppidam-api` / `parppidam-web` with whatever you named your pm2 or
+  systemd services (`pm2 list` shows them).
+
+---
+
 ## All npm scripts
 
 ### Backend (`cd backend && npm run <name>`)
