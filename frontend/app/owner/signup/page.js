@@ -173,7 +173,7 @@ export default function OwnerSignupPage() {
     "mt-1 w-full rounded-lg border border-white/15 px-3 py-2 outline-none focus:border-gold";
 
   return (
-    <div className="grid min-h-screen place-items-center auth-bg-owner px-4 py-10">
+    <div className="flex min-h-[100dvh] items-center justify-center auth-bg-owner px-4 py-10">
       <div className="w-full max-w-md rounded-2xl auth-card p-6">
         {/* Distinct emerald "Owner Portal" banner (matches the owner login). */}
         <div className="-mx-6 -mt-6 mb-5 rounded-t-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 px-6 py-4 text-center text-white">

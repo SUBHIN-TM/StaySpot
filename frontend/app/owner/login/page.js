@@ -104,7 +104,7 @@ export default function OwnerLoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center auth-bg-owner px-4 py-6">
+    <div className="flex min-h-[100dvh] items-center justify-center auth-bg-owner px-4 py-6">
       <div className="w-full max-w-md rounded-2xl auth-card p-6">
         {/* Distinct emerald "Owner Portal" banner — makes this page clearly the
             OWNER login, not the seeker/user login. */}

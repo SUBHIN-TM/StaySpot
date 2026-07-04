@@ -11,8 +11,8 @@ import { GOLD, SAGE, OLIVE } from "./palette";
 const EASE = [0.22, 1, 0.36, 1];
 
 const STEPS = [
-  { n: "01", I: Search, t: "Search & Filter", d: "Explore listings by city, type and budget — or find roommates. No account needed to browse." },
-  { n: "02", I: UserCheck, t: "Sign Up in Seconds", d: "Create an account with Google or email — verified by a one-time code (OTP)." },
+  { n: "01", I: Search, t: "Search & Filter", d: "Explore listings by city, type and budget, or find roommates. No account needed to browse." },
+  { n: "02", I: UserCheck, t: "Sign Up in Seconds", d: "Create an account with Google or email, verified by a one-time code (OTP)." },
   { n: "03", I: MessageCircle, t: "Chat Directly", d: "Message owners or potential roommates in-app. Ask questions, share details and arrange a visit." },
   { n: "04", I: Key, t: "Move In", d: "Pick the place that fits, agree the terms and settle into your new home." },
 ];
@@ -69,8 +69,8 @@ export default function HowItWorks() {
                   )}
                 </div>
 
-                <div className="flex-1 pt-1.5">
-                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: STEP_COLORS[i] }}>Step {step.n}</span>
+                <div className="flex-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest" style={{ color: STEP_COLORS[i] }}>Step {step.n}</span>
                   <h3 className="text-xl font-bold mt-1 mb-1.5" style={{ color: OLIVE }}>{step.t}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "#5A6B63" }}>{step.d}</p>
                 </div>

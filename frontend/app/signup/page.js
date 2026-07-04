@@ -124,7 +124,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center auth-bg px-4 py-10">
+    <div className="flex min-h-[100dvh] items-center justify-center auth-bg px-4 py-10">
       <div className="w-full max-w-md rounded-2xl auth-card p-6">
         {/* Logo */}
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
