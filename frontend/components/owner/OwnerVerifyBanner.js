@@ -11,6 +11,7 @@
 // The number is private — never shown publicly (see backend serialize.js).
 
 import { useState } from "react";
+import { ShieldCheck, Clock, Lock } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { getUserToken } from "@/lib/userAuth";
 
@@ -22,8 +23,8 @@ export default function OwnerVerifyBanner({ user, onChange }) {
   // State 3 — already verified. A quiet confirmation chip.
   if (user?.phone_verified) {
     return (
-      <div className="mt-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-        <span className="text-base">✓</span>
+      <div className="mt-6 flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <ShieldCheck size={18} className="shrink-0 text-green-600" />
         <span>
           You’re a <strong>verified owner</strong>. Your listings can show the verified badge.
         </span>
@@ -34,15 +35,17 @@ export default function OwnerVerifyBanner({ user, onChange }) {
   // State 2 — number submitted, waiting for the admin's call.
   if (user?.mobile_number) {
     return (
-      <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <p className="font-semibold">⏳ Verification in progress</p>
+      <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 text-sm text-amber-900">
+        <p className="flex items-center gap-2 font-semibold">
+          <Clock size={17} className="shrink-0" /> Verification in progress
+        </p>
         <p className="mt-1">
           Our team will call you on <strong>+91 {user.mobile_number}</strong> to confirm you’re a
           real person. Your listings stay <em>pending</em> until then.
         </p>
-        <p className="mt-1 text-xs text-amber-700">
-          🔒 Your number is private — it’s only for this one-time verification and is never shown to
-          the public or shared with anyone.
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-amber-700">
+          <Lock size={12} className="shrink-0" /> Your number is private — only for this one-time
+          verification, never shown to the public or shared with anyone.
         </p>
       </div>
     );
@@ -69,17 +72,19 @@ export default function OwnerVerifyBanner({ user, onChange }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-      <p className="font-semibold text-emerald-900">🛡️ Human verification needed</p>
-      <p className="mt-1 text-sm text-emerald-800">
+    <div className="mt-6 rounded-2xl border border-brand/25 bg-brand/5 px-4 py-4">
+      <p className="flex items-center gap-2 font-semibold text-ink">
+        <ShieldCheck size={18} className="shrink-0 text-brand" /> Human verification needed
+      </p>
+      <p className="mt-1 text-sm text-ink/70">
         Add your phone number so our team can verify you’re a real person. This is a one-time step —
-        once verified, all your listings are covered and can be approved & badged.
+        once verified, all your listings are covered and can be approved &amp; badged.
       </p>
 
       <form onSubmit={submit} className="mt-3 flex flex-wrap items-start gap-2">
-        <div className="flex overflow-hidden rounded-lg border border-emerald-300 bg-white">
+        <div className="flex overflow-hidden rounded-lg border border-brand/30 bg-white focus-within:border-brand">
           {/* +91 is locked for now (Kerala/India). More countries can be enabled later. */}
-          <span className="grid place-items-center bg-slate-100 px-3 text-sm font-medium text-slate-500">
+          <span className="grid place-items-center bg-mist px-3 text-sm font-medium text-ink/50">
             +91
           </span>
           <input
@@ -95,15 +100,16 @@ export default function OwnerVerifyBanner({ user, onChange }) {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60"
         >
           {busy ? "Saving…" : "Submit for verification"}
         </button>
       </form>
 
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      <p className="mt-2 text-xs text-emerald-700">
-        🔒 Your number stays private — only used for this one-time verification, never shown publicly.
+      <p className="mt-2 flex items-center gap-1.5 text-xs text-brand">
+        <Lock size={12} className="shrink-0" /> Your number stays private — only used for this
+        one-time verification, never shown publicly.
       </p>
     </div>
   );

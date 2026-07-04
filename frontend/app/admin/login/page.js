@@ -46,11 +46,11 @@ export default function AdminLoginPage() {
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
             S
           </span>
-          <span className="text-xl font-bold text-slate-900">StayMate</span>
+          <span className="text-xl font-bold text-ink">StayMate</span>
         </Link>
 
-        <h1 className="text-center text-xl font-semibold text-slate-900">Admin sign in</h1>
-        <p className="mt-1 text-center text-sm text-slate-500">
+        <h1 className="text-center text-xl font-semibold text-ink">Admin sign in</h1>
+        <p className="mt-1 text-center text-sm text-ink/60">
           Sign in to manage listings and users.
         </p>
 
@@ -60,25 +60,25 @@ export default function AdminLoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <label className="block text-sm font-medium text-ink/80">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@staymate.com"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2 outline-none focus:border-brand"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">Password</label>
+            <label className="block text-sm font-medium text-ink/80">Password</label>
             <PasswordInput
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2 outline-none focus:border-brand"
             />
           </div>
 
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <Link href="/" className="mt-6 block text-center text-sm text-slate-500 hover:text-brand">
+        <Link href="/" className="mt-6 block text-center text-sm text-ink/60 hover:text-brand">
           ← Back to website
         </Link>
       </div>

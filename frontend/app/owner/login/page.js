@@ -1,8 +1,8 @@
 "use client";
 
 // OWNER login page  (URL: "/owner/login")
-// Same methods as the user login (Google / password / OTP) but EMERALD-themed
-// so the owner side is visually distinct. Only accounts with role "owner" are
+// Same methods as the user login (Google / password / OTP) but sage/gold themed
+// to match the site. Only accounts with role "owner" are
 // allowed in — others are rejected. A successful login overwrites any previous
 // (user) session, so there's never a token clash.
 
@@ -103,14 +103,14 @@ export default function OwnerLoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-emerald-50 px-4 py-10">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md ring-1 ring-emerald-100">
+    <div className="grid min-h-screen place-items-center bg-cream px-4 py-10">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md ring-1 ring-line">
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-600 font-bold text-white">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
             S
           </span>
           <span className="text-xl font-bold text-slate-900">StayMate</span>
-          <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+          <span className="rounded bg-[#D4A359]/20 px-2 py-0.5 text-xs font-semibold text-[#9A6B18]">
             OWNER
           </span>
         </Link>
@@ -122,7 +122,7 @@ export default function OwnerLoginPage() {
           <p className="mt-5 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">{error}</p>
         )}
         {info && !error && (
-          <p className="mt-5 rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700">{info}</p>
+          <p className="mt-5 rounded-lg bg-brand/5 px-3 py-2 text-center text-sm text-brand">{info}</p>
         )}
 
         <div className="mt-6 flex justify-center">
@@ -154,7 +154,7 @@ export default function OwnerLoginPage() {
             // Once a code is sent it's locked — use "Edit" below to change it.
             readOnly={mode === "otp" && otpSent}
             className={
-              "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500" +
+              "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand" +
               (mode === "otp" && otpSent ? " cursor-not-allowed bg-slate-100 text-slate-500" : "")
             }
           />
@@ -168,20 +168,20 @@ export default function OwnerLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-emerald-600 py-2.5 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="w-full rounded-lg bg-brand py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {loading ? "Signing in…" : "Log in with password"}
             </button>
             <button
               type="button"
               onClick={() => { setMode("otp"); setError(""); setInfo(""); }}
-              className="w-full text-center text-sm font-medium text-emerald-700 hover:underline"
+              className="w-full text-center text-sm font-medium text-brand hover:underline"
             >
               Log in with OTP instead
             </button>
@@ -209,14 +209,14 @@ export default function OwnerLoginPage() {
                     placeholder="6-digit code from your email"
                     inputMode="numeric"
                     maxLength={6}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 tracking-widest outline-none focus:border-emerald-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 tracking-widest outline-none focus:border-brand"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={verifyOtpAndLogin}
                   disabled={loading}
-                  className="w-full rounded-lg bg-emerald-600 py-2.5 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                  className="w-full rounded-lg bg-brand py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   {loading ? "Verifying…" : "Verify & log in"}
                 </button>
@@ -227,7 +227,7 @@ export default function OwnerLoginPage() {
                     type="button"
                     onClick={sendOtp}
                     disabled={sending}
-                    className="font-medium text-emerald-700 hover:underline disabled:opacity-60"
+                    className="font-medium text-brand hover:underline disabled:opacity-60"
                   >
                     {sending ? "Sending…" : "Resend code"}
                   </button>
@@ -244,7 +244,7 @@ export default function OwnerLoginPage() {
             <button
               type="button"
               onClick={() => { setMode("password"); setOtpSent(false); setOtpInput(""); setError(""); setInfo(""); }}
-              className="w-full text-center text-sm font-medium text-emerald-700 hover:underline"
+              className="w-full text-center text-sm font-medium text-brand hover:underline"
             >
               Use password instead
             </button>
@@ -253,11 +253,11 @@ export default function OwnerLoginPage() {
 
         <p className="mt-6 text-center text-sm text-slate-500">
           New owner?{" "}
-          <Link href="/owner/signup" className="font-medium text-emerald-700 hover:underline">
+          <Link href="/owner/signup" className="font-medium text-brand hover:underline">
             Create an owner account
           </Link>
         </p>
-        <Link href="/" className="mt-3 block text-center text-sm text-slate-400 hover:text-emerald-700">
+        <Link href="/" className="mt-3 block text-center text-sm text-slate-400 hover:text-brand">
           ← Back to website
         </Link>
       </div>

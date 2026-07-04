@@ -10,7 +10,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/api";
+import { SAGE, GOLD, OLIVE, LINE, CREAM } from "@/components/public/palette";
 
 export default function NotificationBell({ token, messagesPath = "/messages" }) {
   const router = useRouter();
@@ -65,34 +67,63 @@ export default function NotificationBell({ token, messagesPath = "/messages" }) 
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={toggle} className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Notifications">
-        <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M11 4a5 5 0 0 0-5 5v3l-1 2h12l-1-2V9a5 5 0 0 0-5-5zM9 18a2 2 0 0 0 4 0" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <button
+        onClick={toggle}
+        className="relative rounded-lg p-2 transition-colors hover:bg-black/5"
+        style={{ color: OLIVE }}
+        aria-label="Notifications"
+      >
+        <Bell size={21} />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-xs font-bold text-white ring-2 ring-white">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-          <div className="border-b border-slate-100 px-4 py-2 text-sm font-semibold text-slate-900">
+        <div
+          className="absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl bg-white"
+          style={{ border: `1px solid ${LINE}`, boxShadow: "0 24px 70px rgba(30,37,33,0.18)" }}
+        >
+          <div
+            className="flex items-center gap-2 px-4 py-3 text-sm font-semibold"
+            style={{ background: CREAM, borderBottom: `1px solid ${LINE}`, color: OLIVE }}
+          >
+            <Bell size={15} color={SAGE} />
             Notifications
+            {unread > 0 && (
+              <span
+                className="ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold"
+                style={{ background: `${GOLD}26`, color: "#9A6B18" }}
+              >
+                {unread} new
+              </span>
+            )}
           </div>
           <div className="max-h-96 overflow-y-auto">
             {items.length === 0 ? (
-              <p className="p-4 text-sm text-slate-500">No notifications.</p>
+              <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                <Bell size={26} color={`${OLIVE}40`} />
+                <p className="text-sm" style={{ color: `${OLIVE}80` }}>No notifications yet.</p>
+              </div>
             ) : (
               items.map((n) => (
                 <button
                   key={n.id}
                   onClick={() => clickItem(n)}
-                  className="block w-full border-b border-slate-50 px-4 py-3 text-left hover:bg-slate-50"
+                  className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors"
+                  style={{ borderBottom: `1px solid ${LINE}` }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = CREAM)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                  {n.message && <p className="truncate text-xs text-slate-500">{n.message}</p>}
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: SAGE }} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium" style={{ color: OLIVE }}>{n.title}</span>
+                    {n.message && (
+                      <span className="block truncate text-xs" style={{ color: `${OLIVE}99` }}>{n.message}</span>
+                    )}
+                  </span>
                 </button>
               ))
             )}

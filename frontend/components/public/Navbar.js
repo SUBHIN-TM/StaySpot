@@ -163,15 +163,23 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Hamburger */}
-        <button
-          className="md:hidden ml-auto"
-          onClick={() => setOpen(!open)}
-          style={{ color: solid ? OLIVE : "white" }}
-          aria-label="Toggle menu"
-        >
-          {open ? <XIcon size={20} /> : <Menu size={20} />}
-        </button>
+        {/* Mobile right cluster: bell + avatar when logged in, then hamburger.
+            (Avatar must show on small screens too, not just desktop.) */}
+        <div className="flex md:hidden items-center gap-2 ml-auto">
+          {user && (
+            <>
+              <NotificationBell token={getUserToken()} messagesPath="/messages" />
+              <AvatarMenu user={user} onLogout={logout} />
+            </>
+          )}
+          <button
+            onClick={() => setOpen(!open)}
+            style={{ color: solid ? OLIVE : "white" }}
+            aria-label="Toggle menu"
+          >
+            {open ? <XIcon size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile dropdown */}

@@ -20,8 +20,8 @@ export default function AdminMessagesPage() {
 
   return (
     <AdminShell active="messages">
-      <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
-      <p className="mt-1 mb-4 text-slate-500">Conversations from users and owners.</p>
+      <h1 className="text-2xl font-bold text-ink">Messages</h1>
+      <p className="mt-1 mb-4 text-ink/60">Conversations from users and owners.</p>
       {auth && <ChatPanel token={auth.token} userId={auth.userId} initialConversationId={conv} />}
     </AdminShell>
   );

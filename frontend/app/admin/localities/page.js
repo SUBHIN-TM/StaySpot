@@ -132,28 +132,28 @@ export default function AdminLocalitiesPage() {
     }
   }
 
-  const inputCls = "rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand";
+  const inputCls = "rounded-lg border border-line px-3 py-2 outline-none focus:border-brand";
 
   return (
     <AdminShell active="localities">
-      <h1 className="text-2xl font-bold text-slate-900">Localities</h1>
-      <p className="mt-1 text-slate-500">
+      <h1 className="text-2xl font-bold text-ink">Localities</h1>
+      <p className="mt-1 text-ink/60">
         Localities are scoped to a pincode. Merge duplicates within the same pincode to keep them clean.
       </p>
 
       {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {notice && <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</p>}
+      {notice && <p className="mt-4 rounded-lg bg-brand/5 px-3 py-2 text-sm text-brand">{notice}</p>}
 
       {/* Filters */}
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-sm font-medium text-slate-700">District</label>
+          <label className="block text-sm font-medium text-ink/80">District</label>
           <select value={district} onChange={(e) => setDistrict(e.target.value)} className={`${inputCls} mt-1`}>
             {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Pincode</label>
+          <label className="block text-sm font-medium text-ink/80">Pincode</label>
           <input
             value={pincodeFilter}
             onChange={(e) => setPincodeFilter(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -163,7 +163,7 @@ export default function AdminLocalitiesPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Search</label>
+          <label className="block text-sm font-medium text-ink/80">Search</label>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -172,15 +172,15 @@ export default function AdminLocalitiesPage() {
             className={`${inputCls} mt-1`}
           />
         </div>
-        <button onClick={load} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <button onClick={load} className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink/80 hover:bg-mist">
           Apply
         </button>
       </div>
 
       {/* Merge bar */}
-      <div className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-mist p-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700">Merge selected into</label>
+          <label className="block text-sm font-medium text-ink/80">Merge selected into</label>
           <select value={target} onChange={(e) => setTarget(e.target.value)} className={`${inputCls} mt-1`}>
             <option value="">Choose target…</option>
             {rows.map((r) => <option key={r.id} value={r.id}>{r.name} — {r.pincode}</option>)}
@@ -193,20 +193,21 @@ export default function AdminLocalitiesPage() {
         >
           Preview merge {selected.size > 0 ? `(${selected.size})` : ""}
         </button>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-ink/60">
           Tick the duplicates, choose the correct name as target. Only rows in the target's pincode are merged.
         </p>
       </div>
 
       {/* Table */}
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
         {loading ? (
-          <p className="p-6 text-slate-400">Loading…</p>
+          <p className="p-6 text-ink/40">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="p-6 text-slate-400">No localities yet for {district}.</p>
+          <p className="p-6 text-ink/40">No localities yet for {district}.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-mist text-left text-ink/60">
               <tr>
                 <th className="w-10 px-4 py-3"></th>
                 <th className="px-4 py-3 font-medium">Locality</th>
@@ -217,28 +218,29 @@ export default function AdminLocalitiesPage() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-slate-100">
+                <tr key={r.id} className="border-t border-line">
                   <td className="px-4 py-3">
                     <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)} />
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                  <td className="px-4 py-3 font-medium text-ink">
                     {r.name}
                     {r.id === target && (
                       <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">target</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{r.pincode || "—"}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink/70">{r.pincode || "—"}</td>
+                  <td className="px-4 py-3 text-ink/70">
                     {r.property_count} {r.property_count === 1 ? "property" : "properties"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => rename(r)} className="mr-3 text-slate-600 hover:underline">Rename</button>
+                    <button onClick={() => rename(r)} className="mr-3 text-ink/70 hover:underline">Rename</button>
                     <button onClick={() => remove(r)} className="text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -246,17 +248,17 @@ export default function AdminLocalitiesPage() {
       {mergePreview && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-slate-900">Confirm merge</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Merging into <span className="font-semibold text-slate-900">{mergePreview.target}</span>{" "}
+            <h2 className="text-lg font-semibold text-ink">Confirm merge</h2>
+            <p className="mt-1 text-sm text-ink/60">
+              Merging into <span className="font-semibold text-ink">{mergePreview.target}</span>{" "}
               (pincode {mergePreview.pincode}).
             </p>
 
             <ul className="mt-4 max-h-48 space-y-1 overflow-auto text-sm">
               {mergePreview.perSource.map((s) => (
-                <li key={s.name} className="flex justify-between border-b border-slate-100 py-1">
-                  <span className="text-slate-700">{s.name}</span>
-                  <span className="text-slate-500">
+                <li key={s.name} className="flex justify-between border-b border-line py-1">
+                  <span className="text-ink/80">{s.name}</span>
+                  <span className="text-ink/60">
                     {s.count} {s.count === 1 ? "property" : "properties"}
                   </span>
                 </li>
@@ -273,7 +275,7 @@ export default function AdminLocalitiesPage() {
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setMergePreview(null)}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink/70 hover:bg-mist"
               >
                 Cancel
               </button>

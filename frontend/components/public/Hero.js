@@ -89,7 +89,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.75, duration: 0.6 }}
-          className="text-lg md:text-xl font-medium mb-3"
+          className="whitespace-nowrap text-[13px] sm:text-lg md:text-xl font-medium mb-3"
           style={{ color: "rgba(255,255,255,.82)", maxWidth: 560 }}
         >
           Find your next stay, roommate &amp; rental space
@@ -99,7 +99,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.88, duration: 0.6 }}
-          className="text-sm leading-relaxed mb-8"
+          className="hidden sm:block text-sm leading-relaxed mb-8"
           style={{ color: "rgba(255,255,255,.58)", maxWidth: 520 }}
         >
           Browse rooms, PGs, apartments and rentals across Kerala — every listing is admin-checked. Chat owners directly, find compatible roommates, and move in faster. All in one place.
@@ -110,23 +110,23 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0, duration: 0.6 }}
-          className="flex flex-wrap gap-4 justify-center mb-7"
+          className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center items-stretch sm:items-center mb-7 w-full max-w-xs sm:max-w-none"
         >
-          <Link href="/properties">
+          <Link href="/properties" className="w-full sm:w-auto">
             <motion.span
               whileHover={{ scale: 1.04, y: -3 }}
               whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-base text-white"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 sm:px-8 sm:py-4 rounded-full font-semibold text-base text-white"
               style={{ background: SAGE, boxShadow: `0 10px 32px ${SAGE}80` }}
             >
               Explore Listings <ArrowRight size={18} />
             </motion.span>
           </Link>
-          <Link href="/roommates">
+          <Link href="/roommates" className="w-full sm:w-auto">
             <motion.span
               whileHover={{ scale: 1.04, y: -3 }}
               whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-base text-white"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 sm:px-8 sm:py-4 rounded-full font-semibold text-base text-white"
               style={{ background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.32)" }}
             >
               Find a Roommate <Users size={18} />
@@ -139,13 +139,13 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.12, duration: 0.6 }}
-          className="flex flex-wrap gap-3 justify-center"
+          className="flex flex-wrap gap-2 sm:gap-3 justify-center max-w-xs sm:max-w-none"
         >
           {TRUST.map((tag) => (
             <motion.div
               key={tag}
               whileHover={{ scale: 1.05, y: -2 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium"
               style={{ background: "rgba(255,255,255,.10)", border: "1px solid rgba(255,255,255,.18)", color: "rgba(255,255,255,.88)", backdropFilter: "blur(8px)" }}
             >
               <CheckCircle size={13} color={GOLD} />

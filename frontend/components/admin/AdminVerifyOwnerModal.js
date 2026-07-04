@@ -62,48 +62,48 @@ export default function AdminVerifyOwnerModal({ owner, onClose, onChanged }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h2 className="font-semibold text-slate-900">Verify owner</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Close">
+      <div className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3">
+          <h2 className="font-semibold text-ink">Verify owner</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink/60 hover:bg-mist" aria-label="Close">
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" /></svg>
           </button>
         </div>
 
         <div className="space-y-4 p-5">
           <div>
-            <p className="text-xs text-slate-500">Owner</p>
-            <p className="font-medium capitalize text-slate-900">{owner.name}</p>
-            <p className="text-sm text-slate-500">{owner.email}</p>
+            <p className="text-xs text-ink/60">Owner</p>
+            <p className="font-medium capitalize text-ink">{owner.name}</p>
+            <p className="text-sm text-ink/60">{owner.email}</p>
           </div>
 
           <div>
-            <p className="text-xs text-slate-500">Phone number (call this to confirm)</p>
-            <p className="text-lg font-semibold text-slate-900">
+            <p className="text-xs text-ink/60">Phone number (call this to confirm)</p>
+            <p className="text-lg font-semibold text-ink">
               {owner.mobile_number ? `+91 ${owner.mobile_number}` : "— not submitted —"}
             </p>
           </div>
 
           <label className="block">
-            <span className="text-xs text-slate-500">Note (optional)</span>
+            <span className="text-xs text-ink/60">Note (optional)</span>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder="e.g. Spoke to owner, confirmed identity."
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand"
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </label>
 
           <div>
-            <span className="text-xs text-slate-500">Proof (optional) — recording / screenshot / pdf</span>
+            <span className="text-xs text-ink/60">Proof (optional) — recording / screenshot / pdf</span>
             <div className="mt-1 flex items-center gap-2">
-              <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <label className="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink/80 hover:bg-mist">
                 Choose file
                 <input type="file" className="hidden" onChange={pickProof} accept="image/*,video/*,audio/*,application/pdf" />
               </label>
               {proofName && (
-                <span className="truncate text-sm text-slate-600">
+                <span className="truncate text-sm text-ink/70">
                   {proofName}
                   {progress !== null && progress < 100 ? ` · ${progress}%` : proofKey ? " ✓" : ""}
                 </span>
@@ -114,7 +114,7 @@ export default function AdminVerifyOwnerModal({ owner, onClose, onChanged }) {
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="flex flex-wrap gap-2 border-t border-slate-100 px-5 py-4">
+        <div className="flex flex-wrap gap-2 border-t border-line px-5 py-4">
           <button
             onClick={() => confirm(true)}
             disabled={busy || !owner.mobile_number || (progress !== null && progress < 100)}

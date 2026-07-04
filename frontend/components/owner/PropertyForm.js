@@ -402,7 +402,7 @@ export default function PropertyForm({ existing }) {
   }
 
   const field =
-    "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500";
+    "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition-colors focus:border-brand";
   const label = "block text-sm font-medium text-slate-700";
 
   return (
@@ -601,7 +601,7 @@ export default function PropertyForm({ existing }) {
                   onClick={() => toggleAmenity(a.value)}
                   className={`rounded-full border px-3 py-1.5 text-sm transition ${
                     on
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      ? "border-brand bg-brand/5 text-brand"
                       : "border-slate-300 text-slate-600 hover:border-slate-400"
                   }`}
                 >
@@ -658,7 +658,7 @@ export default function PropertyForm({ existing }) {
           <label className={label}>Current photos</label>
           <p className="mt-0.5 text-xs text-slate-500">
             The first photo is the{" "}
-            <span className="font-medium text-emerald-700">cover</span> seekers see first. Use ◀ ▶
+            <span className="font-medium text-brand">cover</span> seekers see first. Use ◀ ▶
             to arrange.
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
@@ -683,7 +683,7 @@ export default function PropertyForm({ existing }) {
         {!isEdit && (
           <p className="mt-0.5 text-xs text-slate-500">
             The first photo is the{" "}
-            <span className="font-medium text-emerald-700">cover</span> seekers see first. Use ◀ ▶
+            <span className="font-medium text-brand">cover</span> seekers see first. Use ◀ ▶
             to arrange.
           </p>
         )}
@@ -712,7 +712,7 @@ export default function PropertyForm({ existing }) {
             addImages(e.target.files);
             e.target.value = ""; // allow re-picking the same file
           }}
-          className="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-medium file:text-white hover:file:bg-emerald-700"
+          className="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:font-medium file:text-white hover:file:bg-brand-dark"
         />
         <p className="mt-1 text-xs text-slate-400">Max {limits.image.maxMb} MB per photo.</p>
         {isEdit && images.length > 0 && (
@@ -738,7 +738,7 @@ export default function PropertyForm({ existing }) {
             {video.status === "uploading" && (
               <span className="text-slate-500">uploading… {video.progress ?? 0}%</span>
             )}
-            {video.status === "done" && <span className="text-emerald-600">ready ✓</span>}
+            {video.status === "done" && <span className="text-brand">ready ✓</span>}
             {video.status === "error" && <span className="text-red-600">upload failed</span>}
             <button type="button" onClick={removeVideo} className="text-red-600 underline">
               remove
@@ -748,7 +748,7 @@ export default function PropertyForm({ existing }) {
         {video?.status === "uploading" && (
           <div className="mt-1 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-slate-200">
             <div
-              className="h-full bg-emerald-600 transition-all"
+              className="h-full bg-brand transition-all"
               style={{ width: `${video.progress ?? 0}%` }}
             />
           </div>
@@ -768,7 +768,7 @@ export default function PropertyForm({ existing }) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-emerald-600 px-6 py-2.5 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+          className="rounded-lg bg-brand px-6 py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
         >
           {loading ? "Saving…" : isEdit ? "Save changes" : "Create listing"}
         </button>
@@ -792,7 +792,7 @@ function PhotoTile({ src, index, total, isCover, status, progress, onMove, onRem
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" className="h-full w-full object-cover" />
       {isCover && (
-        <span className="absolute left-0 top-0 rounded-br-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+        <span className="absolute left-0 top-0 rounded-br-md bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-white">
           Cover
         </span>
       )}

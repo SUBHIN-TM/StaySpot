@@ -124,26 +124,26 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const card = "mt-6 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6";
+  const card = "mt-6 max-w-2xl rounded-2xl border border-line bg-white p-6";
 
   return (
     <AdminShell active="settings">
-      <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-      <p className="mt-1 text-slate-500">Configure how StayMate behaves.</p>
+      <h1 className="text-2xl font-bold text-ink">Settings</h1>
+      <p className="mt-1 text-ink/60">Configure how StayMate behaves.</p>
 
       {error && (
         <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       )}
       {notice && (
-        <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</p>
+        <p className="mt-4 rounded-lg bg-brand/5 px-3 py-2 text-sm text-brand">{notice}</p>
       )}
 
       {/* Auto-approve listings */}
       <div className={card}>
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="font-semibold text-slate-900">Auto-approve new listings</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="font-semibold text-ink">Auto-approve new listings</h2>
+            <p className="mt-1 text-sm text-ink/60">
               <strong>On:</strong> a property goes live the moment an owner creates it.<br />
               <strong>Off:</strong> new properties stay <em>pending</em> until you approve them
               in the Properties page.
@@ -168,7 +168,7 @@ export default function AdminSettingsPage() {
           </button>
         </div>
 
-        <p className="mt-4 text-sm font-medium text-slate-600">
+        <p className="mt-4 text-sm font-medium text-ink/70">
           Status:{" "}
           {loading ? (
             "…"
@@ -184,8 +184,8 @@ export default function AdminSettingsPage() {
       <div className={card}>
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="font-semibold text-slate-900">Review comment suggestions</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="font-semibold text-ink">Review comment suggestions</h2>
+            <p className="mt-1 text-sm text-ink/60">
               <strong>On:</strong> tapping a star on the reviews section drops a random
               short comment into the box, which the user can edit.<br />
               <strong>Off:</strong> the box stays empty and users write their own review.
@@ -210,7 +210,7 @@ export default function AdminSettingsPage() {
           </button>
         </div>
 
-        <p className="mt-4 text-sm font-medium text-slate-600">
+        <p className="mt-4 text-sm font-medium text-ink/70">
           Status:{" "}
           {loading ? (
             "…"
@@ -224,15 +224,15 @@ export default function AdminSettingsPage() {
 
       {/* Upload size limits */}
       <div className={card}>
-        <h2 className="font-semibold text-slate-900">Upload size limits</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="font-semibold text-ink">Upload size limits</h2>
+        <p className="mt-1 text-sm text-ink/60">
           Maximum file size owners can attach to a listing. Enforced in the browser
           (the file is rejected before uploading) and again on the server.
         </p>
 
         <div className="mt-4 flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700">Max photo (MB)</label>
+            <label className="block text-sm font-medium text-ink/80">Max photo (MB)</label>
             <input
               type="number"
               min={1}
@@ -240,11 +240,11 @@ export default function AdminSettingsPage() {
               value={maxImageMb}
               onChange={(e) => setMaxImageMb(e.target.value)}
               disabled={loading}
-              className="mt-1 w-28 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+              className="mt-1 w-28 rounded-lg border border-line px-3 py-2 outline-none focus:border-brand"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700">Max video (MB)</label>
+            <label className="block text-sm font-medium text-ink/80">Max video (MB)</label>
             <input
               type="number"
               min={1}
@@ -252,7 +252,7 @@ export default function AdminSettingsPage() {
               value={maxVideoMb}
               onChange={(e) => setMaxVideoMb(e.target.value)}
               disabled={loading}
-              className="mt-1 w-28 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+              className="mt-1 w-28 rounded-lg border border-line px-3 py-2 outline-none focus:border-brand"
             />
           </div>
           <button
@@ -268,8 +268,8 @@ export default function AdminSettingsPage() {
 
       {/* Orphaned uploads cleanup */}
       <div className={card}>
-        <h2 className="font-semibold text-slate-900">Unused attachment cleanup</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="font-semibold text-ink">Unused attachment cleanup</h2>
+        <p className="mt-1 text-sm text-ink/60">
           When someone attaches a photo or video but never submits the listing, the file is
           uploaded but unused. A background sweep deletes anything left unattached for longer
           than this many minutes.
@@ -277,14 +277,14 @@ export default function AdminSettingsPage() {
 
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700">Delete after (minutes)</label>
+            <label className="block text-sm font-medium text-ink/80">Delete after (minutes)</label>
             <input
               type="number"
               min={1}
               value={ttl}
               onChange={(e) => setTtl(e.target.value)}
               disabled={loading}
-              className="mt-1 w-32 rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand"
+              className="mt-1 w-32 rounded-lg border border-line px-3 py-2 outline-none focus:border-brand"
             />
           </div>
           <button
@@ -297,10 +297,10 @@ export default function AdminSettingsPage() {
           </button>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          <p className="text-sm text-slate-600">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+          <p className="text-sm text-ink/70">
             Currently waiting:{" "}
-            <span className="font-semibold text-slate-900">{loading ? "…" : pending}</span>{" "}
+            <span className="font-semibold text-ink">{loading ? "…" : pending}</span>{" "}
             pending upload{pending === 1 ? "" : "s"}
           </p>
           <button

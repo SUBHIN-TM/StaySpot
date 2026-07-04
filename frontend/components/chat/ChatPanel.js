@@ -100,22 +100,22 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
   const active = conversations.find((c) => c.id === activeId);
 
   return (
-    <div className="flex h-[72vh] overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <div className="flex h-[72vh] overflow-hidden rounded-2xl border border-line bg-white">
       {/* Conversation list */}
-      <div className={`w-full border-r border-slate-200 md:w-80 ${activeId ? "hidden md:block" : "block"}`}>
-        <div className="border-b border-slate-200 px-4 py-3 font-semibold text-slate-900">Chats</div>
+      <div className={`w-full border-r border-line md:w-80 ${activeId ? "hidden md:block" : "block"}`}>
+        <div className="border-b border-line px-4 py-3 font-semibold text-ink">Chats</div>
         <div className="h-[calc(72vh-49px)] overflow-y-auto">
           {loadingConvs ? (
-            <p className="p-4 text-sm text-slate-500">Loading…</p>
+            <p className="p-4 text-sm text-ink/60">Loading…</p>
           ) : conversations.length === 0 ? (
-            <p className="p-4 text-sm text-slate-500">No conversations yet.</p>
+            <p className="p-4 text-sm text-ink/60">No conversations yet.</p>
           ) : (
             conversations.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setActiveId(c.id)}
-                className={`flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left hover:bg-slate-50 ${
-                  c.id === activeId ? "bg-blue-50" : ""
+                className={`flex w-full items-center gap-3 border-b border-line px-4 py-3 text-left hover:bg-mist ${
+                  c.id === activeId ? "bg-brand/10" : ""
                 }`}
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-brand text-sm font-bold text-white">
@@ -128,7 +128,7 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center justify-between">
-                    <span className="truncate font-medium capitalize text-slate-900">
+                    <span className="truncate font-medium capitalize text-ink">
                       {c.other_user?.name || "User"}
                       {c.other_user?.role === "admin" && " (Support)"}
                     </span>
@@ -138,7 +138,7 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
                       </span>
                     )}
                   </span>
-                  <span className="block truncate text-xs text-slate-500">
+                  <span className="block truncate text-xs text-ink/60">
                     {c.property?.title ? `🏠 ${c.property.title} · ` : ""}
                     {c.last_message?.content || "No messages yet"}
                   </span>
@@ -152,38 +152,38 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
       {/* Thread */}
       <div className={`flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
         {!active ? (
-          <div className="grid flex-1 place-items-center text-slate-400">
+          <div className="grid flex-1 place-items-center text-ink/40">
             Select a conversation to start chatting.
           </div>
         ) : (
           <>
             {/* Thread header */}
-            <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
-              <button onClick={() => setActiveId(null)} className="text-slate-500 md:hidden" aria-label="Back">
+            <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+              <button onClick={() => setActiveId(null)} className="text-ink/60 md:hidden" aria-label="Back">
                 ‹
               </button>
-              <span className="font-semibold capitalize text-slate-900">
+              <span className="font-semibold capitalize text-ink">
                 {active.other_user?.name}
                 {active.other_user?.role === "admin" && " (Support)"}
               </span>
               {active.property?.title && (
-                <span className="truncate text-sm text-slate-500">· {active.property.title}</span>
+                <span className="truncate text-sm text-ink/60">· {active.property.title}</span>
               )}
             </div>
 
             {/* Messages */}
-            <div className="flex-1 space-y-2 overflow-y-auto bg-slate-50 p-4">
+            <div className="flex-1 space-y-2 overflow-y-auto bg-mist p-4">
               {messages.map((m) => {
                 const mine = m.sender_id === userId;
                 return (
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <div
                       className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                        mine ? "bg-brand text-white" : "bg-white text-slate-800 ring-1 ring-slate-200"
+                        mine ? "bg-brand text-white" : "bg-white text-ink ring-1 ring-line"
                       }`}
                     >
                       <p className="whitespace-pre-line break-words">{m.content}</p>
-                      <p className={`mt-1 text-right text-[10px] ${mine ? "text-blue-100" : "text-slate-400"}`}>
+                      <p className={`mt-1 text-right text-[10px] ${mine ? "text-white/70" : "text-ink/40"}`}>
                         {timeOf(m.created_at)}
                       </p>
                     </div>
@@ -194,12 +194,12 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
             </div>
 
             {/* Composer */}
-            <form onSubmit={send} className="flex gap-2 border-t border-slate-200 p-3">
+            <form onSubmit={send} className="flex gap-2 border-t border-line p-3">
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type a message…"
-                className="flex-1 rounded-full border border-slate-300 px-4 py-2 outline-none focus:border-brand"
+                className="flex-1 rounded-full border border-line px-4 py-2 outline-none focus:border-brand"
               />
               <button
                 type="submit"

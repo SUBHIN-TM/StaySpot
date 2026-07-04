@@ -2,7 +2,7 @@
 
 // OWNER sign-up page  (URL: "/owner/signup")
 // Same flow as user signup (Google / email-OTP) but creates an account with
-// role "owner" and is emerald-themed.
+// role "owner" and is sage/gold themed to match the site.
 
 import { GoogleLogin } from "@react-oauth/google";
 import { useState } from "react";
@@ -108,17 +108,17 @@ export default function OwnerSignupPage() {
   }
 
   const field =
-    "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500";
+    "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand";
 
   return (
-    <div className="grid min-h-screen place-items-center bg-emerald-50 px-4 py-10">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md ring-1 ring-emerald-100">
+    <div className="grid min-h-screen place-items-center bg-cream px-4 py-10">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md ring-1 ring-line">
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-600 font-bold text-white">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
             S
           </span>
           <span className="text-xl font-bold text-slate-900">StayMate</span>
-          <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+          <span className="rounded bg-[#D4A359]/20 px-2 py-0.5 text-xs font-semibold text-[#9A6B18]">
             OWNER
           </span>
         </Link>
@@ -130,7 +130,7 @@ export default function OwnerSignupPage() {
           <p className="mt-5 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">{error}</p>
         )}
         {info && !error && (
-          <p className="mt-5 rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700">{info}</p>
+          <p className="mt-5 rounded-lg bg-brand/5 px-3 py-2 text-center text-sm text-brand">{info}</p>
         )}
 
         <div className="mt-6 flex justify-center">
@@ -169,7 +169,7 @@ export default function OwnerSignupPage() {
                 disabled={emailVerified}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@gmail.com"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 disabled:bg-slate-100"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand disabled:bg-slate-100"
               />
               {emailVerified ? (
                 <span className="grid place-items-center rounded-lg bg-green-100 px-3 text-sm font-medium text-green-700">
@@ -192,12 +192,12 @@ export default function OwnerSignupPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700">Enter the code</label>
               <div className="mt-1 flex gap-2">
-                <input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code from your email" className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500" />
+                <input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code from your email" className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-brand" />
                 <button
                   type="button"
                   onClick={verifyOtp}
                   disabled={loading}
-                  className="shrink-0 rounded-lg bg-emerald-600 px-3 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                  className="shrink-0 rounded-lg bg-brand px-3 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   Verify
                 </button>
@@ -222,7 +222,7 @@ export default function OwnerSignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-emerald-600 py-2.5 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                className="w-full rounded-lg bg-brand py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {loading ? "Creating account…" : "Create owner account"}
               </button>
@@ -232,7 +232,7 @@ export default function OwnerSignupPage() {
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Already an owner?{" "}
-          <Link href="/owner/login" className="font-medium text-emerald-700 hover:underline">
+          <Link href="/owner/login" className="font-medium text-brand hover:underline">
             Log in
           </Link>
         </p>

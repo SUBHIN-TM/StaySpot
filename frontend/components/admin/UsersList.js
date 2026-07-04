@@ -26,12 +26,12 @@ const ms = (d) => (d ? new Date(d).getTime() : 0);
 
 function Select({ value, onChange, children, label }) {
   return (
-    <label className="flex items-center gap-1 text-xs text-slate-500">
+    <label className="flex items-center gap-1 text-xs text-ink/60">
       {label}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand"
+        className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink/80 outline-none focus:border-brand"
       >
         {children}
       </select>
@@ -114,8 +114,8 @@ export default function UsersList({ role, title, subtitle }) {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-      <p className="mt-1 text-slate-500">{subtitle}</p>
+      <h1 className="text-2xl font-bold text-ink">{title}</h1>
+      <p className="mt-1 text-ink/60">{subtitle}</p>
 
       {/* Toolbar: search · sort · filters */}
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -123,7 +123,7 @@ export default function UsersList({ role, title, subtitle }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, email or username…"
-          className="w-60 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand"
+          className="w-60 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
         />
         <Select label="Sort" value={sort} onChange={setSort}>
           <option value="joined_desc">Newest joined</option>
@@ -148,18 +148,18 @@ export default function UsersList({ role, title, subtitle }) {
         )}
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
         {error ? (
           <p className="p-6 text-red-600">{error}</p>
         ) : loading ? (
-          <p className="p-6 text-slate-500">Loading…</p>
+          <p className="p-6 text-ink/60">Loading…</p>
         ) : view.length === 0 ? (
-          <p className="p-6 text-slate-500">No {title.toLowerCase()} match your filters.</p>
+          <p className="p-6 text-ink/60">No {title.toLowerCase()} match your filters.</p>
         ) : (
           <div className="overflow-x-auto">
-            <p className="px-5 py-2 text-xs text-slate-400">Showing {view.length} of {users.length}</p>
+            <p className="px-5 py-2 text-xs text-ink/40">Showing {view.length} of {users.length}</p>
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-mist text-ink/60">
                 <tr>
                   <th className="px-5 py-3 font-medium">Name</th>
                   <th className="px-5 py-3 font-medium">Email</th>
@@ -171,9 +171,9 @@ export default function UsersList({ role, title, subtitle }) {
                   <th className="px-5 py-3 font-medium text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-line">
                 {view.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50">
+                  <tr key={u.id} className="hover:bg-mist">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         {u.avatar_url ? (
@@ -184,7 +184,7 @@ export default function UsersList({ role, title, subtitle }) {
                             {initials(u.name)}
                           </span>
                         )}
-                        <span className="font-medium capitalize text-slate-900">{u.name}</span>
+                        <span className="font-medium capitalize text-ink">{u.name}</span>
                         {u.is_blocked && (
                           <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                             Blocked
@@ -192,9 +192,9 @@ export default function UsersList({ role, title, subtitle }) {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-slate-600">{u.email}</td>
+                    <td className="px-5 py-3 text-ink/70">{u.email}</td>
                     {isOwner && (
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-ink/70">
                         {u.mobile_number ? `+91 ${u.mobile_number}` : "—"}
                       </td>
                     )}
@@ -209,31 +209,31 @@ export default function UsersList({ role, title, subtitle }) {
                             Awaiting call
                           </span>
                         ) : (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                          <span className="rounded-full bg-mist px-2 py-0.5 text-xs font-medium text-ink/60">
                             Not submitted
                           </span>
                         )}
                       </td>
                     )}
-                    <td className="px-5 py-3 text-slate-600">{u.username || "—"}</td>
+                    <td className="px-5 py-3 text-ink/70">{u.username || "—"}</td>
                     <td className="px-5 py-3">
                       {u.edit_count > 0 ? (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{u.edit_count}×</span>
+                        <span className="rounded-full bg-mist px-2 py-0.5 text-xs font-medium text-ink/70">{u.edit_count}×</span>
                       ) : (
-                        <span className="text-xs text-slate-400">0</span>
+                        <span className="text-xs text-ink/40">0</span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-slate-500">
+                    <td className="px-5 py-3 text-ink/60">
                       {fmtDate(u.created_at)}
                       {u.updated_at && ms(u.updated_at) > ms(u.created_at) + 60000 && (
-                        <span className="block text-xs text-slate-400">edited {fmtDate(u.updated_at)}</span>
+                        <span className="block text-xs text-ink/40">edited {fmtDate(u.updated_at)}</span>
                       )}
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setHistoryUser(u)}
-                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                          className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink/70 hover:bg-mist"
                         >
                           History
                         </button>
@@ -242,7 +242,7 @@ export default function UsersList({ role, title, subtitle }) {
                             onClick={() => setVerifying(u)}
                             className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
                               u.phone_verified
-                                ? "border-slate-200 text-slate-600 hover:bg-slate-50"
+                                ? "border-line text-ink/70 hover:bg-mist"
                                 : "border-green-200 text-green-700 hover:bg-green-50"
                             }`}
                           >

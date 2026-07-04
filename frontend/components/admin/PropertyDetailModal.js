@@ -64,8 +64,8 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
 
   const Detail = ({ label, value }) => (
     <div>
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="text-sm font-medium text-slate-900">{value || "—"}</dd>
+      <dt className="text-xs text-ink/60">{label}</dt>
+      <dd className="text-sm font-medium text-ink">{value || "—"}</dd>
     </div>
   );
 
@@ -74,20 +74,20 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
     const ext = (url.split("?")[0].split(".").pop() || "").toLowerCase();
     if (["jpg", "jpeg", "png", "webp", "gif", "avif"].includes(ext)) {
       return (
-        <a href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-slate-200">
+        <a href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-line">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={url} alt="Field-visit proof" className="h-24 w-full object-cover" />
         </a>
       );
     }
     if (["mp4", "webm", "mov", "mkv"].includes(ext)) {
-      return <video src={url} controls className="h-24 w-full rounded-lg border border-slate-200 bg-black object-cover" />;
+      return <video src={url} controls className="h-24 w-full rounded-lg border border-line bg-black object-cover" />;
     }
     if (["mp3", "m4a", "aac", "ogg", "wav"].includes(ext)) {
       return <audio src={url} controls className="w-full" />;
     }
     return (
-      <a href={url} target="_blank" rel="noreferrer" className="flex h-24 items-center justify-center rounded-lg border border-slate-200 text-sm font-medium text-brand hover:bg-slate-50">
+      <a href={url} target="_blank" rel="noreferrer" className="flex h-24 items-center justify-center rounded-lg border border-line text-sm font-medium text-brand hover:bg-mist">
         📄 Open file
       </a>
     );
@@ -98,14 +98,14 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-slate-900">{p.title}</h2>
+            <h2 className="font-semibold text-ink">{p.title}</h2>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS[p.approval_status] || STATUS.pending}`}>
               {p.approval_status}
             </span>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100" aria-label="Close">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink/60 hover:bg-mist" aria-label="Close">
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" /></svg>
           </button>
         </div>
@@ -142,10 +142,10 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
 
           {Array.isArray(p.amenities) && p.amenities.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Amenities</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink/40">Amenities</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {p.amenities.map((a) => (
-                  <span key={a} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                  <span key={a} className="rounded-full bg-mist px-2.5 py-0.5 text-xs font-medium text-ink/70">
                     {AMENITY_LABEL[a] || a}
                   </span>
                 ))}
@@ -153,11 +153,11 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
             </div>
           )}
           {p.field_visited && (
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <h3 className="text-base font-bold tracking-tight text-slate-900">Field Visit Details</h3>
-              <div className="mt-1.5 h-1 w-12 rounded-full bg-emerald-500" />
+            <div className="mt-6 border-t border-line pt-4">
+              <h3 className="text-base font-bold tracking-tight text-ink">Field Visit Details</h3>
+              <div className="mt-1.5 h-1 w-12 rounded-full bg-brand" />
               {p.field_visit_remarks && (
-                <p className="mt-2 text-sm text-slate-600">{p.field_visit_remarks}</p>
+                <p className="mt-2 text-sm text-ink/70">{p.field_visit_remarks}</p>
               )}
               {Array.isArray(p.field_visit_proof_urls) && p.field_visit_proof_urls.length > 0 ? (
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -166,13 +166,13 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
                   ))}
                 </div>
               ) : (
-                <p className="mt-2 text-xs text-slate-400">No attachments.</p>
+                <p className="mt-2 text-xs text-ink/40">No attachments.</p>
               )}
             </div>
           )}
 
-          {p.address && <p className="mt-4 text-sm text-slate-600">📍 {p.address}</p>}
-          {p.description && <p className="mt-2 text-sm text-slate-600">{p.description}</p>}
+          {p.address && <p className="mt-4 text-sm text-ink/70">📍 {p.address}</p>}
+          {p.description && <p className="mt-2 text-sm text-ink/70">{p.description}</p>}
           {p.map_link && (
             <a href={p.map_link} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-medium text-brand hover:underline">
               🗺️ Open in Google Maps
@@ -190,7 +190,7 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
           )}
 
           {/* Actions */}
-          <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+          <div className="mt-6 flex flex-wrap gap-2 border-t border-line pt-4">
             {/* Approve is gated on the owner being phone-verified. */}
             {ownerVerified && p.approval_status !== "approved" && (
               <button onClick={() => setApproval("approved")} disabled={busy} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50">
@@ -202,10 +202,10 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
                 ✕ Reject
               </button>
             )}
-            <button onClick={() => setShowVisit(true)} disabled={busy} className="rounded-lg border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+            <button onClick={() => setShowVisit(true)} disabled={busy} className="rounded-lg border border-brand/40 px-4 py-2 text-sm font-medium text-brand hover:bg-brand/5 disabled:opacity-50">
               {p.field_visited ? "📍 Edit field visit" : "📍 Record field visit"}
             </button>
-            <button onClick={() => setShowHistory(true)} disabled={busy} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            <button onClick={() => setShowHistory(true)} disabled={busy} className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-ink/80 hover:bg-mist disabled:opacity-50">
               🕑 Edit history{typeof p.edit_count === "number" ? ` (${p.edit_count})` : ""}
             </button>
             <button onClick={remove} disabled={busy} className="ml-auto rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">

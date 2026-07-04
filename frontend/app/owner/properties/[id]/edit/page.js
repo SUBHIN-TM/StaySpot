@@ -27,12 +27,12 @@ export default function EditPropertyPage() {
 
   return (
     <OwnerShell active="dashboard">
-      <h1 className="text-2xl font-bold text-slate-900">Edit property</h1>
-      <p className="mt-1 mb-6 text-slate-500">Update your listing details.</p>
+      <h1 className="text-2xl font-bold text-ink">Edit property</h1>
+      <p className="mt-1 mb-6 text-ink/60">Update your listing details.</p>
       {error ? (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
       ) : !property ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-ink/60">Loading…</p>
       ) : (
         <PropertyForm existing={property} />
       )}

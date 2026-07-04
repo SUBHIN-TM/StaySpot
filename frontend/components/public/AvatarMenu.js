@@ -8,10 +8,30 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Heart, MessageCircle, UserPen, LogOut, LayoutDashboard } from "lucide-react";
+import { SAGE, GOLD, OLIVE, LINE, CREAM } from "./palette";
 
 function initials(name = "") {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return (parts.slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase();
+}
+
+// A single dropdown row: lucide icon + label. `accent` gives the owner-dashboard
+// link the gold accent; the rest use sage icons on a cream hover.
+function MenuLink({ href, icon: Icon, label, onClick, accent }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
+      style={{ color: accent ? "#9A6B18" : OLIVE }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = CREAM)}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+    >
+      <Icon size={17} color={accent ? GOLD : SAGE} />
+      {label}
+    </Link>
+  );
 }
 
 export default function AvatarMenu({ user, onLogout }) {
@@ -56,62 +76,49 @@ export default function AvatarMenu({ user, onLogout }) {
         </span>
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown — themed to the sage/gold brand palette, lucide line icons */}
       {open && (
-        <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div
+          className="absolute right-0 mt-3 w-60 overflow-hidden rounded-2xl bg-white"
+          style={{ border: `1px solid ${LINE}`, boxShadow: "0 24px 70px rgba(30,37,33,0.18)" }}
+        >
           {/* Header: name + email + role */}
-          <div className="border-b border-slate-100 px-4 py-3">
+          <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${LINE}`, background: CREAM }}>
             <div className="flex items-center gap-2">
-              <p className="truncate text-sm font-semibold capitalize text-slate-900">{user.name}</p>
+              <p className="truncate text-sm font-semibold capitalize" style={{ color: OLIVE }}>{user.name}</p>
               <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  isOwner ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-                }`}
+                className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                style={
+                  isOwner
+                    ? { background: `${GOLD}26`, color: "#9A6B18" }
+                    : { background: `${SAGE}1A`, color: SAGE }
+                }
               >
                 {isOwner ? "Owner" : "User"}
               </span>
             </div>
-            <p className="truncate text-xs text-slate-500">{user.email}</p>
+            <p className="truncate text-xs" style={{ color: `${OLIVE}99` }}>{user.email}</p>
           </div>
 
-          {/* Owner-only: jump to the owner dashboard */}
-          {isOwner && (
-            <Link
-              href="/owner"
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-            >
-              🏠 Owner dashboard
-            </Link>
-          )}
+          <div className="p-1.5">
+            {/* Owner-only: jump to the owner dashboard */}
+            {isOwner && (
+              <MenuLink href="/owner" icon={LayoutDashboard} label="Owner dashboard" onClick={() => setOpen(false)} accent />
+            )}
+            <MenuLink href="/wishlist" icon={Heart} label="Wishlist" onClick={() => setOpen(false)} />
+            <MenuLink href="/messages" icon={MessageCircle} label="Messages" onClick={() => setOpen(false)} />
+            <MenuLink href="/profile" icon={UserPen} label="Edit profile" onClick={() => setOpen(false)} />
 
-          <Link
-            href="/wishlist"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            ❤️ Wishlist
-          </Link>
-          <Link
-            href="/messages"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            💬 Messages
-          </Link>
-          <Link
-            href="/profile"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            ✏️ Edit profile
-          </Link>
-          <button
-            onClick={onLogout}
-            className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-slate-50"
-          >
-            ↪ Log out
-          </button>
+            <div className="my-1" style={{ borderTop: `1px solid ${LINE}` }} />
+
+            <button
+              onClick={onLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+            >
+              <LogOut size={17} />
+              Log out
+            </button>
+          </div>
         </div>
       )}
     </div>

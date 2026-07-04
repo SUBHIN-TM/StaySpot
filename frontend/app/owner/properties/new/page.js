@@ -8,8 +8,8 @@ import PropertyForm from "@/components/owner/PropertyForm";
 export default function NewPropertyPage() {
   return (
     <OwnerShell active="new">
-      <h1 className="text-2xl font-bold text-slate-900">Add a property</h1>
-      <p className="mt-1 mb-6 text-slate-500">List a new place for seekers to find.</p>
+      <h1 className="text-2xl font-bold text-ink">Add a property</h1>
+      <p className="mt-1 mb-6 text-ink/60">List a new place for seekers to find.</p>
       <PropertyForm existing={null} />
     </OwnerShell>
   );

@@ -27,12 +27,12 @@ function fmtDate(d) {
 // A tidy little dropdown used across the toolbar.
 function Select({ value, onChange, children, label }) {
   return (
-    <label className="flex items-center gap-1 text-xs text-slate-500">
+    <label className="flex items-center gap-1 text-xs text-ink/60">
       {label}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 outline-none focus:border-brand"
+        className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-ink/80 outline-none focus:border-brand"
       >
         {children}
       </select>
@@ -110,8 +110,8 @@ export default function PropertiesList() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-slate-900">Properties</h1>
-      <p className="mt-1 text-slate-500">All listings — click a row to view details and approve.</p>
+      <h1 className="text-2xl font-bold text-ink">Properties</h1>
+      <p className="mt-1 text-ink/60">All listings — click a row to view details and approve.</p>
 
       {/* Toolbar: search · sort · filters */}
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -119,7 +119,7 @@ export default function PropertiesList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search title, owner or city…"
-          className="w-60 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand"
+          className="w-60 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
         />
         <Select label="Sort" value={sort} onChange={setSort}>
           <option value="added_desc">Newest added</option>
@@ -151,24 +151,24 @@ export default function PropertiesList() {
           <option value="all">All</option>
           <option value="yes">Requested</option>
         </Select>
-        <label className="flex items-center gap-1.5 text-sm text-slate-600">
+        <label className="flex items-center gap-1.5 text-sm text-ink/70">
           <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
           Show deleted
         </label>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
         {error ? (
           <p className="p-6 text-red-600">{error}</p>
         ) : loading ? (
-          <p className="p-6 text-slate-500">Loading…</p>
+          <p className="p-6 text-ink/60">Loading…</p>
         ) : view.length === 0 ? (
-          <p className="p-6 text-slate-500">No properties match your filters.</p>
+          <p className="p-6 text-ink/60">No properties match your filters.</p>
         ) : (
           <div className="overflow-x-auto">
-            <p className="px-5 py-2 text-xs text-slate-400">Showing {view.length} of {items.length}</p>
+            <p className="px-5 py-2 text-xs text-ink/40">Showing {view.length} of {items.length}</p>
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-mist text-ink/60">
                 <tr>
                   <th className="px-5 py-3 font-medium">Title</th>
                   <th className="px-5 py-3 font-medium">Owner</th>
@@ -182,12 +182,12 @@ export default function PropertiesList() {
                   <th className="px-5 py-3 font-medium">Approval</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-line">
                 {view.map((p) => (
                   <tr
                     key={p.id}
                     onClick={() => setSelected(p)}
-                    className="cursor-pointer hover:bg-slate-50"
+                    className="cursor-pointer hover:bg-mist"
                   >
                     <td className="px-5 py-3 font-medium text-brand">
                       {p.title}
@@ -195,7 +195,7 @@ export default function PropertiesList() {
                         <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Deleted</span>
                       )}
                     </td>
-                    <td className="px-5 py-3 capitalize text-slate-600">{p.owner?.name || "—"}</td>
+                    <td className="px-5 py-3 capitalize text-ink/70">{p.owner?.name || "—"}</td>
                     <td className="px-5 py-3">
                       {p.owner?.phone_verified ? (
                         <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">✓ Verified</span>
@@ -207,29 +207,29 @@ export default function PropertiesList() {
                       {p.field_visited ? (
                         <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">📍 Visited</span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-ink/40">—</span>
                       )}
                     </td>
                     <td className="px-5 py-3">
                       {p.visit_requested ? (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">⚡ Requested</span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-ink/40">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-slate-600">{p.city || "—"}</td>
-                    <td className="px-5 py-3 text-slate-600">₹{Number(p.rent_amount).toLocaleString("en-IN")}</td>
+                    <td className="px-5 py-3 text-ink/70">{p.city || "—"}</td>
+                    <td className="px-5 py-3 text-ink/70">₹{Number(p.rent_amount).toLocaleString("en-IN")}</td>
                     <td className="px-5 py-3">
                       {p.edit_count > 0 ? (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{p.edit_count}×</span>
+                        <span className="rounded-full bg-mist px-2 py-0.5 text-xs font-medium text-ink/70">{p.edit_count}×</span>
                       ) : (
-                        <span className="text-xs text-slate-400">0</span>
+                        <span className="text-xs text-ink/40">0</span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-slate-500">
+                    <td className="px-5 py-3 text-ink/60">
                       {fmtDate(p.created_at)}
                       {p.updated_at && t2(p.updated_at) > t2(p.created_at) + 60000 && (
-                        <span className="block text-xs text-slate-400">edited {fmtDate(p.updated_at)}</span>
+                        <span className="block text-xs text-ink/40">edited {fmtDate(p.updated_at)}</span>
                       )}
                     </td>
                     <td className="px-5 py-3">
