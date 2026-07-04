@@ -31,7 +31,7 @@ const COLS = [
   ] },
   { t: "Company", ls: [
     { label: "About Us", href: "/#" },
-    { label: "Blog", href: "/#" },
+    { label: "Guides", href: "/blog" },
     { label: "Careers", href: "/#" },
     { label: "Contact Us", href: "/#" },
   ] },
