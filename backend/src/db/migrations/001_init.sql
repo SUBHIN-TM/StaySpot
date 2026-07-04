@@ -1,4 +1,4 @@
--- StayMate initial schema
+-- Parppidam initial schema
 -- Safe to run multiple times (IF NOT EXISTS guards).
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- gen_random_uuid()

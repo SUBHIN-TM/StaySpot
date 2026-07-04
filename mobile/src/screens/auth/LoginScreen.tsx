@@ -35,7 +35,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing(12) }]}>
-        <Text style={styles.brand}>StayMate</Text>
+        <Text style={styles.brand}>Parppidam</Text>
         <Text style={styles.tagline}>Find your next stay, roommate, or rental space in minutes.</Text>
 
         <View style={{ height: spacing(8) }} />

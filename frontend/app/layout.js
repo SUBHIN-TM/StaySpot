@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import ToastProvider from "@/components/ToastProvider";
 import NavProgress from "@/components/NavProgress";
 import ChatWidget from "@/components/chat/ChatWidget";
 
@@ -22,14 +23,14 @@ const dmSans = DM_Sans({
 // This is one of the big reasons we use Next.js: clean, server-rendered SEO.
 export const metadata = {
   title: {
-    default: "StayMate — Find your next stay, roommate, or rental space",
-    template: "%s | StayMate",
+    default: "Parppidam — Find your next stay, roommate, or rental space",
+    template: "%s | Parppidam",
   },
   description:
-    "StayMate helps you find rooms, PGs, apartments and roommates in minutes. Browse verified listings, chat with owners, and move in faster.",
-  keywords: ["rooms for rent", "PG", "roommates", "apartments", "rental", "StayMate"],
+    "Parppidam helps you find rooms, PGs, apartments and roommates in minutes. Browse verified listings, chat with owners, and move in faster.",
+  keywords: ["rooms for rent", "PG", "roommates", "apartments", "rental", "Parppidam"],
   openGraph: {
-    title: "StayMate — Find your next stay, roommate, or rental space",
+    title: "Parppidam — Find your next stay, roommate, or rental space",
     description:
       "Browse verified rooms, PGs and apartments. Chat with owners and move in faster.",
     type: "website",
@@ -48,7 +49,9 @@ export default function RootLayout({ children }) {
         <Suspense fallback={null}>
           <NavProgress />
         </Suspense>
-        <Providers>{children}</Providers>
+        <Providers>
+          <ToastProvider>{children}</ToastProvider>
+        </Providers>
         {/* Site-wide floating chat widget (role-aware; hides itself on auth
             and full-chat pages). */}
         <ChatWidget />

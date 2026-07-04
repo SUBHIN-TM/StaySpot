@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "StayMate",
+    "name": "Parppidam",
     "slug": "staymate",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,8 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "StayMate uses your location to find nearby stays and roommates.",
-        "NSPhotoLibraryUsageDescription": "StayMate needs photo access so you can upload property images and your avatar."
+        "NSLocationWhenInUseUsageDescription": "Parppidam uses your location to find nearby stays and roommates.",
+        "NSPhotoLibraryUsageDescription": "Parppidam needs photo access so you can upload property images and your avatar."
       }
     },
     "android": {

@@ -11,11 +11,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Home, Menu, X as XIcon } from "lucide-react";
+import { Menu, X as XIcon } from "lucide-react";
 import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
 import { apiGet } from "@/lib/api";
 import AvatarMenu from "./AvatarMenu";
 import NotificationBell from "@/components/NotificationBell";
+import Logo from "./Logo";
 import { SAGE, GOLD, OLIVE, LINE } from "./palette";
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -76,7 +77,9 @@ export default function Navbar() {
   const onHero = pathname === "/";
   const solid = scrolled || !onHero;
 
-  const pillBg = solid ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.10)";
+  // Over the hero the pill gets a consistent dark tint (not near-transparent) so the
+  // gold wordmark + white links stay readable against ANY slideshow image.
+  const pillBg = solid ? "rgba(255,255,255,0.95)" : "rgba(30,37,33,0.42)";
   const txtCol = solid ? OLIVE : "#ffffff";
   const shadow = solid
     ? "0 10px 48px rgba(30,37,33,0.14)"
@@ -105,13 +108,8 @@ export default function Navbar() {
         }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-          <span className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: SAGE }}>
-            <Home size={14} color="white" />
-          </span>
-          <span className="font-bold text-base" style={{ color: solid ? OLIVE : "white" }}>
-            StayMate
-          </span>
+        <Link href="/" className="flex flex-shrink-0 items-center">
+          <Logo size={30} textClass="text-lg" tone={solid ? "light" : "dark"} />
         </Link>
 
         {/* Links */}
@@ -135,7 +133,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3 flex-shrink-0 ml-auto">
           {user ? (
             <>
-              <NotificationBell token={getUserToken()} messagesPath="/messages" />
+              <NotificationBell token={getUserToken()} messagesPath="/messages" color={solid ? OLIVE : "#ffffff"} />
               <AvatarMenu user={user} onLogout={logout} />
             </>
           ) : (
@@ -168,7 +166,7 @@ export default function Navbar() {
         <div className="flex md:hidden items-center gap-2 ml-auto">
           {user && (
             <>
-              <NotificationBell token={getUserToken()} messagesPath="/messages" />
+              <NotificationBell token={getUserToken()} messagesPath="/messages" color={solid ? OLIVE : "#ffffff"} />
               <AvatarMenu user={user} onLogout={logout} />
             </>
           )}

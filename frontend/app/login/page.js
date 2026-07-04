@@ -10,6 +10,7 @@
 import { GoogleLogin } from "@react-oauth/google";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Logo from "@/components/public/Logo";
 import { apiPost } from "@/lib/api";
 import { saveUser, getNextPath } from "@/lib/userAuth";
 import { consumePendingWishlist } from "@/lib/wishlist";
@@ -114,10 +115,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl auth-card p-6">
         {/* Logo */}
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
-            S
-          </span>
-          <span className="text-xl font-bold text-white">StayMate</span>
+          <Logo size={32} textClass="text-xl" tone="dark" />
         </Link>
 
         <h1 className="text-center text-xl font-semibold text-white">Welcome back</h1>
@@ -264,7 +262,7 @@ export default function LoginPage() {
         )}
 
         <p className="mt-6 text-center text-sm text-white/60">
-          New to StayMate?{" "}
+          New to Parppidam?{" "}
           <Link
             href={nextUrl !== "/" ? `/signup?next=${encodeURIComponent(nextUrl)}` : "/signup"}
             className="font-medium text-gold hover:underline"

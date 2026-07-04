@@ -188,7 +188,7 @@ export default function OwnerSignupPage() {
               <h1 className="text-lg font-bold leading-tight">Become an owner</h1>
             </div>
           </div>
-          <p className="mt-1.5 text-xs text-white/85">List your properties on StayMate</p>
+          <p className="mt-1.5 text-xs text-white/85">List your properties on Parppidam</p>
         </div>
 
         {error && (

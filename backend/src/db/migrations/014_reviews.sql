@@ -30,7 +30,7 @@ sample (rn, rating, comment) AS (
     (1, 5, 'Found my place in just three days. The admin-checked listings gave me real confidence to move ahead.'),
     (2, 5, 'Messaging owners directly saved so much time — no brokers, no commissions. Moved in within a week.'),
     (3, 4, 'Loved how easy it was to compare rooms and find a compatible roommate before shifting in.'),
-    (4, 5, 'Listing my property took just minutes and every enquiry felt genuine. StayMate simply works.'),
+    (4, 5, 'Listing my property took just minutes and every enquiry felt genuine. Parppidam simply works.'),
     (5, 5, 'Clean, simple and trustworthy. Exactly what house-hunting in Kerala needed.'),
     (6, 4, 'The chat and verified profiles made the whole process feel safe and friendly.')
 )

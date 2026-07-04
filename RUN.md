@@ -1,4 +1,4 @@
-# How to run StayMate
+# How to run Parppidam
 
 Run things in this order. The **backend must be running first** — the frontend and
 mobile app both talk to it.

@@ -1,6 +1,6 @@
-# StayMate
+# Parppidam
 
-Monorepo for StayMate — "Find your next stay, roommate, or rental space in minutes."
+Monorepo for Parppidam — "Find your next stay, roommate, or rental space in minutes."
 
 ## Structure
 

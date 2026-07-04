@@ -10,11 +10,13 @@ import Link from "next/link";
 import MessageUserButton from "./MessageUserButton";
 import { apiDelete } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
+import { useToast } from "@/components/ToastProvider";
 
 // onDeleted (optional): called with the post id after a successful delete.
 // If not provided, we refresh the server-rendered route instead.
 export default function RoommatePostActions({ post, onDeleted }) {
   const router = useRouter();
+  const toast = useToast();
   const [me, setMe] = useState(null);
 
   useEffect(() => {
@@ -31,10 +33,11 @@ export default function RoommatePostActions({ post, onDeleted }) {
     if (!confirm("Delete this post?")) return;
     try {
       await apiDelete(`/roommate-posts/${post.id}`, getUserToken());
+      toast("Post deleted.", "success");
       if (onDeleted) onDeleted(post.id);
       else router.refresh(); // re-fetch the server-rendered list
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t delete the post", "error");
     }
   }
 

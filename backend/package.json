@@ -1,7 +1,7 @@
 {
   "name": "staymate-backend",
   "version": "1.0.0",
-  "description": "StayMate REST API + Socket.io chat",
+  "description": "Parppidam REST API + Socket.io chat",
   "type": "commonjs",
   "main": "src/server.js",
   "scripts": {

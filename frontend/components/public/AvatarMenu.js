@@ -2,7 +2,7 @@
 
 // The round avatar shown in the navbar when a user is logged in.
 // Clicking it opens a dropdown with "Edit profile" and "Log out".
-// If the logged-in account is an OWNER, we show an emerald "Owner" badge + ring
+// If the logged-in account is an OWNER, we show a gold "Owner" badge + gold ring
 // and a quick link to the owner dashboard — so an owner browsing the public
 // (user) site can tell they're in user mode.
 
@@ -56,20 +56,29 @@ export default function AvatarMenu({ user, onLogout }) {
         aria-label="Open profile menu"
       >
         {isOwner && (
-          <span className="hidden rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 sm:inline">
+          <span
+            className="hidden items-center justify-center rounded-full text-[10px] font-extrabold uppercase leading-none text-white sm:inline-flex"
+            style={{
+              background: "linear-gradient(135deg, #D4A359, #B07C1E)",
+              boxShadow: "0 2px 8px rgba(176,124,30,0.35)",
+              // Caps sit high in the line box (no descenders), so a touch more top
+              // padding than bottom optically centres "OWNER".
+              padding: "0.5em 0.75em 0.3em",
+            }}
+          >
             Owner
           </span>
         )}
         <span
           className={`block h-9 w-9 overflow-hidden rounded-full border-2 ${
-            isOwner ? "border-emerald-500" : "border-slate-300 hover:border-brand"
+            isOwner ? "border-[#D4A359]" : "border-slate-300 hover:border-brand"
           }`}
         >
           {user.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.avatar_url} alt={user.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
           ) : (
-            <span className={`grid h-full w-full place-items-center text-sm font-bold text-white ${isOwner ? "bg-emerald-600" : "bg-brand"}`}>
+            <span className="grid h-full w-full place-items-center bg-brand text-sm font-bold text-white">
               {initials(user.name)}
             </span>
           )}

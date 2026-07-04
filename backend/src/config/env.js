@@ -39,7 +39,7 @@ const env = {
     pass: process.env.SMTP_PASS || '',
   },
   mailFrom: process.env.MAIL_FROM || '',
-  mailFromName: process.env.MAIL_FROM_NAME || 'StayMate',
+  mailFromName: process.env.MAIL_FROM_NAME || 'Parppidam',
 
   storageDriver: (process.env.STORAGE_DRIVER || 'local').toLowerCase(),
   publicBaseUrl: (process.env.PUBLIC_BASE_URL || 'http://localhost:4000').replace(/\/$/, ''),

@@ -80,7 +80,7 @@ async function start() {
   startSweeper();
 
   server.listen(env.port, () => {
-    console.log(`\n  StayMate API  →  http://localhost:${env.port}`);
+    console.log(`\n  Parppidam API  →  http://localhost:${env.port}`);
     console.log(`  Health        →  http://localhost:${env.port}/health`);
     console.log(`  Socket.io     →  ws://localhost:${env.port}`);
     console.log(`  Storage       →  ${require('./storage').driver}\n`);

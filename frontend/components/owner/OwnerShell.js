@@ -9,11 +9,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
 import { apiGet } from "@/lib/api";
 import NotificationBell from "@/components/NotificationBell";
 import OwnerAvatarMenu from "@/components/owner/OwnerAvatarMenu";
+import Logo from "@/components/public/Logo";
 import { SAGE, GOLD, OLIVE, LINE, CREAM } from "@/components/public/palette";
 
 export default function OwnerShell({ active, children, bgClass }) {
@@ -89,10 +90,7 @@ export default function OwnerShell({ active, children, bgClass }) {
         >
           {/* Logo + OWNER pill */}
           <Link href="/owner" className="flex flex-shrink-0 items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: SAGE }}>
-              <Home size={15} color="white" />
-            </span>
-            <span className="font-bold" style={{ color: OLIVE }}>StayMate</span>
+            <Logo size={28} textClass="text-base" tone="light" />
             <span
               className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white"
               style={{

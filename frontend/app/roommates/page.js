@@ -14,7 +14,7 @@ import { apiGet } from "@/lib/api";
 export const metadata = {
   title: "Find roommates & room-sharing partners",
   description:
-    "Browse roommate requirements or post your own. Find compatible people to share a room or flat with on StayMate.",
+    "Browse roommate requirements or post your own. Find compatible people to share a room or flat with on Parppidam.",
 };
 
 async function getPosts() {
@@ -51,7 +51,7 @@ export default async function RoommatesPage() {
                 </h1>
                 <p className="mt-2 max-w-lg text-sm text-white/80">
                   Share a room or flat with compatible people. Browse requirements or post your
-                  own — it&apos;s free.
+                  own. It&apos;s free.
                 </p>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-white/70">
                   <Sparkles size={14} style={{ color: "#E9C88A" }} />

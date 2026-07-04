@@ -83,6 +83,22 @@ const readConversation = asyncHandler(async (req, res) => {
   }
 });
 
+// GET /api/chat/admin/conversations  (admin only) — every conversation on the platform.
+const getAllConversations = asyncHandler(async (req, res) => {
+  res.json({ conversations: await chat.listAllConversations() });
+});
+
+// GET /api/chat/admin/conversations/:id/messages  (admin only) — read any conversation.
+const getMessagesAsAdmin = asyncHandler(async (req, res) => {
+  try {
+    const messages = await chat.listMessagesForAdmin(req.params.id, { limit: req.query.limit });
+    res.json({ messages });
+  } catch (err) {
+    throw new ApiError(404, err.message);
+  }
+});
+
 module.exports = {
   startConversation, startSupport, getConversations, getMessages, postMessage, readConversation,
+  getAllConversations, getMessagesAsAdmin,
 };

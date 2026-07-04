@@ -1,5 +1,5 @@
 // ───────────────────────────────────────────────────────────────────────────
-// Tiny API helper for talking to the StayMate backend.
+// Tiny API helper for talking to the Parppidam backend.
 // Used by both server components (landing page) and client components (admin).
 // Keep it simple: just thin wrappers around fetch().
 // ───────────────────────────────────────────────────────────────────────────

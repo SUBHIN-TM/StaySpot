@@ -38,11 +38,11 @@ async function sendMail({ to, subject, html, text }) {
 async function sendOtpEmail(to, code) {
   return sendMail({
     to,
-    subject: `${code} is your StayMate verification code`,
-    text: `Your StayMate verification code is ${code}. It expires in 10 minutes.`,
+    subject: `${code} is your Parppidam verification code`,
+    text: `Your Parppidam verification code is ${code}. It expires in 10 minutes.`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto">
-        <h2 style="color:#2563eb">StayMate</h2>
+        <h2 style="color:#2563eb">Parppidam</h2>
         <p>Your verification code is:</p>
         <p style="font-size:32px;font-weight:bold;letter-spacing:4px">${code}</p>
         <p style="color:#64748b">This code expires in 10 minutes. If you didn’t request it, ignore this email.</p>
@@ -54,11 +54,11 @@ async function sendOtpEmail(to, code) {
 async function sendWelcomeEmail(to, name) {
   return sendMail({
     to,
-    subject: 'Welcome to StayMate 🎉',
-    text: `Hi ${name}, welcome to StayMate! Find your next stay, roommate, or rental space in minutes.`,
+    subject: 'Welcome to Parppidam 🎉',
+    text: `Hi ${name}, welcome to Parppidam! Find your next stay, roommate, or rental space in minutes.`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto">
-        <h2 style="color:#2563eb">Welcome to StayMate, ${name}! 🎉</h2>
+        <h2 style="color:#2563eb">Welcome to Parppidam, ${name}! 🎉</h2>
         <p>Your account is ready. Find your next stay, roommate, or rental space in minutes.</p>
       </div>`,
   });

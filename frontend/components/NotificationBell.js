@@ -14,7 +14,7 @@ import { Bell } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/api";
 import { SAGE, GOLD, OLIVE, LINE, CREAM } from "@/components/public/palette";
 
-export default function NotificationBell({ token, messagesPath = "/messages" }) {
+export default function NotificationBell({ token, messagesPath = "/messages", color = OLIVE }) {
   const router = useRouter();
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -70,7 +70,7 @@ export default function NotificationBell({ token, messagesPath = "/messages" }) 
       <button
         onClick={toggle}
         className="relative rounded-lg p-2 transition-colors hover:bg-black/5"
-        style={{ color: OLIVE }}
+        style={{ color }}
         aria-label="Notifications"
       >
         <Bell size={21} />

@@ -23,6 +23,7 @@ import {
 import { getToken, getUser, clearAuth, saveAuth } from "@/lib/auth";
 import { apiGet } from "@/lib/api";
 import NotificationBell from "@/components/NotificationBell";
+import Logo from "@/components/public/Logo";
 import { SAGE, GOLD, OLIVE, LINE, CREAM } from "@/components/public/palette";
 
 function initials(name = "") {
@@ -120,10 +121,7 @@ export default function AdminShell({ active, children }) {
 
   const brand = (
     <Link href="/admin" className="flex items-center gap-2 px-2 py-3" onClick={() => setMenuOpen(false)}>
-      <span className="grid h-9 w-9 place-items-center rounded-xl font-bold text-white" style={{ background: SAGE }}>
-        S
-      </span>
-      <span className="font-bold text-white">StayMate</span>
+      <Logo size={26} textClass="text-base" tone="dark" />
       <span
         className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
         style={{ background: `${GOLD}26`, color: GOLD }}
@@ -186,7 +184,7 @@ export default function AdminShell({ active, children }) {
             <Menu size={22} />
           </button>
 
-          <span className="font-semibold md:hidden" style={{ color: OLIVE }}>StayMate Admin</span>
+          <span className="font-semibold md:hidden" style={{ color: OLIVE }}>Parppidam Admin</span>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-4">
             <NotificationBell token={getToken()} messagesPath="/admin/messages" />

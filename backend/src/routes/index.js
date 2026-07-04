@@ -19,6 +19,6 @@ router.use('/audit', require('./auditRoutes'));
 router.use('/settings', require('./settingsRoutes'));
 router.use('/stats', require('./statsRoutes'));
 
-router.get('/', (req, res) => res.json({ name: 'StayMate API', version: '1.0.0' }));
+router.get('/', (req, res) => res.json({ name: 'Parppidam API', version: '1.0.0' }));
 
 module.exports = router;

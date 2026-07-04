@@ -79,7 +79,7 @@ export default function RootNavigator() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.textMuted }}>Loading StayMate…</Text>
+        <Text style={{ marginTop: 12, color: colors.textMuted }}>Loading Parppidam…</Text>
       </View>
     );
   }

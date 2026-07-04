@@ -227,10 +227,9 @@ const createProperty = asyncHandler(async (req, res) => {
   // Numbers can't be negative.
   const rent = rent_amount != null && rent_amount !== '' ? Number(rent_amount) : 0;
   if (!Number.isFinite(rent) || rent < 0) throw new ApiError(400, 'Rent must be 0 or more');
-  const persons = max_persons != null && max_persons !== '' ? parseInt(max_persons, 10) : null;
-  if (persons != null && (!Number.isFinite(persons) || persons < 0)) {
-    throw new ApiError(400, 'Max persons must be 0 or more');
-  }
+  // max_persons is always at least 1 (blank / 0 / invalid → 1, enforced in the DB too).
+  const parsedPersons = parseInt(max_persons, 10);
+  const persons = Number.isFinite(parsedPersons) && parsedPersons >= 1 ? parsedPersons : 1;
 
   // Canonical location (state/district/pincode) — validated + normalised.
   const { state, district, pincode } = normalizeLocation(req.body || {});
@@ -436,8 +435,11 @@ const updateProperty = asyncHandler(async (req, res) => {
   if (req.body.rent_amount !== undefined && req.body.rent_amount !== '' && Number(req.body.rent_amount) < 0) {
     throw new ApiError(400, 'Rent must be 0 or more');
   }
-  if (req.body.max_persons !== undefined && req.body.max_persons !== '' && req.body.max_persons !== null && Number(req.body.max_persons) < 0) {
-    throw new ApiError(400, 'Max persons must be 0 or more');
+  // If max_persons is being changed, floor it to 1 (blank / 0 / invalid → 1) so the
+  // column's "at least 1" rule is never violated.
+  if (req.body.max_persons !== undefined) {
+    const n = parseInt(req.body.max_persons, 10);
+    req.body.max_persons = Number.isFinite(n) && n >= 1 ? n : 1;
   }
 
   // Validate/normalise any canonical location fields being changed, and write

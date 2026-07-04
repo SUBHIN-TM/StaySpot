@@ -1,6 +1,6 @@
-# StayMate — Web app (frontend)
+# Parppidam — Web app (frontend)
 
-The public website + admin dashboard for StayMate. Built with **Next.js 16 (App Router)**,
+The public website + admin dashboard for Parppidam. Built with **Next.js 16 (App Router)**,
 **JavaScript**, and **Tailwind CSS v4**. It talks to the shared backend API (`/backend`).
 
 ## Quick start

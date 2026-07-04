@@ -2,6 +2,7 @@
 // matching the design. Brand blurb + social icons + link columns.
 
 import Link from "next/link";
+import Logo from "./Logo";
 import { Home } from "lucide-react";
 import { GOLD, OLIVE } from "./palette";
 
@@ -57,11 +58,8 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: GOLD }}>
-                <Home size={14} color={OLIVE} />
-              </span>
-              <span className="font-bold text-lg text-white">StayMate</span>
+            <div className="mb-4">
+              <Logo size={32} textClass="text-xl" tone="dark" />
             </div>
             <p className="text-xs leading-relaxed mb-5 max-w-xs" style={{ color: "rgba(255,255,255,.38)" }}>
               Kerala&apos;s most trusted platform for finding rooms, PGs, apartments and compatible roommates. Zero brokerage, 100% verified.
@@ -98,7 +96,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8" style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,.28)" }}>© StayMate {year}. All rights reserved.</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,.28)" }}>© Parppidam {year}. All rights reserved.</p>
           <p className="text-xs" style={{ color: "rgba(255,255,255,.28)" }}>Made with ❤️ in Kerala</p>
         </div>
       </div>

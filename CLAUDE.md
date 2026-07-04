@@ -1,9 +1,16 @@
-# StayMate — project guide (read me first)
+# Parppidam — project guide (read me first)
 
 > This file is the portable project context. It travels with the repo, so any
-> machine/account picking up StayMate has the full picture. Keep it updated when
+> machine/account picking up Parppidam has the full picture. Keep it updated when
 > architecture, conventions, or major decisions change.
-> (The project may be renamed later — "StayMate" is the current working name.)
+> (The project may be renamed later — "Parppidam" is the current working name.)
+
+## Writing rule (STRICT, applies to every reply and all app copy)
+Do NOT use em dashes (—) or a hyphen used as sentence punctuation (" - ") in chat
+replies or in any UI text / copy written into the app. Rewrite with commas, colons,
+parentheses, or two short sentences. Avoid hyphens generally; keep a hyphen only
+inside a single compound word when there is no clean alternative. The user has
+asked for this repeatedly, so treat it as a hard requirement.
 
 ## What this is
 A marketplace to **find rooms, PGs, apartments, rentals AND roommates** ("find your
@@ -55,7 +62,7 @@ Optional demo data: `npm run db:seed`.
 (pgcrypto bcrypt is compatible with the backend's bcryptjs):
 ```sql
 INSERT INTO users (email, username, password_hash, name, role)
-VALUES ('admin@staymate.com','admin@staymate.com', crypt('CHOOSE_A_PASSWORD', gen_salt('bf')), 'StayMate Admin', 'admin');
+VALUES ('admin@staymate.com','admin@staymate.com', crypt('CHOOSE_A_PASSWORD', gen_salt('bf')), 'Parppidam Admin', 'admin');
 ```
 Admin login is at `/admin/login` (separate session from regular users).
 
@@ -208,7 +215,8 @@ Admin login is at `/admin/login` (separate session from regular users).
   shipped (see Features). Still to do: **AI scam detection** on new listings; optionally
   a self-serve DigiLocker KYC tier; cheap fraud signal (same phone → many listings).
 - **Post-move-in retention:** rent/expense split, flat group + chores board.
-- **Rename** "StayMate" (candidates discussed: Nestmate, Aangan, Basera) — do a single
+- **Rename** "Parppidam" (candidates discussed: Nestmate, Aangan, Basera) — do a single
+
   pass across logo text, titles, SEO metadata, email templates when chosen.
 - Polish: image lightbox, embedded map, search/filters, instant chat via Socket.io,
   email notifications on new messages.

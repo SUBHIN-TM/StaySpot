@@ -8,9 +8,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
+import { useToast } from "@/components/ToastProvider";
 
 export default function MessageUserButton({ userId, label = "Message", className }) {
   const router = useRouter();
+  const toast = useToast();
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +41,7 @@ export default function MessageUserButton({ userId, label = "Message", className
       );
       setLoading(false);
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t open the chat", "error");
       setLoading(false);
     }
   }

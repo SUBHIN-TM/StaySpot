@@ -1,6 +1,6 @@
 "use client";
 
-// "Find exactly what you're looking for" — the three real people StayMate serves
+// "Find exactly what you're looking for" — the three real people Parppidam serves
 // (Seekers, Owners, Roommates). Each card has its own accent colour, a soft
 // gradient surface and a hover lift. Reveals on scroll with a small stagger.
 

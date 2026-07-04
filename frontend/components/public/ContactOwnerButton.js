@@ -6,11 +6,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MessageCircle } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
+import { useToast } from "@/components/ToastProvider";
 
-export default function ContactOwnerButton({ ownerId, propertyId }) {
+export default function ContactOwnerButton({ ownerId, propertyId, className, label = "Contact owner" }) {
   const router = useRouter();
+  const toast = useToast();
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,9 +44,13 @@ export default function ContactOwnerButton({ ownerId, propertyId }) {
         { other_user_id: ownerId, property_id: propertyId },
         getUserToken()
       );
-      router.push(`/messages?c=${d.conversation_id}`);
+      // Open the floating chat widget on this conversation (no /messages page).
+      window.dispatchEvent(
+        new CustomEvent("staymate:open-chat", { detail: { conversationId: d.conversation_id } })
+      );
+      setLoading(false);
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t contact the owner", "error");
       setLoading(false);
     }
   }
@@ -52,9 +59,12 @@ export default function ContactOwnerButton({ ownerId, propertyId }) {
     <button
       onClick={contact}
       disabled={loading}
-      className="mt-4 block w-full rounded-lg bg-brand py-2.5 text-center font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+      className={
+        className ||
+        "flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-center font-semibold text-white shadow-sm transition-colors hover:bg-brand-dark disabled:opacity-60"
+      }
     >
-      {loading ? "Opening chat…" : "Contact owner"}
+      <MessageCircle size={17} /> {loading ? "Opening chat…" : label}
     </button>
   );
 }

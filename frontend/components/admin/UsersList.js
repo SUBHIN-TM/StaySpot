@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiDelete, apiPatch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useToast } from "@/components/ToastProvider";
 import AdminVerifyOwnerModal from "./AdminVerifyOwnerModal";
 import AuditHistoryModal from "./AuditHistoryModal";
 
@@ -40,6 +41,7 @@ function Select({ value, onChange, children, label }) {
 }
 
 export default function UsersList({ role, title, subtitle }) {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,8 +76,9 @@ export default function UsersList({ role, title, subtitle }) {
     try {
       await apiDelete(`/users/${u.id}`, getToken());
       setUsers((list) => list.filter((x) => x.id !== u.id));
+      toast(`${u.name} was deleted.`, "success");
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t delete the user", "error");
     }
   }
 
@@ -84,8 +87,9 @@ export default function UsersList({ role, title, subtitle }) {
     try {
       const { user } = await apiPatch(`/users/${u.id}/block`, { is_blocked: !u.is_blocked }, getToken());
       setUsers((list) => list.map((x) => (x.id === u.id ? { ...x, is_blocked: user.is_blocked } : x)));
+      toast(user.is_blocked ? `${u.name} was blocked.` : `${u.name} was unblocked.`, "success");
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t update the user", "error");
     }
   }
 

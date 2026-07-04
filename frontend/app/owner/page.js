@@ -165,7 +165,7 @@ export default function OwnerDashboard() {
                 >
                   {/* Sage accent bar — the brand "green touch" across every card. */}
                   <div className="h-1 w-full bg-gradient-to-r from-brand via-brand/70 to-gold/60" />
-                  <div className="relative h-40 bg-gradient-to-br from-brand/10 to-mist">
+                  <Link href={`/owner/properties/${p.id}`} className="relative block h-40 bg-gradient-to-br from-brand/10 to-mist">
                     {cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={cover} alt={p.title} className="h-full w-full object-cover" />
@@ -178,9 +178,11 @@ export default function OwnerDashboard() {
                     <span className={`absolute right-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold ${approval.cls}`}>
                       {approval.label}
                     </span>
-                  </div>
+                  </Link>
                   <div className="p-4">
-                    <h3 className="line-clamp-1 font-semibold text-ink">{p.title}</h3>
+                    <Link href={`/owner/properties/${p.id}`} className="line-clamp-1 font-semibold text-ink transition-colors hover:text-brand">
+                      {p.title}
+                    </Link>
                     <p className="mt-1 flex items-center gap-1 text-sm text-ink/55">
                       <MapPin size={13} className="shrink-0" />
                       {p.city || "—"} · <span className="capitalize">{p.property_type}</span>

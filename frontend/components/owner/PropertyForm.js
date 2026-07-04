@@ -18,6 +18,7 @@ import { apiGet, apiPost, apiPatch, apiDelete, uploadToPresignedUrl } from "@/li
 import { getUserToken } from "@/lib/userAuth";
 import { STATE_LIST, DEFAULT_STATE, districtsOf } from "@/lib/geo";
 import { AMENITIES, FURNISHING, PETS, ELECTRICITY, PREFERRED_TENANT, FOOD, PROPERTY_TYPES } from "@/lib/listingMeta";
+import { useToast } from "@/components/ToastProvider";
 
 // Fallback caps used only until the server's limits load (server re-validates anyway).
 const FALLBACK_LIMITS = {
@@ -56,6 +57,7 @@ let pickSeq = 0; // local id generator for picked items
 
 export default function PropertyForm({ existing }) {
   const router = useRouter();
+  const toast = useToast();
   const isEdit = !!existing;
   const token = getUserToken();
 
@@ -406,9 +408,11 @@ export default function PropertyForm({ existing }) {
         await apiPost(`/properties/${propertyId}/video`, { key: video.key }, token);
       }
 
+      // Success snackbar survives the redirect (the toast provider is global).
+      toast(isEdit ? "Changes saved." : "Listing created.", "success");
       router.push("/owner");
     } catch (err) {
-      setError(err.message || "Couldn’t save the property");
+      toast(err.message || "Couldn’t save the property", "error");
       setLoading(false);
     }
   }

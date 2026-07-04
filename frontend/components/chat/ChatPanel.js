@@ -10,10 +10,20 @@
 //   initialConversationId - optional conversation to open on load
 
 import { useEffect, useRef, useState } from "react";
+import { Home } from "lucide-react";
 import { apiGet, apiPost } from "@/lib/api";
+import { useToast } from "@/components/ToastProvider";
+import { RoofMark } from "@/components/public/Logo";
 
 function initials(name = "") {
   return (name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase();
+}
+// The admin support contact shows a short name + our roof-mark logo as its avatar.
+function contactName(u) {
+  return u?.role === "admin" ? "Parppidam Support" : u?.name || "User";
+}
+function SupportMark({ size = 22 }) {
+  return <RoofMark size={size} stroke="#FFFFFF" door="#D4A359" />;
 }
 function timeOf(d) {
   try {
@@ -24,6 +34,7 @@ function timeOf(d) {
 }
 
 export default function ChatPanel({ token, userId, initialConversationId }) {
+  const toast = useToast();
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(initialConversationId || null);
   const [messages, setMessages] = useState([]);
@@ -92,7 +103,7 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
       loadMessages(activeId);
       loadConversations();
     } catch (err) {
-      alert(err.message);
+      toast(err.message || "Couldn’t send the message", "error");
       setText(content);
     }
   }
@@ -119,7 +130,9 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
                 }`}
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-brand text-sm font-bold text-white">
-                  {c.other_user?.avatar_url ? (
+                  {c.other_user?.role === "admin" ? (
+                    <SupportMark />
+                  ) : c.other_user?.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.other_user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
                   ) : (
@@ -128,9 +141,8 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center justify-between">
-                    <span className="truncate font-medium capitalize text-ink">
-                      {c.other_user?.name || "User"}
-                      {c.other_user?.role === "admin" && " (Support)"}
+                    <span className={`truncate font-medium text-ink ${c.other_user?.role === "admin" ? "" : "capitalize"}`}>
+                      {contactName(c.other_user)}
                     </span>
                     {c.unread_count > 0 && (
                       <span className="ml-2 rounded-full bg-brand px-1.5 text-xs font-bold text-white">
@@ -162,14 +174,37 @@ export default function ChatPanel({ token, userId, initialConversationId }) {
               <button onClick={() => setActiveId(null)} className="text-ink/60 md:hidden" aria-label="Back">
                 ‹
               </button>
-              <span className="font-semibold capitalize text-ink">
-                {active.other_user?.name}
-                {active.other_user?.role === "admin" && " (Support)"}
-              </span>
-              {active.property?.title && (
-                <span className="truncate text-sm text-ink/60">· {active.property.title}</span>
+              {active.other_user?.role === "admin" && (
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand">
+                  <SupportMark size={18} />
+                </span>
               )}
+              <span className={`font-semibold text-ink ${active.other_user?.role === "admin" ? "" : "capitalize"}`}>
+                {contactName(active.other_user)}
+              </span>
             </div>
+
+            {/* Property context banner — tells the owner exactly which listing
+                this enquiry is about (the whole point of the chat). */}
+            {active.property && (
+              <a
+                href={`/properties/${active.property.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 border-b border-line bg-mist/60 px-4 py-2.5 transition-colors hover:bg-mist"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand">
+                  <Home size={16} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/45">Enquiry about</p>
+                  <p className="truncate text-sm font-semibold text-ink">{active.property.title}</p>
+                </div>
+                <span className="shrink-0 text-sm font-bold text-brand">
+                  ₹{Number(active.property.rent_amount).toLocaleString("en-IN")}
+                </span>
+              </a>
+            )}
 
             {/* Messages */}
             <div className="flex-1 space-y-2 overflow-y-auto bg-mist p-4">

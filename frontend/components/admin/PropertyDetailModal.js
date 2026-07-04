@@ -8,6 +8,7 @@ import Link from "next/link";
 import ImageCarousel from "@/components/public/ImageCarousel";
 import { apiPatch, apiDelete } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useToast } from "@/components/ToastProvider";
 import AdminFieldVisitModal from "./AdminFieldVisitModal";
 import AuditHistoryModal from "./AuditHistoryModal";
 import {
@@ -26,6 +27,7 @@ const STATUS = {
 };
 
 export default function PropertyDetailModal({ property, onClose, onChanged }) {
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [showVisit, setShowVisit] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -42,9 +44,10 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
         getToken()
       );
       onChanged(updated);
+      toast(status === "approved" ? "Listing approved." : status === "rejected" ? "Listing rejected." : "Listing updated.", "success");
       onClose(); // close the modal once the action succeeds
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t update the listing", "error");
     } finally {
       setBusy(false);
     }
@@ -55,9 +58,10 @@ export default function PropertyDetailModal({ property, onClose, onChanged }) {
     setBusy(true);
     try {
       await apiDelete(`/properties/${p.id}`, getToken());
+      toast("Listing deleted.", "success");
       onChanged(null); // null = removed
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t delete the listing", "error");
       setBusy(false);
     }
   }

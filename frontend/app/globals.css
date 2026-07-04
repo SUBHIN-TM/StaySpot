@@ -237,7 +237,7 @@ h1, h2, h3, h4, h5, h6 {
   66%      { transform: translateY(-6px) rotate(-1deg); }
 }
 
-/* Gentle bob for the mock chat bubbles in the "Why StayMate" panel. */
+/* Gentle bob for the mock chat bubbles in the "Why Parppidam" panel. */
 @keyframes chat-bounce-1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @keyframes chat-bounce-2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 

@@ -1,6 +1,6 @@
 "use client";
 
-// "Loved by renters across Kerala" — REAL reviews from StayMate users (seekers &
+// "Loved by renters across Kerala" — REAL reviews from Parppidam users (seekers &
 // owners), fetched on the server and passed in. Logged-in users can leave / edit
 // their own star rating + comment right here; logged-out users are sent to login.
 
@@ -24,7 +24,7 @@ const FRAGMENTS = {
   5: {
     o: ["Excellent experience", "Brilliant platform", "Absolutely loved it", "Top-notch all round", "Couldn't be happier", "A fantastic find", "Genuinely impressed", "Five stars from me"],
     m: ["smooth from search to move-in", "no brokers and zero hassle", "the verified listings built real trust", "chatting with owners was effortless", "everything just worked the way it should", "fast, simple and reliable"],
-    c: ["Highly recommend!", "Would absolutely use it again.", "Exactly what house-hunting needed.", "Found my place in no time.", "StayMate made the whole thing easy."],
+    c: ["Highly recommend!", "Would absolutely use it again.", "Exactly what house-hunting needed.", "Found my place in no time.", "Parppidam made the whole thing easy."],
   },
   4: {
     o: ["Really good experience", "A solid platform", "Happy with how it went", "Worked well for me", "Pretty great overall", "Genuinely useful", "A reliable choice"],
@@ -189,7 +189,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
           style={{ background: "white", border: `1px solid ${LINE}`, boxShadow: "0 4px 20px rgba(30,37,33,.06)" }}
         >
           <h3 className="text-lg font-bold mb-1" style={{ color: OLIVE }}>
-            {loggedIn ? "Rate your StayMate experience" : "Share your experience"}
+            {loggedIn ? "Rate your Parppidam experience" : "Share your experience"}
           </h3>
           <p className="text-sm mb-4" style={{ color: "#5A6B63" }}>
             {loggedIn
@@ -220,7 +220,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
             value={comment}
             onChange={(e) => { setComment(e.target.value); autofilledRef.current = false; setDone(false); }}
             onFocus={() => { if (!loggedIn) router.push(`/login?next=${encodeURIComponent("/")}`); }}
-            placeholder={loggedIn ? "Tell others how StayMate worked for you…" : "Log in to write your review…"}
+            placeholder={loggedIn ? "Tell others how Parppidam worked for you…" : "Log in to write your review…"}
             maxLength={600}
             rows={3}
             readOnly={!loggedIn}
@@ -293,7 +293,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
                     </span>
                   )}
                   <div>
-                    <div className="text-sm font-bold capitalize" style={{ color: OLIVE }}>{r.user?.name || "StayMate user"}</div>
+                    <div className="text-sm font-bold capitalize" style={{ color: OLIVE }}>{r.user?.name || "Parppidam user"}</div>
                     <div className="text-xs" style={{ color: "#8A9A92" }}>{roleLabel(r.user)}</div>
                   </div>
                 </div>

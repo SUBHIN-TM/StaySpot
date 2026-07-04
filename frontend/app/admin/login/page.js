@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/public/Logo";
 import { ArrowLeft } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { saveAuth } from "@/lib/auth";
@@ -44,10 +45,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md rounded-2xl auth-card p-7">
         {/* Logo */}
         <Link href="/" className="mb-6 flex items-center justify-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
-            S
-          </span>
-          <span className="text-xl font-bold text-white">StayMate</span>
+          <Logo size={32} textClass="text-xl" tone="dark" />
         </Link>
 
         <h1 className="text-center text-xl font-semibold text-white">Admin sign in</h1>

@@ -129,7 +129,7 @@ export default function AdminSettingsPage() {
   return (
     <AdminShell active="settings">
       <h1 className="text-2xl font-bold text-ink">Settings</h1>
-      <p className="mt-1 text-ink/60">Configure how StayMate behaves.</p>
+      <p className="mt-1 text-ink/60">Configure how Parppidam behaves.</p>
 
       {error && (
         <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>

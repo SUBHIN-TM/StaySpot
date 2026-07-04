@@ -18,11 +18,13 @@ import { MessageCircle, X, Send, ChevronLeft, Home, Search } from "lucide-react"
 import { getUserToken, getCurrentUser } from "@/lib/userAuth";
 import { getToken, getUser } from "@/lib/auth";
 import { apiGet, apiPost } from "@/lib/api";
+import { RoofMark } from "@/components/public/Logo";
 
 // ── Theme (from the design screenshot) ──────────────────────────────────────
 const PANEL_BG = "linear-gradient(160deg,#3A473D 0%,#2A332C 100%)";
 const GOLD = "#D4A359";
 const OLIVE = "#1E2521";
+const SAGE = "#4A5A50";
 const RECV_BG = "rgba(255,255,255,0.10)";
 const RECV_TX = "rgba(255,255,255,0.92)";
 const SUBTLE = "rgba(255,255,255,0.55)";
@@ -38,6 +40,16 @@ const DEMO = [
 
 function initials(name = "") {
   return (name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase();
+}
+// The admin support contact shows a short name + our roof-mark logo as its avatar.
+function contactName(u) {
+  return u?.role === "admin" ? "Parppidam Support" : u?.name || "User";
+}
+function isSupport(u) {
+  return u?.role === "admin";
+}
+function SupportMark({ size = 20 }) {
+  return <RoofMark size={size} stroke="#FFFFFF" door={GOLD} />;
 }
 function timeOf(d) {
   try {
@@ -217,12 +229,16 @@ export default function ChatWidget() {
             <span
               className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full"
               style={
-                listHeader
+                loggedIn && active && isSupport(active.other_user)
+                  ? { background: SAGE, boxShadow: "0 4px 14px rgba(74,90,80,0.45)" }
+                  : listHeader
                   ? { background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.16)" }
                   : { background: GOLD, boxShadow: "0 4px 14px rgba(212,163,89,0.4)" }
               }
             >
-              {loggedIn && active?.other_user?.avatar_url ? (
+              {loggedIn && active && isSupport(active.other_user) ? (
+                <SupportMark size={22} />
+              ) : loggedIn && active?.other_user?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={active.other_user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               ) : loggedIn && active ? (
@@ -235,9 +251,9 @@ export default function ChatWidget() {
             </span>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold capitalize text-white">
+              <p className={`truncate font-semibold text-white ${loggedIn && active && isSupport(active.other_user) ? "" : "capitalize"}`}>
                 {loggedIn && active
-                  ? active.other_user?.name + (active.other_user?.role === "admin" ? " (Support)" : "")
+                  ? contactName(active.other_user)
                   : loggedIn
                   ? "Messages"
                   : "Raj (Owner)"}
@@ -315,8 +331,10 @@ export default function ChatWidget() {
                       style={{ borderBottom: `1px solid ${LINE}` }}
                     >
                       <span className="relative shrink-0">
-                        <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full" style={{ background: GOLD }}>
-                          {c.other_user?.avatar_url ? (
+                        <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full" style={{ background: isSupport(c.other_user) ? SAGE : GOLD }}>
+                          {isSupport(c.other_user) ? (
+                            <SupportMark size={22} />
+                          ) : c.other_user?.avatar_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={c.other_user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
                           ) : (
@@ -332,8 +350,8 @@ export default function ChatWidget() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2">
-                          <span className="truncate font-medium capitalize text-white">
-                            {c.other_user?.name || "User"}{c.other_user?.role === "admin" ? " (Support)" : ""}
+                          <span className={`truncate font-medium text-white ${isSupport(c.other_user) ? "" : "capitalize"}`}>
+                            {contactName(c.other_user)}
                           </span>
                           {c.unread_count > 0 && (
                             <span className="rounded-full px-1.5 text-xs font-bold" style={{ background: GOLD, color: OLIVE }}>
@@ -354,7 +372,30 @@ export default function ChatWidget() {
 
             {/* Signed-in: open thread */}
             {loggedIn && activeId && (
-              <Bubbles items={messages.map((m) => ({ id: m.id, mine: m.sender_id === meId, content: m.content, time: timeOf(m.created_at) }))} />
+              <>
+                {/* Which listing this enquiry is about — pinned so the owner always sees it. */}
+                {active?.property && (
+                  <a
+                    href={`/properties/${active.property.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="sticky top-0 z-10 mb-3 flex items-center gap-2.5 rounded-xl px-3 py-2"
+                    style={{ background: "#38463C", border: "1px solid rgba(212,163,89,0.30)" }}
+                  >
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: "rgba(212,163,89,0.2)" }}>
+                      <Home size={15} color={GOLD} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: SUBTLE }}>Enquiry about</p>
+                      <p className="truncate text-sm font-semibold text-white">{active.property.title}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold" style={{ color: GOLD }}>
+                      ₹{Number(active.property.rent_amount).toLocaleString("en-IN")}
+                    </span>
+                  </a>
+                )}
+                <Bubbles items={messages.map((m) => ({ id: m.id, mine: m.sender_id === meId, content: m.content, time: timeOf(m.created_at) }))} />
+              </>
             )}
             <div ref={bottomRef} />
           </div>

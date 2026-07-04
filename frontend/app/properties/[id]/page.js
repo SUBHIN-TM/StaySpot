@@ -1,32 +1,29 @@
 // ───────────────────────────────────────────────────────────────────────────
 // Property detail page  (URL: "/properties/<id>")
-// Full view a seeker sees when they click a listing: image gallery, video,
-// all details, map link, and owner contact. SERVER component → SEO-friendly.
-// NOTE (Next 16): `params` is a Promise and must be awaited.
+// The main page where a seeker views a listing and connects with the owner.
+// SERVER component → SEO-friendly.  NOTE (Next 16): `params` is a Promise.
 // ───────────────────────────────────────────────────────────────────────────
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft, MapPin, ShieldCheck, Users, Home, BadgeCheck, Map as MapIcon, Info,
+} from "lucide-react";
 import Navbar from "@/components/public/Navbar";
 import Footer from "@/components/public/Footer";
 import ImageCarousel from "@/components/public/ImageCarousel";
 import ContactOwnerButton from "@/components/public/ContactOwnerButton";
+import WishlistButton from "@/components/public/WishlistButton";
 import { apiGet } from "@/lib/api";
 import {
-  AMENITY_LABEL,
-  AMENITY_ICON,
-  AMENITY_FALLBACK_ICON,
-  FURNISHING_LABEL,
-  PETS_LABEL,
-  ELECTRICITY_LABEL,
-  PREFERRED_TENANT_LABEL,
-  FOOD_LABEL,
+  AMENITY_LABEL, AMENITY_ICON, AMENITY_FALLBACK_ICON,
+  FURNISHING_LABEL, PETS_LABEL, ELECTRICITY_LABEL, PREFERRED_TENANT_LABEL, FOOD_LABEL,
+  PROPERTY_TYPE_LABEL,
 } from "@/lib/listingMeta";
 
 const OCCUPANCY = {
-  available: { label: "Available", cls: "bg-green-100 text-green-700" },
-  partially_occupied: { label: "Partially occupied", cls: "bg-amber-100 text-amber-700" },
-  occupied: { label: "Occupied", cls: "bg-slate-200 text-slate-600" },
+  available: { label: "Available", dot: "#16a34a", cls: "bg-green-100 text-green-700" },
+  partially_occupied: { label: "Partially occupied", dot: "#d97706", cls: "bg-amber-100 text-amber-700" },
+  occupied: { label: "Occupied", dot: "#dc2626", cls: "bg-red-100 text-red-700" },
 };
 
 async function getProperty(id) {
@@ -38,15 +35,41 @@ async function getProperty(id) {
   }
 }
 
-// SEO: use the property title/description for this page's metadata.
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const p = await getProperty(id);
   if (!p) return { title: "Listing not found" };
   return {
     title: p.title,
-    description: p.description || `${p.property_type} in ${p.city || "your city"} on StayMate.`,
+    description: p.description || `${p.property_type} in ${p.city || "your city"} on Parppidam.`,
   };
+}
+
+// A titled white card section.
+function Section({ title, icon: Icon, children }) {
+  return (
+    <section className="rounded-2xl border border-line bg-white p-6 shadow-sm sm:p-7">
+      <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+        {Icon && <Icon size={18} className="text-brand" />} {title}
+      </h2>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+// A key-fact tile (icon chip + label + value).
+function Fact({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-3">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand">
+        <Icon size={17} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink/45">{label}</p>
+        <p className="truncate text-sm font-semibold capitalize text-ink">{value}</p>
+      </div>
+    </div>
+  );
 }
 
 export default async function PropertyDetailPage({ params }) {
@@ -57,12 +80,14 @@ export default async function PropertyDetailPage({ params }) {
     return (
       <>
         <Navbar />
-        <main className="mx-auto max-w-3xl px-4 py-20 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Listing not found</h1>
-          <p className="mt-2 text-slate-500">It may have been removed or is no longer available.</p>
-          <Link href="/properties" className="mt-6 inline-flex items-center gap-1.5 font-semibold text-brand hover:underline">
-            <ArrowLeft size={16} /> Back to listings
-          </Link>
+        <main className="grid min-h-[60vh] place-items-center bg-cream px-4 text-center">
+          <div>
+            <h1 className="text-2xl font-bold text-ink">Listing not found</h1>
+            <p className="mt-2 text-ink/55">It may have been removed or is no longer available.</p>
+            <Link href="/properties" className="mt-6 inline-flex items-center gap-1.5 font-semibold text-brand hover:underline">
+              <ArrowLeft size={16} /> Back to listings
+            </Link>
+          </div>
         </main>
         <Footer />
       </>
@@ -72,13 +97,11 @@ export default async function PropertyDetailPage({ params }) {
   const imageUrls = (p.images || []).map((img) => img.image_url).filter(Boolean);
   const occ = OCCUPANCY[p.occupancy_status] || OCCUPANCY.available;
   const rent = `₹${Number(p.rent_amount).toLocaleString("en-IN")}`;
+  const typeLabel = PROPERTY_TYPE_LABEL[p.property_type] || p.property_type;
+  const location = [p.address, p.landmark, p.city, p.district, p.state].filter(Boolean).join(", ") || "—";
 
-  // Amenities the owner ticked (with icons), and the "good to know" policy rows
-  // that were actually set.
   const amenities = (p.amenities || []).map((a) => ({
-    key: a,
-    Icon: AMENITY_ICON[a] || AMENITY_FALLBACK_ICON,
-    label: AMENITY_LABEL[a] || a,
+    key: a, Icon: AMENITY_ICON[a] || AMENITY_FALLBACK_ICON, label: AMENITY_LABEL[a] || a,
   }));
   const policies = [
     p.furnishing && { label: "Furnishing", value: FURNISHING_LABEL[p.furnishing] },
@@ -91,137 +114,174 @@ export default async function PropertyDetailPage({ params }) {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <Link href="/properties" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline">
-          <ArrowLeft size={15} /> Back to listings
-        </Link>
+      <main className="min-h-screen bg-cream">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <Link href="/properties" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink/60 transition-colors hover:text-brand">
+            <ArrowLeft size={15} /> Back to listings
+          </Link>
 
-        {/* Gallery */}
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-          <ImageCarousel images={imageUrls} alt={p.title} heightClass="h-72 sm:h-96" />
-        </div>
-
-        {/* Video */}
-        {p.video_url && (
-          <video
-            src={p.video_url}
-            controls
-            className="mt-4 w-full rounded-2xl border border-slate-200 bg-black"
-            style={{ maxHeight: "24rem" }}
-          />
-        )}
-
-        <div className="mt-6 grid gap-8 lg:grid-cols-3">
-          {/* Main details */}
-          <div className="lg:col-span-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold capitalize text-brand">
-                {p.property_type}
+          {/* Gallery */}
+          <div className="relative mt-4 overflow-hidden rounded-3xl border border-line shadow-sm">
+            <ImageCarousel images={imageUrls} alt={p.title} heightClass="h-72 sm:h-[26rem]" />
+            {/* Badges over the image */}
+            <div className="pointer-events-none absolute left-4 top-4 flex flex-wrap items-center gap-2">
+              <span className="rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: "rgba(30,37,33,.72)" }}>
+                {typeLabel}
               </span>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${occ.cls}`}>
+              <span className="rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: occ.dot }}>
                 {occ.label}
               </span>
-              {p.max_persons ? (
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                  👥 {p.max_persons} persons
+              {p.field_visited && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-[#2E8B57] shadow">
+                  <ShieldCheck size={13} /> Verified by our team
                 </span>
-              ) : null}
+              )}
             </div>
-
-            <h1 className="mt-4 text-3xl font-bold text-slate-900">{p.title}</h1>
-            <p className="mt-2 text-slate-500">
-              📍 {[p.address, p.landmark, p.city, p.district, p.state].filter(Boolean).join(", ") || "—"}
-              {p.pincode ? ` - ${p.pincode}` : ""}
-            </p>
-
-            {p.description && (
-              <div className="mt-6">
-                <h2 className="text-lg font-semibold text-slate-900">About this place</h2>
-                <p className="mt-2 whitespace-pre-line text-slate-600">{p.description}</p>
-              </div>
-            )}
-
-            {amenities.length > 0 && (
-              <div className="mt-6">
-                <h2 className="text-lg font-semibold text-slate-900">Amenities</h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {amenities.map(({ key, Icon, label }) => (
-                    <span
-                      key={key}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700"
-                    >
-                      <Icon size={15} strokeWidth={2} />
-                      {label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {policies.length > 0 && (
-              <div className="mt-6">
-                <h2 className="text-lg font-semibold text-slate-900">Good to know</h2>
-                <dl className="mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2">
-                  {policies.map((row) => (
-                    <div key={row.label} className="flex justify-between border-b border-slate-100 py-1.5">
-                      <dt className="text-sm text-slate-500">{row.label}</dt>
-                      <dd className="text-sm font-medium text-slate-800">{row.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            )}
-
-            {p.map_link && (
-              <a
-                href={p.map_link}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-6 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                🗺️ View location on Google Maps
-              </a>
-            )}
+            <div className="absolute right-4 top-4">
+              <WishlistButton propertyId={p.id} size={17} />
+            </div>
           </div>
 
-          {/* Sidebar: price + owner contact */}
-          <aside className="lg:col-span-1">
-            <div className="rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <div className="text-3xl font-bold text-brand">
-                {rent}
-                <span className="text-base font-normal text-slate-500"> / month</span>
+          {/* Video */}
+          {p.video_url && (
+            <video
+              src={p.video_url}
+              controls
+              className="mt-4 w-full rounded-2xl border border-line bg-black"
+              style={{ maxHeight: "26rem" }}
+            />
+          )}
+
+          {/* Title */}
+          <div className="mt-7">
+            <h1 className="text-2xl font-bold leading-tight text-ink sm:text-3xl">{p.title}</h1>
+            <p className="mt-2 flex items-start gap-1.5 text-ink/60">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-gold" />
+              <span>{location}{p.pincode ? ` · ${p.pincode}` : ""}</span>
+            </p>
+          </div>
+
+          <div className="mt-7 grid items-start gap-7 lg:grid-cols-[1fr_360px]">
+            {/* Main column */}
+            <div className="space-y-6">
+              {/* Key facts */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Fact icon={Home} label="Type" value={typeLabel} />
+                <Fact icon={Users} label="Capacity" value={`${p.max_persons || 1} ${p.max_persons === 1 ? "person" : "persons"}`} />
+                <Fact icon={BadgeCheck} label="Status" value={occ.label} />
               </div>
 
-              <div className="mt-6 border-t border-slate-100 pt-4">
-                <p className="text-xs text-slate-500">Listed by</p>
-                <div className="mt-2 flex items-center gap-3">
-                  {p.owner?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.owner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
-                  ) : (
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-brand font-bold text-white">
-                      {(p.owner?.name || "U").charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  <span className="font-medium capitalize text-slate-900">{p.owner?.name || "Owner"}</span>
-                  {/* Green tick = this owner's phone was verified by our team. */}
-                  {p.owner?.phone_verified && (
-                    <span
-                      title="Verified owner"
-                      className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
-                    >
-                      ✓ Verified
-                    </span>
-                  )}
+              {p.description && (
+                <Section title="About this place" icon={Info}>
+                  <p className="whitespace-pre-line leading-relaxed text-ink/70">{p.description}</p>
+                </Section>
+              )}
+
+              {amenities.length > 0 && (
+                <Section title="Amenities" icon={Sparkle}>
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    {amenities.map(({ key, Icon, label }) => (
+                      <div key={key} className="flex items-center gap-3 rounded-xl bg-mist/60 px-3.5 py-2.5">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand">
+                          <Icon size={16} strokeWidth={2} />
+                        </span>
+                        <span className="text-sm font-medium text-ink/80">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {policies.length > 0 && (
+                <Section title="Good to know" icon={Info}>
+                  <dl className="grid gap-x-8 sm:grid-cols-2">
+                    {policies.map((row) => (
+                      <div key={row.label} className="flex items-center justify-between border-b border-line py-2.5">
+                        <dt className="text-sm text-ink/55">{row.label}</dt>
+                        <dd className="text-sm font-semibold text-ink">{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Section>
+              )}
+
+              {p.map_link && (
+                <Section title="Location" icon={MapPin}>
+                  <p className="text-sm text-ink/70">{location}{p.pincode ? ` · ${p.pincode}` : ""}</p>
+                  <a
+                    href={p.map_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-brand/40 px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand/5"
+                  >
+                    <MapIcon size={16} /> Open in Google Maps
+                  </a>
+                </Section>
+              )}
+            </div>
+
+            {/* Sticky sidebar */}
+            <aside className="lg:sticky lg:top-24">
+              <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+                {/* Price */}
+                <div className="border-b border-line p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">Monthly rent</p>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-brand">{rent}</span>
+                    <span className="text-sm font-medium text-ink/50">/ month</span>
+                  </div>
                 </div>
 
-                {p.owner?.id && <ContactOwnerButton ownerId={p.owner.id} propertyId={p.id} />}
+                {/* Owner */}
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">Listed by</p>
+                  <div className="mt-2.5 flex items-center gap-3">
+                    {p.owner?.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.owner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-11 w-11 rounded-full object-cover ring-2 ring-line" />
+                    ) : (
+                      <span className="grid h-11 w-11 place-items-center rounded-full bg-brand text-base font-bold text-white">
+                        {(p.owner?.name || "U").charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold capitalize text-ink">{p.owner?.name || "Owner"}</p>
+                      {p.owner?.phone_verified ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-[#2E8B57]">
+                          <ShieldCheck size={13} /> Verified owner
+                        </span>
+                      ) : (
+                        <span className="text-xs text-ink/40">Owner on Parppidam</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {p.owner?.id && (
+                    <div className="mt-5">
+                      <ContactOwnerButton ownerId={p.owner.id} propertyId={p.id} />
+                    </div>
+                  )}
+
+                  <p className="mt-4 flex items-start gap-1.5 text-xs leading-relaxed text-ink/45">
+                    <Info size={13} className="mt-0.5 shrink-0" />
+                    For your safety, always visit the place in person and never pay before you see it.
+                  </p>
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </div>
       </main>
       <Footer />
     </>
+  );
+}
+
+// A small four-point sparkle used as the Amenities heading icon.
+function Sparkle({ size = 18, className }) {
+  return (
+    <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" />
+    </svg>
   );
 }

@@ -11,7 +11,7 @@ const { pool } = require('../config/db');
 
 const ADMIN_EMAIL = 'admin@staymate.com';
 const ADMIN_PASSWORD = 'admin123';
-const ADMIN_NAME = 'StayMate Admin';
+const ADMIN_NAME = 'Parppidam Admin';
 
 async function run() {
   const client = await pool.connect();

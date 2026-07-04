@@ -1,6 +1,6 @@
 "use client";
 
-// "Why StayMate" — a dark sage→olive panel pairing the value proposition (talk
+// "Why Parppidam" — a dark sage→olive panel pairing the value proposition (talk
 // directly, no middlemen) with a live-looking chat mockup. The mock chat is
 // decorative; the real chat lives at /messages.
 
@@ -40,7 +40,7 @@ export default function Features() {
             {/* Left copy */}
             <div>
               <motion.p initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: GOLD }}>
-                Why StayMate
+                Why Parppidam
               </motion.p>
               <motion.h2 initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.08 }} className="text-3xl md:text-4xl font-bold text-white mb-5">
                 Everything You Need,<br />in One Place

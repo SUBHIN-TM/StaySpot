@@ -9,9 +9,11 @@ import Navbar from "@/components/public/Navbar";
 import ChatPanel from "@/components/chat/ChatPanel";
 import { apiPost } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
+import { useToast } from "@/components/ToastProvider";
 
 export default function MessagesPage() {
   const router = useRouter();
+  const toast = useToast();
   const [auth, setAuth] = useState(null); // { token, userId }
   const [conv, setConv] = useState(null); // initial conversation id from ?c=
   const [ready, setReady] = useState(false);
@@ -33,7 +35,7 @@ export default function MessagesPage() {
       const d = await apiPost("/chat/support", {}, getUserToken());
       window.location.assign(`/messages?c=${d.conversation_id}`);
     } catch (e) {
-      alert(e.message);
+      toast(e.message || "Couldn’t reach support", "error");
     }
   }
 

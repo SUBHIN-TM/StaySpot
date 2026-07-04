@@ -120,7 +120,7 @@ export default function OwnerLoginPage() {
               <h1 className="text-lg font-bold leading-tight">Owner sign in</h1>
             </div>
           </div>
-          <p className="mt-1.5 text-xs text-white/85">List &amp; manage your properties on StayMate</p>
+          <p className="mt-1.5 text-xs text-white/85">List &amp; manage your properties on Parppidam</p>
         </div>
 
         {error && (

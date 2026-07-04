@@ -30,7 +30,7 @@ async function api(path, { method = 'GET', token, body } = {}) {
 function ok(msg) { console.log(`  ✓ ${msg}`); }
 
 async function main() {
-  console.log('\nStayMate backend smoke test →', BASE, '\n');
+  console.log('\nParppidam backend smoke test →', BASE, '\n');
 
   // Health
   const health = await fetch(`${BASE}/health`).then((r) => r.json());
