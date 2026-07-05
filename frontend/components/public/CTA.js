@@ -55,7 +55,7 @@ export default function CTA() {
                   Explore Listings <ArrowRight size={18} />
                 </motion.span>
               </Link>
-              <Link href="/owner/signup">
+              <Link href="/properties">
                 <motion.span whileHover={{ scale: 1.04, y: -3 }} whileTap={{ scale: 0.97 }} className="flex items-center gap-2 px-8 py-4 rounded-full font-semibold" style={{ border: `1.5px solid ${SAGE}`, color: SAGE, background: "white" }}>
                   Get Started
                 </motion.span>

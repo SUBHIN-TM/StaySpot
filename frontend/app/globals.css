@@ -40,9 +40,11 @@
   --foreground: #1E2521;
 }
 
-html {
-  scroll-behavior: smooth; /* smooth scroll for in-page anchor links */
-}
+/* NOTE: do NOT set `scroll-behavior: smooth` on <html>. It hijacks the Next.js
+   App Router's scroll-to-top on route changes, leaving the new page scrolled to
+   wherever you clicked (e.g. clicking a bottom CTA lands mid-page). There are no
+   in-page anchor links that need it; components that want smooth scrolling pass
+   `behavior: "smooth"` to scrollIntoView directly. */
 
 /* Premium auth backdrop: a deep sage/olive gradient with a soft gold glow at the
    top — used behind all sign-in / sign-up / profile cards so the auth flow feels

@@ -3,6 +3,7 @@
 
 import { MapPin, CalendarDays, Home, Search, BedDouble, Users, Building2 } from "lucide-react";
 import RoommatePostActions from "./RoommatePostActions";
+import AvatarPopover from "./AvatarPopover";
 import { PROPERTY_TYPE_LABEL } from "@/lib/listingMeta";
 
 function fmtDate(d) {
@@ -43,17 +44,21 @@ export default function RoommatePostCard({ post, onDeleted }) {
       {/* Top gradient accent line */}
       <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sun via-coral to-grape" />
 
-      {/* Header: poster + prominent budget */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Header: poster + prominent budget. On small screens these STACK so a long
+          poster name gets the full first row and the price drops to the next line;
+          from sm up they sit side by side. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sun via-coral to-grape text-base font-bold text-white shadow ring-2 ring-white">
-            {post.user?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-            ) : (
-              initial
-            )}
-          </span>
+          <AvatarPopover user={post.user} className="shrink-0">
+            <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-sun via-coral to-grape text-base font-bold text-white shadow ring-2 ring-white">
+              {post.user?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={post.user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              ) : (
+                initial
+              )}
+            </span>
+          </AvatarPopover>
           <div className="min-w-0">
             <p className="truncate font-semibold capitalize text-ink">{post.user?.name || "User"}</p>
             {fmtDate(post.created_at) && (
@@ -63,11 +68,11 @@ export default function RoommatePostCard({ post, onDeleted }) {
         </div>
 
         {post.budget != null && (
-          <div className="shrink-0 rounded-2xl bg-grape/8 px-3.5 py-2 text-right ring-1 ring-grape/15">
+          <div className="flex shrink-0 items-baseline gap-1.5 self-start rounded-2xl bg-grape/8 px-3.5 py-2 text-left ring-1 ring-grape/15 sm:block sm:self-auto sm:text-right">
             <p className="text-lg font-bold leading-none text-grape">
               ₹{Number(post.budget).toLocaleString("en-IN")}
             </p>
-            <p className="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-ink/45">{basis} / month</p>
+            <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-ink/45 sm:mt-0.5">{basis} / month</p>
           </div>
         )}
       </div>

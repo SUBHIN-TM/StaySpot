@@ -13,6 +13,7 @@ import Footer from "@/components/public/Footer";
 import ImageCarousel from "@/components/public/ImageCarousel";
 import ContactOwnerButton from "@/components/public/ContactOwnerButton";
 import WishlistButton from "@/components/public/WishlistButton";
+import AvatarPopover from "@/components/public/AvatarPopover";
 import { apiGet } from "@/lib/api";
 import {
   AMENITY_LABEL, AMENITY_ICON, AMENITY_FALLBACK_ICON,
@@ -236,14 +237,16 @@ export default async function PropertyDetailPage({ params }) {
                 <div className="p-6">
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">Listed by</p>
                   <div className="mt-2.5 flex items-center gap-3">
-                    {p.owner?.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.owner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-11 w-11 rounded-full object-cover ring-2 ring-line" />
-                    ) : (
-                      <span className="grid h-11 w-11 place-items-center rounded-full bg-brand text-base font-bold text-white">
-                        {(p.owner?.name || "U").charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                    <AvatarPopover user={p.owner} className="shrink-0">
+                      {p.owner?.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.owner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-11 w-11 rounded-full object-cover ring-2 ring-line" />
+                      ) : (
+                        <span className="grid h-11 w-11 place-items-center rounded-full bg-brand text-base font-bold text-white">
+                          {(p.owner?.name || "U").charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </AvatarPopover>
                     <div className="min-w-0">
                       <p className="truncate font-semibold capitalize text-ink">{p.owner?.name || "Owner"}</p>
                       {p.owner?.phone_verified ? (

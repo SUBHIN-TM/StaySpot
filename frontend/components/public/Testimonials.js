@@ -10,6 +10,7 @@ import { motion } from "motion/react";
 import { Star, Send } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
+import AvatarPopover from "./AvatarPopover";
 import { GOLD, SAGE, OLIVE, LINE } from "./palette";
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -284,14 +285,16 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
                 <div className="mb-4"><Stars value={r.rating} /></div>
                 <p className="text-sm leading-relaxed mb-6" style={{ color: "#3A4A42" }}>&ldquo;{r.comment}&rdquo;</p>
                 <div className="flex items-center gap-3">
-                  {r.user?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.user.avatar_url} alt={r.user.name} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover" style={{ border: `2px solid ${GOLD}55` }} />
-                  ) : (
-                    <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: SAGE, border: `2px solid ${GOLD}55` }}>
-                      {initials(r.user?.name)}
-                    </span>
-                  )}
+                  <AvatarPopover user={r.user} className="shrink-0">
+                    {r.user?.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.user.avatar_url} alt={r.user.name} referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover" style={{ border: `2px solid ${GOLD}55` }} />
+                    ) : (
+                      <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold text-white" style={{ background: SAGE, border: `2px solid ${GOLD}55` }}>
+                        {initials(r.user?.name)}
+                      </span>
+                    )}
+                  </AvatarPopover>
                   <div>
                     <div className="text-sm font-bold capitalize" style={{ color: OLIVE }}>{r.user?.name || "Parppidam user"}</div>
                     <div className="text-xs" style={{ color: "#8A9A92" }}>{roleLabel(r.user)}</div>
