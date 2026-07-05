@@ -30,6 +30,11 @@ const startConversation = asyncHandler(async (req, res) => {
 
 // GET /api/chat/conversations
 const getConversations = asyncHandler(async (req, res) => {
+  // Every seeker/owner gets a "Parppidam Support" chat waiting when they open
+  // chat (created once, seeded with a welcome). Admins don't need one.
+  if (req.user.role !== 'admin') {
+    await chat.ensureSupportConversation(req.user.id).catch(() => {});
+  }
   res.json({ conversations: await chat.listConversations(req.user.id) });
 });
 

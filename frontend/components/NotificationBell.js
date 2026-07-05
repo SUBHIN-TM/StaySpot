@@ -62,7 +62,14 @@ export default function NotificationBell({ token, messagesPath = "/messages", co
   function clickItem(n) {
     setOpen(false);
     const convId = n.data?.conversation_id;
-    if (convId) router.push(`${messagesPath}?c=${convId}`);
+    if (!convId) return;
+    // Seekers/owners have no dedicated messages page — open the floating chat
+    // widget in place instead. Admin keeps its full /admin/messages page.
+    if (messagesPath === "/messages") {
+      window.dispatchEvent(new CustomEvent("staymate:open-chat", { detail: { conversationId: convId } }));
+    } else {
+      router.push(`${messagesPath}?c=${convId}`);
+    }
   }
 
   return (

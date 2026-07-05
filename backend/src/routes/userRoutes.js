@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getUser, updateMe, sendPasswordOtp, sendEmailChangeOtp, changeEmail, becomeOwner, submitPhone, uploadAvatar, listUsers, verifyPhone, deleteUser, setBlocked } =
+const { getUser, updateMe, sendPasswordOtp, sendEmailChangeOtp, changeEmail, becomeOwner, submitPhone, uploadAvatar, listUsers, verifyPhone, deleteMe, deleteUser, setBlocked } =
   require('../controllers/userController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
@@ -17,6 +17,7 @@ router.patch('/me/email', requireAuth, changeEmail); // verify code + switch log
 router.post('/me/become-owner', requireAuth, becomeOwner); // upgrade a seeker account to owner
 router.post('/me/phone', requireAuth, submitPhone); // owner submits number for verification
 router.post('/me/avatar', requireAuth, upload.single('image'), uploadAvatar);
+router.delete('/me', requireAuth, deleteMe); // account owner soft-deletes their own account
 router.get('/:id', getUser);
 router.patch('/:id/block', requireAuth, requireRole('admin'), setBlocked);
 router.patch('/:id/verify-phone', requireAuth, requireRole('admin'), verifyPhone); // admin confirms a call

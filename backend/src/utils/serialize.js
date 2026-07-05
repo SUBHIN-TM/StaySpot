@@ -52,6 +52,7 @@ function adminUser(u) {
     phone_verify_proof_url: u.phone_verify_proof_key ? storage.url(u.phone_verify_proof_key) : null,
     updated_at: u.updated_at ?? null, // for admin "recently edited" sorting
     edit_count: u.edit_count ?? 0,
+    deleted_at: u.deleted_at ?? null, // set when the user deleted their own account
   };
 }
 

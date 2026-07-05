@@ -31,7 +31,8 @@ function usernameFromEmail(email) {
 async function uniqueUsername(base) {
   let candidate = base;
   for (let n = 2; n < 10000; n++) {
-    const { rows } = await query('SELECT 1 FROM users WHERE username = $1', [candidate]);
+    // Only LIVE accounts hold a username; a soft-deleted user frees theirs.
+    const { rows } = await query('SELECT 1 FROM users WHERE username = $1 AND deleted_at IS NULL', [candidate]);
     if (!rows[0]) return candidate;
     candidate = `${base}${n}`;
   }
@@ -52,13 +53,13 @@ const sendOtp = asyncHandler(async (req, res) => {
   if (p === 'signup') {
     if (!email || !EMAIL_RE.test(email)) throw new ApiError(400, 'A valid email is required');
     targetEmail = String(email).toLowerCase().trim();
-    const exists = await query('SELECT id FROM users WHERE email = $1', [targetEmail]);
+    const exists = await query('SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL', [targetEmail]);
     if (exists.rows[0]) throw new ApiError(409, 'An account with this email already exists');
   } else {
     // login: find the user by username/email and send to their registered email.
     const id = String(identifier || email || '').toLowerCase().trim();
     if (!id) throw new ApiError(400, 'Username or email is required');
-    const u = await query('SELECT email FROM users WHERE email = $1 OR username = $1', [id]);
+    const u = await query('SELECT email FROM users WHERE (email = $1 OR username = $1) AND deleted_at IS NULL', [id]);
     if (!u.rows[0]) throw new ApiError(404, 'No account found with that username or email');
     targetEmail = u.rows[0].email;
   }
@@ -105,8 +106,9 @@ const register = asyncHandler(async (req, res) => {
     ? String(username).trim().toLowerCase()
     : await uniqueUsername(usernameFromEmail(cleanEmail));
 
-  // Don't allow duplicate accounts.
-  const existing = await query('SELECT id FROM users WHERE email = $1 OR username = $2', [
+  // Don't allow duplicate accounts (LIVE only — a soft-deleted account with this
+  // email/username was released, so a fresh signup is allowed).
+  const existing = await query('SELECT id FROM users WHERE (email = $1 OR username = $2) AND deleted_at IS NULL', [
     cleanEmail,
     cleanUsername,
   ]);
@@ -150,7 +152,7 @@ const login = asyncHandler(async (req, res) => {
   const id = String(identifier || email || '').toLowerCase().trim();
   if (!id || !password) throw new ApiError(400, 'Username/email and password are required');
 
-  const { rows } = await query('SELECT * FROM users WHERE email = $1 OR username = $1', [id]);
+  const { rows } = await query('SELECT * FROM users WHERE (email = $1 OR username = $1) AND deleted_at IS NULL', [id]);
   const user = rows[0];
   if (!user || !user.password_hash) throw new ApiError(401, 'Invalid username/email or password');
   if (user.is_blocked) throw new ApiError(403, 'Your account has been blocked');
@@ -169,7 +171,7 @@ const otpLogin = asyncHandler(async (req, res) => {
   const id = String(identifier || email || '').toLowerCase().trim();
   if (!id || !code) throw new ApiError(400, 'Username/email and code are required');
 
-  const { rows } = await query('SELECT * FROM users WHERE email = $1 OR username = $1', [id]);
+  const { rows } = await query('SELECT * FROM users WHERE (email = $1 OR username = $1) AND deleted_at IS NULL', [id]);
   const user = rows[0];
   if (!user) throw new ApiError(404, 'No account found with that username or email');
   if (user.is_blocked) throw new ApiError(403, 'Your account has been blocked');
@@ -227,8 +229,9 @@ const googleAuth = asyncHandler(async (req, res) => {
   const name = payload.name || email.split('@')[0];
   const avatar = payload.picture || null;
 
-  // 2. Find an existing user by email or Google id.
-  const found = await query('SELECT * FROM users WHERE email = $1 OR google_id = $2', [
+  // 2. Find an existing LIVE user by email or Google id. (A soft-deleted account
+  //    is ignored, so signing in again with Google starts a fresh account.)
+  const found = await query('SELECT * FROM users WHERE (email = $1 OR google_id = $2) AND deleted_at IS NULL', [
     email,
     googleId,
   ]);

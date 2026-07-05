@@ -24,7 +24,7 @@ const listReviews = asyncHandler(async (req, res) => {
     `SELECT r.*, row_to_json(u) AS author
      FROM reviews r
      JOIN users u ON u.id = r.user_id
-     WHERE COALESCE(u.is_blocked, false) = false
+     WHERE COALESCE(u.is_blocked, false) = false AND u.deleted_at IS NULL
      ORDER BY r.updated_at DESC, r.created_at DESC
      LIMIT $1`,
     [limit]

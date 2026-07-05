@@ -9,12 +9,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, ShieldCheck, Camera, Mail, Info } from "lucide-react";
+import { ArrowLeft, User, ShieldCheck, Camera, Mail, Info, Trash2 } from "lucide-react";
 import Navbar from "@/components/public/Navbar";
-import { apiPatch, apiPost, apiUpload } from "@/lib/api";
-import { getUserToken, getCurrentUser, saveUser } from "@/lib/userAuth";
+import { apiPatch, apiPost, apiUpload, apiDelete } from "@/lib/api";
+import { getUserToken, getCurrentUser, saveUser, clearUser } from "@/lib/userAuth";
 import PasswordInput from "@/components/PasswordInput";
 import { useToasts, ToastViewport } from "@/components/owner/feedback";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 function initials(name = "") {
   return (name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase();
@@ -88,9 +89,11 @@ export default function ProfilePage() {
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Feedback as branded toasts (bottom-right) instead of inline banners.
   const { toasts, notify, dismiss } = useToasts();
+  const askConfirm = useConfirm();
 
   // On mount: must be logged in; prefill everything.
   useEffect(() => {
@@ -232,6 +235,28 @@ export default function ProfilePage() {
       notify(err.message || "Couldn’t change email", "error");
     } finally {
       setChangingEmail(false);
+    }
+  }
+
+  // Soft-delete the account after a clear confirmation, then sign out.
+  async function deleteAccount() {
+    const ok = await askConfirm({
+      title: "Delete your account?",
+      message:
+        "Your listings and roommate posts will be hidden from everyone and you'll be signed out. This can't be undone. You can sign up again later with the same email as a completely fresh account.",
+      confirmLabel: "Delete my account",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await apiDelete("/users/me", getUserToken());
+      clearUser();
+      // Send them to the home page as a signed-out visitor.
+      window.location.assign("/");
+    } catch (err) {
+      notify(err.message || "Couldn’t delete your account", "error");
+      setDeleting(false);
     }
   }
 
@@ -492,6 +517,29 @@ export default function ProfilePage() {
               </div>
             </form>
           </section>
+
+          {/* Danger zone: delete account (seekers & owners; admins use the panel). */}
+          {role !== "admin" && (
+            <section className="mt-6 rounded-2xl border border-red-200 bg-red-50/40 p-6 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Trash2 size={18} className="text-red-600" />
+                <h2 className="font-semibold text-red-700">Delete account</h2>
+              </div>
+              <p className="mt-1 text-sm text-ink/60">
+                Permanently close your Parppidam account. Your listings and roommate posts are hidden
+                from everyone and you are signed out. You can sign up again later with the same email
+                as a completely fresh account, with no old history.
+              </p>
+              <button
+                type="button"
+                onClick={deleteAccount}
+                disabled={deleting}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-5 py-2.5 font-semibold text-red-600 transition-colors hover:bg-red-600 hover:text-white disabled:opacity-60"
+              >
+                <Trash2 size={15} /> {deleting ? "Deleting…" : "Delete my account"}
+              </button>
+            </section>
+          )}
 
           <Link
             href="/"

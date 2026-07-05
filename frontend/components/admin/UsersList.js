@@ -55,13 +55,21 @@ export default function UsersList({ role, title, subtitle }) {
   const [sort, setSort] = useState("joined_desc");
   const [fBlocked, setFBlocked] = useState("all");
   const [fVerified, setFVerified] = useState("all"); // owners only
+  const [fDeleted, setFDeleted] = useState("active"); // active | deleted | all
 
   // Phone verification only applies to owners (they list properties).
   const isOwner = role === "owner";
 
   async function load() {
+    setLoading(true);
+    setError("");
     try {
-      const d = await apiGet(`/users?role=${role}`, getToken());
+      // Deleted-account filter is applied server-side (the API hides deleted
+      // accounts by default): active = live only, deleted = only removed, all = both.
+      const params = new URLSearchParams({ role });
+      if (fDeleted === "deleted") params.set("deleted", "only");
+      else if (fDeleted === "all") params.set("deleted", "all");
+      const d = await apiGet(`/users?${params.toString()}`, getToken());
       setUsers(d.users || []);
     } catch (e) {
       setError(e.message);
@@ -71,7 +79,7 @@ export default function UsersList({ role, title, subtitle }) {
   }
   useEffect(() => {
     load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fDeleted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function remove(u) {
     if (!(await confirm({
@@ -148,6 +156,11 @@ export default function UsersList({ role, title, subtitle }) {
           <option value="active">Active</option>
           <option value="blocked">Blocked</option>
         </Select>
+        <Select label="Accounts" value={fDeleted} onChange={setFDeleted}>
+          <option value="active">Live</option>
+          <option value="deleted">Deleted</option>
+          <option value="all">All</option>
+        </Select>
         {isOwner && (
           <Select label="Verified" value={fVerified} onChange={setFVerified}>
             <option value="all">All</option>
@@ -195,6 +208,11 @@ export default function UsersList({ role, title, subtitle }) {
                           </span>
                         )}
                         <span className="font-medium capitalize text-ink">{u.name}</span>
+                        {u.deleted_at && (
+                          <span className="rounded-full bg-ink/10 px-2 py-0.5 text-xs font-semibold text-ink/60">
+                            Deleted
+                          </span>
+                        )}
                         {u.is_blocked && (
                           <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                             Blocked
@@ -235,8 +253,12 @@ export default function UsersList({ role, title, subtitle }) {
                     </td>
                     <td className="px-5 py-3 text-ink/60">
                       {fmtDate(u.created_at)}
-                      {u.updated_at && ms(u.updated_at) > ms(u.created_at) + 60000 && (
-                        <span className="block text-xs text-ink/40">edited {fmtDate(u.updated_at)}</span>
+                      {u.deleted_at ? (
+                        <span className="block text-xs font-medium text-red-500">deleted {fmtDate(u.deleted_at)}</span>
+                      ) : (
+                        u.updated_at && ms(u.updated_at) > ms(u.created_at) + 60000 && (
+                          <span className="block text-xs text-ink/40">edited {fmtDate(u.updated_at)}</span>
+                        )
                       )}
                     </td>
                     <td className="px-5 py-3">
@@ -247,34 +269,42 @@ export default function UsersList({ role, title, subtitle }) {
                         >
                           History
                         </button>
-                        {isOwner && (
-                          <button
-                            onClick={() => setVerifying(u)}
-                            className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                              u.phone_verified
-                                ? "border-line text-ink/70 hover:bg-mist"
-                                : "border-green-200 text-green-700 hover:bg-green-50"
-                            }`}
-                          >
-                            {u.phone_verified ? "Verified ✓" : "Verify phone"}
-                          </button>
+                        {/* A self-deleted account keeps its history but has no live
+                            actions (nothing to block/verify/delete). */}
+                        {u.deleted_at ? (
+                          <span className="self-center text-xs italic text-ink/40">Account deleted</span>
+                        ) : (
+                          <>
+                            {isOwner && (
+                              <button
+                                onClick={() => setVerifying(u)}
+                                className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                                  u.phone_verified
+                                    ? "border-line text-ink/70 hover:bg-mist"
+                                    : "border-green-200 text-green-700 hover:bg-green-50"
+                                }`}
+                              >
+                                {u.phone_verified ? "Verified ✓" : "Verify phone"}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => toggleBlock(u)}
+                              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
+                                u.is_blocked
+                                  ? "border-green-200 text-green-700 hover:bg-green-50"
+                                  : "border-amber-200 text-amber-700 hover:bg-amber-50"
+                              }`}
+                            >
+                              {u.is_blocked ? "Unblock" : "Block"}
+                            </button>
+                            <button
+                              onClick={() => remove(u)}
+                              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          </>
                         )}
-                        <button
-                          onClick={() => toggleBlock(u)}
-                          className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                            u.is_blocked
-                              ? "border-green-200 text-green-700 hover:bg-green-50"
-                              : "border-amber-200 text-amber-700 hover:bg-amber-50"
-                          }`}
-                        >
-                          {u.is_blocked ? "Unblock" : "Block"}
-                        </button>
-                        <button
-                          onClick={() => remove(u)}
-                          className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
                       </div>
                     </td>
                   </tr>

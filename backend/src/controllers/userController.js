@@ -34,7 +34,7 @@ const updateMe = asyncHandler(async (req, res) => {
   let cleanUsername = null;
   if (username !== undefined && username !== null && String(username).trim()) {
     cleanUsername = String(username).trim().toLowerCase();
-    const clash = await query('SELECT id FROM users WHERE username = $1 AND id <> $2', [
+    const clash = await query('SELECT id FROM users WHERE username = $1 AND id <> $2 AND deleted_at IS NULL', [
       cleanUsername,
       req.user.id,
     ]);
@@ -132,7 +132,7 @@ const sendEmailChangeOtp = asyncHandler(async (req, res) => {
   const me = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
   if (me.rows[0]?.email === email) throw new ApiError(400, 'That is already your email');
 
-  const taken = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
+  const taken = await query('SELECT id FROM users WHERE email = $1 AND id <> $2 AND deleted_at IS NULL', [email, req.user.id]);
   if (taken.rows[0]) throw new ApiError(409, 'An account with this email already exists');
 
   const code = await createOtp(email, 'email_change');
@@ -147,7 +147,7 @@ const changeEmail = asyncHandler(async (req, res) => {
   const otp = req.body?.otp;
   if (!EMAIL_RE.test(email)) throw new ApiError(400, 'Enter a valid email address');
 
-  const taken = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
+  const taken = await query('SELECT id FROM users WHERE email = $1 AND id <> $2 AND deleted_at IS NULL', [email, req.user.id]);
   if (taken.rows[0]) throw new ApiError(409, 'An account with this email already exists');
 
   const ok = await checkOtp(email, 'email_change', otp);
@@ -234,15 +234,20 @@ const uploadAvatar = asyncHandler(async (req, res) => {
   res.json({ user: selfUser(rows[0]) });
 });
 
-// GET /api/users  (admin only) — list all users, optional ?role= filter.
+// GET /api/users  (admin only) — list users.
+//   ?role=seeker|owner   filter by role
+//   ?deleted=active|only|all   default 'active' (hide deleted). 'only' = just
+//      deleted accounts; 'all' = both (so the admin can review either).
 const listUsers = asyncHandler(async (req, res) => {
-  const { role } = req.query;
+  const { role, deleted } = req.query;
+  const clauses = [];
   const params = [];
-  let where = '';
-  if (role) {
-    params.push(role);
-    where = 'WHERE role = $1';
-  }
+  let i = 1;
+  if (role) { params.push(role); clauses.push(`role = $${i++}`); }
+  if (deleted === 'only') clauses.push('deleted_at IS NOT NULL');
+  else if (deleted === 'all') { /* no status filter */ }
+  else clauses.push('deleted_at IS NULL'); // default: live accounts only
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const { rows } = await query(
     `SELECT * FROM users ${where} ORDER BY created_at DESC LIMIT 200`,
     params
@@ -308,6 +313,24 @@ const setBlocked = asyncHandler(async (req, res) => {
   res.json({ user: publicUser(upd.rows[0]) });
 });
 
+// DELETE /api/users/me  — the account owner soft-deletes their OWN account.
+// We keep the row (deleted_at set) so the admin retains the history, but the
+// account can no longer log in and its listings/posts drop out of public view.
+// The email/username/Google link are freed, so the person can sign up fresh.
+const deleteMe = asyncHandler(async (req, res) => {
+  if (req.user.role === 'admin') {
+    throw new ApiError(403, 'Admin accounts can’t be deleted from here');
+  }
+  await query(
+    'UPDATE users SET deleted_at = now(), updated_at = now() WHERE id = $1 AND deleted_at IS NULL',
+    [req.user.id]
+  );
+  await recordAudit({
+    entityType: 'user', entityId: req.user.id, action: 'self_delete', actor: req.user,
+  }).catch(() => {});
+  res.json({ ok: true });
+});
+
 // DELETE /api/users/:id  (admin only) — can't delete yourself or another admin.
 const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -324,5 +347,5 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 module.exports = {
   getUser, updateMe, sendPasswordOtp, sendEmailChangeOtp, changeEmail, becomeOwner, submitPhone, uploadAvatar,
-  listUsers, verifyPhone, deleteUser, setBlocked,
+  listUsers, verifyPhone, deleteMe, deleteUser, setBlocked,
 };

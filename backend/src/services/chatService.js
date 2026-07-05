@@ -58,6 +58,44 @@ function otherParticipant(conversation, userId) {
   return conversation.user_a_id === userId ? conversation.user_b_id : conversation.user_a_id;
 }
 
+/**
+ * Make sure a (non-admin) user has a "Parppidam Support" conversation with an
+ * admin, seeded with a friendly welcome message so it's there the moment they
+ * open chat. Idempotent and cheap: the fast path is a single existence query, so
+ * it's safe to call on every conversation-list request. Returns the conversation
+ * if it created one, else null.
+ */
+async function ensureSupportConversation(userId) {
+  // Fast path: already chatting with an admin → nothing to do.
+  const has = await query(
+    `SELECT 1 FROM conversations c
+       JOIN users u ON u.id = CASE WHEN c.user_a_id = $1 THEN c.user_b_id ELSE c.user_a_id END
+     WHERE (c.user_a_id = $1 OR c.user_b_id = $1) AND u.role = 'admin'
+     LIMIT 1`,
+    [userId]
+  );
+  if (has.rows[0]) return null;
+
+  // Pick the earliest admin as the support contact.
+  const admin = await query(
+    "SELECT id FROM users WHERE role = 'admin' AND id <> $1 ORDER BY created_at ASC LIMIT 1",
+    [userId]
+  );
+  if (!admin.rows[0]) return null; // no admin exists yet
+  const adminId = admin.rows[0].id;
+
+  const conv = await getOrCreateConversation(userId, adminId, null);
+  // Seed a welcome from support so the chat isn't empty (also gives the user an
+  // unread nudge that support is reachable).
+  await sendMessage({
+    senderId: adminId,
+    conversationId: conv.id,
+    content:
+      "Welcome to Parppidam! This is your support chat. Message us anytime for help finding a stay, listing a property, or anything else.",
+  });
+  return conv;
+}
+
 async function assertParticipant(conversationId, userId) {
   const { rows } = await query('SELECT * FROM conversations WHERE id = $1', [conversationId]);
   const conv = rows[0];
@@ -240,6 +278,7 @@ async function markRead(userId, conversationId) {
 
 module.exports = {
   getOrCreateConversation,
+  ensureSupportConversation,
   sendMessage,
   listConversations,
   listMessages,

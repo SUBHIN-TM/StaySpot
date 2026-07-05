@@ -30,10 +30,11 @@ async function requireAuth(req, res, next) {
   //    (which made it look like a fresh login had failed).
   try {
     const { rows } = await query(
-      'SELECT id, email, role, name, is_blocked, last_seen_at FROM users WHERE id = $1',
+      'SELECT id, email, role, name, is_blocked, deleted_at, last_seen_at FROM users WHERE id = $1',
       [decoded.sub]
     );
     if (!rows[0]) return next(new ApiError(401, 'User no longer exists'));
+    if (rows[0].deleted_at) return next(new ApiError(401, 'This account has been deleted'));
     if (rows[0].is_blocked) return next(new ApiError(403, 'Your account has been blocked'));
 
     req.user = rows[0];

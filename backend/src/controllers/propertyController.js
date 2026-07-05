@@ -89,8 +89,14 @@ const listProperties = asyncHandler(async (req, res) => {
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '10', 10)));
   const offset = (page - 1) * limit;
 
-  // Public list shows only available, admin-approved AND not-deleted listings.
-  const where = ['p.deleted_at IS NULL', 'p.is_available = TRUE', "p.approval_status = 'approved'"];
+  // Public list shows only available, admin-approved, not-deleted listings whose
+  // owner is still a live account (deleting an account hides all their listings).
+  const where = [
+    'p.deleted_at IS NULL',
+    'p.is_available = TRUE',
+    "p.approval_status = 'approved'",
+    'EXISTS (SELECT 1 FROM users u WHERE u.id = p.owner_id AND u.deleted_at IS NULL)',
+  ];
   const params = [];
   let i = 1;
 
@@ -174,7 +180,9 @@ const listProperties = asyncHandler(async (req, res) => {
 // GET /api/properties/:id
 const getProperty = asyncHandler(async (req, res) => {
   const { rows } = await query(
-    'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+    `SELECT * FROM properties
+       WHERE id = $1 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM users u WHERE u.id = properties.owner_id AND u.deleted_at IS NULL)`,
     [req.params.id]
   );
   if (!rows[0]) throw new ApiError(404, 'Property not found');

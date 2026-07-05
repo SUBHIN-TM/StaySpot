@@ -2,12 +2,26 @@
 
 const { query } = require('../config/db');
 const { asyncHandler, ApiError } = require('../utils/http');
-const { publicUser } = require('../utils/serialize');
+const { publicUser, adminUser } = require('../utils/serialize');
 
 async function hydrate(row) {
   const u = await query('SELECT * FROM users WHERE id = $1', [row.user_id]);
   return { ...row, budget: row.budget != null ? Number(row.budget) : null, user: publicUser(u.rows[0]) };
 }
+
+// Admin variant: the author is serialized with adminUser so the admin sees the
+// email + whether the account was deleted (publicUser hides those).
+async function hydrateAdmin(row) {
+  const u = await query('SELECT * FROM users WHERE id = $1', [row.user_id]);
+  return { ...row, budget: row.budget != null ? Number(row.budget) : null, user: adminUser(u.rows[0]) };
+}
+
+// GET /api/roommate-posts/admin/all  (admin only)
+// Every post, any status, including those by deleted accounts, for moderation.
+const listAllPosts = asyncHandler(async (req, res) => {
+  const { rows } = await query('SELECT * FROM roommate_posts ORDER BY created_at DESC LIMIT 500');
+  res.json({ posts: await Promise.all(rows.map(hydrateAdmin)) });
+});
 
 // GET /api/roommate-posts
 const listPosts = asyncHandler(async (req, res) => {
@@ -16,7 +30,8 @@ const listPosts = asyncHandler(async (req, res) => {
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
   const offset = (page - 1) * limit;
 
-  const where = [];
+  // Posts by a deleted account are hidden from the public entirely.
+  const where = ['EXISTS (SELECT 1 FROM users u WHERE u.id = roommate_posts.user_id AND u.deleted_at IS NULL)'];
   const params = [];
   let i = 1;
   // Status: 'active' or 'closed' filters to one; anything else returns BOTH so
@@ -39,7 +54,12 @@ const listPosts = asyncHandler(async (req, res) => {
 
 // GET /api/roommate-posts/:id
 const getPost = asyncHandler(async (req, res) => {
-  const { rows } = await query('SELECT * FROM roommate_posts WHERE id = $1', [req.params.id]);
+  const { rows } = await query(
+    `SELECT * FROM roommate_posts
+       WHERE id = $1
+         AND EXISTS (SELECT 1 FROM users u WHERE u.id = roommate_posts.user_id AND u.deleted_at IS NULL)`,
+    [req.params.id]
+  );
   if (!rows[0]) throw new ApiError(404, 'Post not found');
   res.json({ post: await hydrate(rows[0]) });
 });
@@ -137,4 +157,4 @@ const deletePost = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
-module.exports = { listPosts, getPost, createPost, updatePost, deletePost };
+module.exports = { listPosts, listAllPosts, getPost, createPost, updatePost, deletePost };
