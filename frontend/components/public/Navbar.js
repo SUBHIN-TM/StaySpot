@@ -11,15 +11,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X as XIcon } from "lucide-react";
+import { Menu, X as XIcon, Home, Compass, Users, Building2, ChevronRight, LogIn, LogOut } from "lucide-react";
 import { getCurrentUser, getUserToken, clearUser, saveUser } from "@/lib/userAuth";
 import { apiGet } from "@/lib/api";
 import AvatarMenu from "./AvatarMenu";
 import NotificationBell from "@/components/NotificationBell";
 import Logo from "./Logo";
 import { SAGE, GOLD, OLIVE, LINE } from "./palette";
-
-const EASE = [0.22, 1, 0.36, 1];
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -33,6 +31,17 @@ export default function Navbar() {
     fn();
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  // Close the mobile drawer once the viewport reaches the desktop breakpoint
+  // (Tailwind md = 768px). Otherwise, resizing from mobile to desktop leaves the
+  // drawer stuck open on top of the full navbar.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const fn = (e) => { if (e.matches) setOpen(false); };
+    fn(mq);
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
   }, []);
 
   // Show the cached user instantly, then validate the token against the backend
@@ -61,10 +70,10 @@ export default function Navbar() {
   }
 
   const links = [
-    { href: "/", label: "Home" },
-    { href: "/properties", label: "Explore" },
-    { href: "/roommates", label: "Find Roommates" },
-    { href: "/owner", label: "For Owners" },
+    { href: "/", label: "Home", icon: Home },
+    { href: "/properties", label: "Explore", icon: Compass },
+    { href: "/roommates", label: "Find Roommates", icon: Users },
+    { href: "/owner", label: "For Owners", icon: Building2 },
   ];
 
   function isActive(href) {
@@ -87,11 +96,10 @@ export default function Navbar() {
 
   return (
     <>
-    <motion.header
-      className="fixed top-0 inset-x-0 z-50 flex justify-center"
-      initial={{ y: -90, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.75, ease: EASE }}
+    {/* Plain <header> + CSS .nav-drop (not Framer) so the pill appears at paint
+        time with the hero image, instead of waiting for the JS bundle to hydrate. */}
+    <header
+      className="nav-drop fixed top-0 inset-x-0 z-50 flex justify-center"
       style={{ paddingTop: scrolled ? 10 : 16, transition: "padding 0.3s ease" }}
     >
       <div
@@ -188,49 +196,67 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.97 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-20 left-4 right-4 rounded-2xl p-4 space-y-1"
+            className="absolute top-20 left-4 right-4 rounded-2xl p-2.5 space-y-1"
             style={{
-              background: "rgba(255,255,255,0.97)",
+              background: "rgba(255,255,255,0.98)",
               backdropFilter: "blur(20px)",
               border: `1px solid ${LINE}`,
               boxShadow: "0 24px 70px rgba(30,37,33,0.15)",
             }}
           >
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="block px-4 py-3 rounded-xl text-sm font-medium"
-                style={{ color: isActive(l.href) ? SAGE : OLIVE }}
-              >
-                {l.label}
-              </Link>
-            ))}
-            <div className="pt-2" style={{ borderTop: `1px solid ${LINE}` }}>
+            {links.map((l) => {
+              const active = isActive(l.href);
+              const Icon = l.icon;
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  style={{
+                    color: active ? SAGE : OLIVE,
+                    background: active ? "rgba(74,90,80,0.10)" : "transparent",
+                  }}
+                >
+                  {/* Icon chip: gold-tinted when active, neutral otherwise. */}
+                  <span
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+                    style={{
+                      background: active ? SAGE : "var(--color-mist)",
+                      color: active ? "#fff" : "#7A8A83",
+                    }}
+                  >
+                    <Icon size={16} />
+                  </span>
+                  <span className="flex-1">{l.label}</span>
+                  <ChevronRight size={16} style={{ color: active ? GOLD : "#C4C0B6" }} />
+                </Link>
+              );
+            })}
+            <div className="mt-1.5 pt-2.5" style={{ borderTop: `1px solid ${LINE}` }}>
               {user ? (
                 <button
                   onClick={() => { setOpen(false); logout(); }}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: SAGE }}
+                  className="flex w-full items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-transform active:scale-[0.98]"
+                  style={{ background: SAGE, boxShadow: `0 8px 22px ${SAGE}44` }}
                 >
-                  Log out
+                  <LogOut size={16} /> Log out
                 </button>
               ) : (
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="block text-center w-full py-3 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: SAGE }}
+                  className="flex w-full items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-transform active:scale-[0.98]"
+                  style={{ background: SAGE, boxShadow: `0 8px 22px ${SAGE}44` }}
                 >
-                  Login
+                  <LogIn size={16} /> Login
                 </Link>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
+    </header>
 
     {/* On non-landing pages there's no full-screen hero behind the fixed pill,
         so reserve space to keep page content from sliding underneath it. */}

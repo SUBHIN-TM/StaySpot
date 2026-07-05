@@ -4,7 +4,7 @@
 // panel opens above it). Dark-olive + gold theme (matches the design).
 //
 // Three modes, resolved from the browser session:
-//   • signed OUT  → a demo "Raj (Owner)" preview; tapping the composer sends the
+//   • signed OUT  → a demo "Abdul Basith (Owner)" preview; tapping the composer sends the
 //                   visitor to /login?next=<current page>, then back here.
 //   • seeker/owner→ their real chats (user session, lib/userAuth) → /messages
 //   • admin       → their real chats (admin session, lib/auth)   → /admin/messages
@@ -30,12 +30,19 @@ const RECV_TX = "rgba(255,255,255,0.92)";
 const SUBTLE = "rgba(255,255,255,0.55)";
 const LINE = "rgba(255,255,255,0.08)";
 
-// Static preview shown to signed-out visitors.
+// Static preview shown to signed-out visitors: a demo owner "Abdul Basith", the listing
+// this enquiry is about, and a short sample conversation.
+const DEMO_AVATAR = "/demo-owner.jpg";
+const DEMO_PROPERTY = { title: "New 1BK", rent_amount: 6500 };
+// mine:true = the signed-out visitor (seeker) → gold bubble on the RIGHT.
+// mine:false = the owner "Abdul Basith" → received bubble on the LEFT.
 const DEMO = [
-  { mine: false, text: "Hi! Is the 2BHK in Kochi still available?" },
-  { mine: true, text: "Yes, available from 1st August!" },
-  { mine: false, text: "Can I visit this Saturday at 11 AM?" },
-  { mine: true, text: "Perfect! See you then 🎉" },
+  { mine: true, text: "Hi! Is the New 1BK still available?" },
+  { mine: false, text: "Yes, available from 1st August!" },
+  { mine: true, text: "Please share your number" },
+  { mine: false, text: "Sure, it's +91 98765 43210" },
+  { mine: true, text: "Can I visit this Saturday at 11 AM?" },
+  { mine: false, text: "Yes you can" },
 ];
 
 function initials(name = "") {
@@ -246,18 +253,26 @@ export default function ChatWidget() {
               ) : listHeader ? (
                 <MessageCircle size={19} color={GOLD} />
               ) : (
-                <Home size={18} color={OLIVE} />
+                // Signed-out preview: show the demo owner "Abdul Basith" as a real person photo.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={DEMO_AVATAR} alt="Abdul Basith" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               )}
             </span>
 
             <div className="min-w-0 flex-1">
-              <p className={`truncate font-semibold text-white ${loggedIn && active && isSupport(active.other_user) ? "" : "capitalize"}`}>
-                {loggedIn && active
-                  ? contactName(active.other_user)
-                  : loggedIn
-                  ? "Messages"
-                  : "Raj (Owner)"}
-              </p>
+              {loggedIn ? (
+                <p className={`truncate font-semibold text-white ${active && isSupport(active.other_user) ? "" : "capitalize"}`}>
+                  {active ? contactName(active.other_user) : "Messages"}
+                </p>
+              ) : (
+                // Signed-out demo owner: name, a middot, then a lighter "Owner"
+                // role inline (no boxes or bare parentheses).
+                <p className="truncate font-semibold text-white">
+                  Abdul Basith
+                  <span className="mx-1.5 font-normal" style={{ color: SUBTLE }}>·</span>
+                  <span className="font-normal" style={{ color: SUBTLE }}>Owner</span>
+                </p>
+              )}
               <p className="flex items-center gap-1.5 text-xs" style={{ color: SUBTLE }}>
                 {loggedIn && !active ? (
                   "Your conversations"
@@ -305,7 +320,26 @@ export default function ChatWidget() {
           <div className="flex-1 overflow-y-auto px-4 py-4">
             {/* Signed-out preview */}
             {!loggedIn && (
-              <Bubbles items={DEMO.map((d, i) => ({ id: i, mine: d.mine, content: d.text }))} />
+              <>
+                {/* Which listing this enquiry is about (same pinned card the real
+                    thread shows once you're signed in) — demo data here. */}
+                <div
+                  className="sticky top-0 z-10 mb-3 flex items-center gap-2.5 rounded-xl px-3 py-2"
+                  style={{ background: "#38463C", border: "1px solid rgba(212,163,89,0.30)" }}
+                >
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: "rgba(212,163,89,0.2)" }}>
+                    <Home size={15} color={GOLD} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: SUBTLE }}>Enquiry about</p>
+                    <p className="truncate text-sm font-semibold text-white">{DEMO_PROPERTY.title}</p>
+                  </div>
+                  <span className="shrink-0 text-sm font-bold" style={{ color: GOLD }}>
+                    ₹{Number(DEMO_PROPERTY.rent_amount).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <Bubbles items={DEMO.map((d, i) => ({ id: i, mine: d.mine, content: d.text }))} />
+              </>
             )}
 
             {/* Signed-in: conversation list */}

@@ -219,6 +219,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 .rise { animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
+/* Navbar drop-in. Pure CSS so the pill appears at paint time (with the hero
+   image) instead of waiting for the JS bundle to hydrate. */
+@keyframes nav-drop {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: none; }
+}
+.nav-drop { animation: nav-drop 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
 /* Infinite horizontal marquee (track is duplicated, so -50% loops seamlessly). */
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee-track { animation: marquee 30s linear infinite; }
@@ -264,7 +272,7 @@ h1, h2, h3, h4, h5, h6 {
 .reveal.reveal-in { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .blob, .floaty, .floaty-slow, .rise, .marquee-track, .marquee-fast, .gradient-pan {
+  .blob, .floaty, .floaty-slow, .rise, .nav-drop, .marquee-track, .marquee-fast, .gradient-pan {
     animation: none !important;
   }
   .reveal { opacity: 1 !important; transform: none !important; }
