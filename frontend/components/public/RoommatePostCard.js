@@ -1,7 +1,10 @@
+"use client";
+
 // A single roommate-post card. Used by /roommates and /roommates/mine.
 // `onDeleted` is optional — passed through to the actions (used by "My posts").
 
-import { MapPin, CalendarDays, Home, Search, BedDouble, Users, Building2 } from "lucide-react";
+import { useState } from "react";
+import { MapPin, CalendarDays, Home, Search, BedDouble, Users, Building2, Lock } from "lucide-react";
 import RoommatePostActions from "./RoommatePostActions";
 import AvatarPopover from "./AvatarPopover";
 import { PROPERTY_TYPE_LABEL } from "@/lib/listingMeta";
@@ -24,6 +27,8 @@ const ROOM_TYPE = { private: "Private room", shared: "Shared room", entire: "Ent
 const PLACE_TYPE = PROPERTY_TYPE_LABEL; // shared list (lib/listingMeta)
 
 export default function RoommatePostCard({ post, onDeleted }) {
+  // Post status (active vs closed). `is_active` defaults to true for older rows.
+  const [active, setActive] = useState(post.is_active !== false);
   const initial = (post.user?.name || "U").charAt(0).toUpperCase();
   const pt = POST_TYPE[post.post_type];
   const basis = post.budget_basis === "total" ? "total" : "per person";
@@ -40,7 +45,7 @@ export default function RoommatePostCard({ post, onDeleted }) {
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-3xl border border-ink/10 bg-white p-6 shadow-sm transition-[box-shadow,border-color] duration-300 hover:border-grape/45 hover:shadow-xl hover:shadow-grape/15 hover:ring-2 hover:ring-grape/25 sm:p-7">
+    <div className={`group relative flex flex-col overflow-hidden rounded-3xl border border-ink/10 bg-white p-6 shadow-sm transition-[box-shadow,border-color] duration-300 hover:border-grape/45 hover:shadow-xl hover:shadow-grape/15 hover:ring-2 hover:ring-grape/25 sm:p-7 ${active ? "" : "opacity-80"}`}>
       {/* Top gradient accent line */}
       <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sun via-coral to-grape" />
 
@@ -77,13 +82,29 @@ export default function RoommatePostCard({ post, onDeleted }) {
         )}
       </div>
 
-      {/* Post-type badge + title */}
-      {pt && (
-        <span className={`mt-5 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${pt.cls}`}>
-          <pt.Icon size={12} /> {pt.label}
-        </span>
-      )}
-      <h2 className={`${pt ? "mt-2" : "mt-5"} text-xl font-bold leading-snug text-ink`}>{post.title}</h2>
+      {/* Status + post-type badges, then title */}
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        {active ? (
+          // Catchy "live" pill: green gradient + a pulsing dot.
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-green-500/30">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+            </span>
+            Active
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white/90 shadow-sm">
+            <Lock size={11} /> Closed
+          </span>
+        )}
+        {pt && (
+          <span className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${pt.cls}`}>
+            <pt.Icon size={12} /> {pt.label}
+          </span>
+        )}
+      </div>
+      <h2 className="mt-2 text-xl font-bold leading-snug text-ink">{post.title}</h2>
 
       {/* Meta chips */}
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
@@ -124,7 +145,7 @@ export default function RoommatePostCard({ post, onDeleted }) {
       )}
 
       <div className="mt-6 flex items-center justify-end border-t border-ink/10 pt-4">
-        <RoommatePostActions post={post} onDeleted={onDeleted} />
+        <RoommatePostActions post={post} onDeleted={onDeleted} active={active} onToggle={setActive} />
       </div>
     </div>
   );

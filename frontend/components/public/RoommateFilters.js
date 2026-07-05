@@ -12,6 +12,7 @@ export default function RoommateFilters({ posts }) {
   const [loc, setLoc] = useState("");
   const [minB, setMinB] = useState("");
   const [maxB, setMaxB] = useState("");
+  const [statusF, setStatusF] = useState(""); // "" = all, "active", "closed"
   const [sort, setSort] = useState("new");
 
   // Distinct locations for the dropdown, sorted.
@@ -32,6 +33,9 @@ export default function RoommateFilters({ posts }) {
       )
         return false;
       if (loc && p.preferred_location !== loc) return false;
+      const isActive = p.is_active !== false;
+      if (statusF === "active" && !isActive) return false;
+      if (statusF === "closed" && isActive) return false;
       const b = p.budget != null ? Number(p.budget) : null;
       if (minB && (b == null || b < Number(minB))) return false;
       if (maxB && (b == null || b > Number(maxB))) return false;
@@ -44,14 +48,15 @@ export default function RoommateFilters({ posts }) {
       budget_high: (a, b) => (Number(b.budget) || 0) - (Number(a.budget) || 0),
     }[sort];
     return cmp ? [...list].sort(cmp) : list;
-  }, [posts, q, loc, minB, maxB, sort]);
+  }, [posts, q, loc, minB, maxB, statusF, sort]);
 
-  const activeCount = (q ? 1 : 0) + (loc ? 1 : 0) + (minB ? 1 : 0) + (maxB ? 1 : 0);
+  const activeCount = (q ? 1 : 0) + (loc ? 1 : 0) + (minB ? 1 : 0) + (maxB ? 1 : 0) + (statusF ? 1 : 0);
   function clearAll() {
     setQ("");
     setLoc("");
     setMinB("");
     setMaxB("");
+    setStatusF("");
   }
 
   const chip =
@@ -84,6 +89,13 @@ export default function RoommateFilters({ posts }) {
             {locations.map((l) => (
               <option key={l} value={l}>{l}</option>
             ))}
+          </select>
+
+          {/* Status */}
+          <select className={`${chip} app-select`} value={statusF} onChange={(e) => setStatusF(e.target.value)} aria-label="Status">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="closed">Closed</option>
           </select>
 
           {/* Budget range */}

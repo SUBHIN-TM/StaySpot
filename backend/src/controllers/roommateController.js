@@ -11,22 +11,27 @@ async function hydrate(row) {
 
 // GET /api/roommate-posts
 const listPosts = asyncHandler(async (req, res) => {
-  const { q, location, user_id } = req.query;
+  const { q, location, user_id, status } = req.query;
   const page = Math.max(1, parseInt(req.query.page || '1', 10));
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '20', 10)));
   const offset = (page - 1) * limit;
 
-  const where = ['is_active = TRUE'];
+  const where = [];
   const params = [];
   let i = 1;
+  // Status: 'active' or 'closed' filters to one; anything else returns BOTH so
+  // seekers can still SEE closed posts (the frontend just disables messaging).
+  if (status === 'active') where.push('is_active = TRUE');
+  else if (status === 'closed') where.push('is_active = FALSE');
   if (q) { params.push(`%${q}%`); where.push(`(title ILIKE $${i} OR description ILIKE $${i})`); i++; }
   if (location) { params.push(`%${location}%`); where.push(`preferred_location ILIKE $${i++}`); }
   if (user_id) { params.push(user_id); where.push(`user_id = $${i++}`); }
 
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   params.push(limit, offset);
   const { rows } = await query(
-    `SELECT * FROM roommate_posts WHERE ${where.join(' AND ')}
-     ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`,
+    `SELECT * FROM roommate_posts ${whereSql}
+     ORDER BY is_active DESC, created_at DESC LIMIT $${i++} OFFSET $${i++}`,
     params
   );
   res.json({ page, limit, posts: await Promise.all(rows.map(hydrate)) });

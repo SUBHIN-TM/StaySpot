@@ -261,8 +261,16 @@ export default function ChatWidget() {
 
             <div className="min-w-0 flex-1">
               {loggedIn ? (
-                <p className={`truncate font-semibold text-white ${active && isSupport(active.other_user) ? "" : "capitalize"}`}>
-                  {active ? contactName(active.other_user) : "Messages"}
+                <p className={`flex items-center gap-2 font-semibold text-white ${active && isSupport(active.other_user) ? "" : "capitalize"}`}>
+                  <span className="truncate">{active ? contactName(active.other_user) : "Messages"}</span>
+                  {active && isSupport(active.other_user) && (
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                      style={{ background: "rgba(212,163,89,0.16)", color: GOLD, border: "1px solid rgba(212,163,89,0.35)" }}
+                    >
+                      Admin
+                    </span>
+                  )}
                 </p>
               ) : (
                 // Signed-out demo owner: name, a middot, then a lighter "Owner"
@@ -384,8 +392,18 @@ export default function ChatWidget() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2">
-                          <span className={`truncate font-medium text-white ${isSupport(c.other_user) ? "" : "capitalize"}`}>
-                            {contactName(c.other_user)}
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <span className={`truncate font-medium text-white ${isSupport(c.other_user) ? "" : "capitalize"}`}>
+                              {contactName(c.other_user)}
+                            </span>
+                            {isSupport(c.other_user) && (
+                              <span
+                                className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                                style={{ background: "rgba(212,163,89,0.16)", color: GOLD, border: "1px solid rgba(212,163,89,0.35)" }}
+                              >
+                                Admin
+                              </span>
+                            )}
                           </span>
                           {c.unread_count > 0 && (
                             <span className="rounded-full px-1.5 text-xs font-bold" style={{ background: GOLD, color: OLIVE }}>

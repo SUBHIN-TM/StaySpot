@@ -3,7 +3,9 @@ import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import ToastProvider from "@/components/ToastProvider";
+import ConfirmProvider from "@/components/ConfirmProvider";
 import NavProgress from "@/components/NavProgress";
+import ScrollTop from "@/components/ScrollTop";
 import ChatWidget from "@/components/chat/ChatWidget";
 
 // Brand typography (matches the design): Inter for body text, DM Sans for
@@ -49,8 +51,11 @@ export default function RootLayout({ children }) {
         <Suspense fallback={null}>
           <NavProgress />
         </Suspense>
+        <ScrollTop />
         <Providers>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </ToastProvider>
         </Providers>
         {/* Site-wide floating chat widget (role-aware; hides itself on auth
             and full-chat pages). */}

@@ -8,11 +8,13 @@ import { useEffect, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { districtsOf, DEFAULT_STATE } from "@/lib/geo";
 
 const DISTRICTS = districtsOf(DEFAULT_STATE);
 
 export default function AdminLocalitiesPage() {
+  const confirm = useConfirm();
   const [district, setDistrict] = useState(DISTRICTS[0] || "");
   const [pincodeFilter, setPincodeFilter] = useState("");
   const [q, setQ] = useState("");
@@ -118,9 +120,9 @@ export default function AdminLocalitiesPage() {
 
   async function remove(row) {
     const msg = row.property_count
-      ? `Delete "${row.name}" (${row.pincode})? ${row.property_count} property(ies) still use it (their text stays, it just leaves the dropdown).`
-      : `Delete "${row.name}" (${row.pincode})?`;
-    if (!confirm(msg)) return;
+      ? `${row.property_count} property(ies) still use it (their text stays, it just leaves the dropdown).`
+      : "This removes it from the dropdown.";
+    if (!(await confirm({ title: `Delete "${row.name}" (${row.pincode})?`, message: msg, confirmLabel: "Delete" }))) return;
     setError("");
     setNotice("");
     try {

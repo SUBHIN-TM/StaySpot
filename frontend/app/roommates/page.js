@@ -28,6 +28,7 @@ async function getPosts() {
 
 export default async function RoommatesPage() {
   const posts = await getPosts();
+  const activeCount = posts.filter((p) => p.is_active !== false).length;
 
   return (
     <>
@@ -55,7 +56,7 @@ export default async function RoommatesPage() {
                 </p>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-white/70">
                   <Sparkles size={14} style={{ color: "#E9C88A" }} />
-                  {posts.length} active {posts.length === 1 ? "requirement" : "requirements"}
+                  {activeCount} active {activeCount === 1 ? "requirement" : "requirements"}
                 </p>
               </div>
 

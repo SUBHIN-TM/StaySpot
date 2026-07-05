@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiDelete, apiPatch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { useToast } from "@/components/ToastProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import AdminVerifyOwnerModal from "./AdminVerifyOwnerModal";
 import AuditHistoryModal from "./AuditHistoryModal";
 
@@ -42,6 +43,7 @@ function Select({ value, onChange, children, label }) {
 
 export default function UsersList({ role, title, subtitle }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -72,7 +74,11 @@ export default function UsersList({ role, title, subtitle }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function remove(u) {
-    if (!confirm(`Delete ${u.name} (${u.email})?\nThis also removes their listings and data.`)) return;
+    if (!(await confirm({
+      title: `Delete ${u.name}?`,
+      message: `${u.email}. This also removes their listings and data.`,
+      confirmLabel: "Delete",
+    }))) return;
     try {
       await apiDelete(`/users/${u.id}`, getToken());
       setUsers((list) => list.filter((x) => x.id !== u.id));
