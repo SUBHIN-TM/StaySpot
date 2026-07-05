@@ -3,6 +3,7 @@
 const { query } = require('../config/db');
 const { asyncHandler, ApiError } = require('../utils/http');
 const { publicUser, adminUser } = require('../utils/serialize');
+const { recordAudit, diffChanges } = require('../services/audit');
 
 async function hydrate(row) {
   const u = await query('SELECT * FROM users WHERE id = $1', [row.user_id]);
@@ -110,6 +111,10 @@ const createPost = asyncHandler(async (req, res) => {
       personMax,
     ]
   );
+  await recordAudit({
+    entityType: 'roommate_post', entityId: rows[0].id, action: 'create', actor: req.user,
+    changes: { title: rows[0].title, post_type: rows[0].post_type },
+  });
   res.status(201).json({ post: await hydrate(rows[0]) });
 });
 
@@ -144,16 +149,32 @@ const updatePost = asyncHandler(async (req, res) => {
     `UPDATE roommate_posts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
     params
   );
+
+  // Record what changed. A pure open/close toggle is logged as a 'status' action
+  // so it reads clearly in the activity feed; other edits are logged as 'update'.
+  const changes = diffChanges(owned.rows[0], rows[0], fields);
+  if (Object.keys(changes).length) {
+    const statusOnly = Object.keys(changes).length === 1 && changes.is_active;
+    await recordAudit({
+      entityType: 'roommate_post', entityId: rows[0].id,
+      action: statusOnly ? 'status' : 'update', actor: req.user,
+      changes: statusOnly ? { is_active: rows[0].is_active, title: rows[0].title } : { ...changes, title: rows[0].title },
+    });
+  }
   res.json({ post: await hydrate(rows[0]) });
 });
 
 // DELETE /api/roommate-posts/:id
 const deletePost = asyncHandler(async (req, res) => {
-  const owned = await query('SELECT user_id FROM roommate_posts WHERE id = $1', [req.params.id]);
+  const owned = await query('SELECT user_id, title FROM roommate_posts WHERE id = $1', [req.params.id]);
   if (!owned.rows[0]) throw new ApiError(404, 'Post not found');
   if (owned.rows[0].user_id !== req.user.id && req.user.role !== 'admin')
     throw new ApiError(403, 'Not your post');
   await query('DELETE FROM roommate_posts WHERE id = $1', [req.params.id]);
+  await recordAudit({
+    entityType: 'roommate_post', entityId: req.params.id, action: 'delete', actor: req.user,
+    changes: { title: owned.rows[0].title, by_admin: req.user.role === 'admin' },
+  });
   res.json({ ok: true });
 });
 

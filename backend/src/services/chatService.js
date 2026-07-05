@@ -118,6 +118,12 @@ async function sendMessage({ senderId, conversationId, content, propertyId = nul
   const conv = await assertParticipant(conversationId, senderId);
   const receiverId = otherParticipant(conv, senderId);
 
+  // Can't message an account that's gone or blocked (the thread stays readable,
+  // but no new messages). The UI disables the composer; this is the hard guard.
+  const recv = await query('SELECT is_blocked, deleted_at FROM users WHERE id = $1', [receiverId]);
+  if (recv.rows[0]?.deleted_at) throw new Error('This account has been deleted');
+  if (recv.rows[0]?.is_blocked) throw new Error('This account has been blocked');
+
   return withTransaction(async (client) => {
     const ins = await client.query(
       `INSERT INTO messages (conversation_id, sender_id, receiver_id, property_id, content)

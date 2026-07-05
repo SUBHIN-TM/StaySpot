@@ -16,6 +16,7 @@ import {
   Handshake,
   MapPin,
   MessageSquare,
+  Activity,
   Settings,
   Menu,
   X,
@@ -78,6 +79,7 @@ export default function AdminShell({ active, children }) {
     { key: "owners", label: "Owners", href: "/admin/owners", icon: BadgeCheck },
     { key: "roommates", label: "Roommates", href: "/admin/roommates", icon: Handshake },
     { key: "localities", label: "Localities", href: "/admin/localities", icon: MapPin },
+    { key: "activity", label: "Activity", href: "/admin/activity", icon: Activity },
     { key: "messages", label: "Messages", href: "/admin/messages", icon: MessageSquare },
     { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
   ];

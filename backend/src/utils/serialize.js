@@ -24,6 +24,9 @@ function publicUser(u) {
     // Presence for the chat "online" dot: admins are ALWAYS shown online (support
     // is always available); everyone else is online if seen in the last 3 minutes.
     online: u.role === 'admin' ? true : isRecentlySeen(u.last_seen_at),
+    // Whether this account has been deleted — safe to expose so chat UIs can mark
+    // a former seeker/owner as "(deleted)" next to their name. Never the timestamp.
+    deleted: !!u.deleted_at,
     created_at: u.created_at,
   };
 }

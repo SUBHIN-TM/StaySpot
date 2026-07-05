@@ -55,6 +55,19 @@ function contactName(u) {
 function isSupport(u) {
   return u?.role === "admin";
 }
+// Red chip flagging a contact whose account is gone or blocked (dark-theme pill).
+function StatusChip({ user }) {
+  const label = user?.deleted ? "Deleted" : user?.is_blocked ? "Blocked" : null;
+  if (!label) return null;
+  return (
+    <span
+      className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+      style={{ background: "rgba(220,38,38,0.22)", color: "#FCA5A5", border: "1px solid rgba(220,38,38,0.4)" }}
+    >
+      {label}
+    </span>
+  );
+}
 function SupportMark({ size = 20 }) {
   return <RoofMark size={size} stroke="#FFFFFF" door={GOLD} />;
 }
@@ -162,6 +175,9 @@ export default function ChatWidget() {
 
   const unread = conversations.reduce((n, c) => n + (c.unread_count || 0), 0);
   const active = conversations.find((c) => c.id === activeId);
+  // If the other person's account is deleted or blocked, the thread stays
+  // readable but new messages can't be sent to them.
+  const contactGone = !!(active && (active.other_user?.deleted || active.other_user?.is_blocked));
 
   // Whether the header shows the search bar (logged-in list view with chats).
   const showSearch = loggedIn && !activeId && conversations.length > 0;
@@ -263,6 +279,7 @@ export default function ChatWidget() {
               {loggedIn ? (
                 <p className={`flex items-center gap-2 font-semibold text-white ${active && isSupport(active.other_user) ? "" : "capitalize"}`}>
                   <span className="truncate">{active ? contactName(active.other_user) : "Messages"}</span>
+                  {active && <StatusChip user={active.other_user} />}
                   {active && isSupport(active.other_user) && (
                     <span
                       className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
@@ -396,6 +413,7 @@ export default function ChatWidget() {
                             <span className={`truncate font-medium text-white ${isSupport(c.other_user) ? "" : "capitalize"}`}>
                               {contactName(c.other_user)}
                             </span>
+                            <StatusChip user={c.other_user} />
                             {isSupport(c.other_user) && (
                               <span
                                 className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
@@ -452,8 +470,16 @@ export default function ChatWidget() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Composer */}
-          {(!loggedIn || activeId) && (
+          {/* Composer — replaced by a notice when the other account is gone/blocked. */}
+          {loggedIn && activeId && contactGone ? (
+            <div
+              className="px-4 py-3.5 text-center text-xs leading-relaxed"
+              style={{ borderTop: `1px solid ${LINE}`, color: SUBTLE }}
+            >
+              This account has been {active.other_user?.deleted ? "deleted" : "blocked"}. You can read the
+              conversation, but you can no longer send messages.
+            </div>
+          ) : (!loggedIn || activeId) ? (
             <form
               onSubmit={loggedIn ? send : (e) => { e.preventDefault(); goSignIn(); }}
               className="flex items-center gap-2 px-3 py-3"
@@ -477,7 +503,7 @@ export default function ChatWidget() {
                 <Send size={17} color={OLIVE} />
               </button>
             </form>
-          )}
+          ) : null}
 
         </div>
       )}

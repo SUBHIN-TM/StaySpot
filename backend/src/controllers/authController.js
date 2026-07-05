@@ -9,6 +9,7 @@ const { asyncHandler, ApiError, withTimeout } = require('../utils/http');
 const { selfUser } = require('../utils/serialize');
 const { createOtp, checkOtp, consumeOtp } = require('../services/otp');
 const { sendOtpEmail, sendWelcomeEmail } = require('../services/mail');
+const { recordAudit } = require('../services/audit');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_ROLES = ['seeker', 'owner'];
@@ -135,6 +136,12 @@ const register = asyncHandler(async (req, res) => {
 
   const user = rows[0];
 
+  // Security/activity trail: record the signup against the new user.
+  await recordAudit({
+    entityType: 'user', entityId: user.id, action: 'register', actor: user,
+    changes: { role: user.role, method: 'password' },
+  });
+
   // The OTP is used up; send a welcome email (best-effort — don't fail signup).
   await consumeOtp(cleanEmail, 'signup');
   sendWelcomeEmail(cleanEmail, user.name).catch((err) =>
@@ -160,6 +167,11 @@ const login = asyncHandler(async (req, res) => {
   const ok = await comparePassword(String(password), user.password_hash);
   if (!ok) throw new ApiError(401, 'Invalid username/email or password');
 
+  await recordAudit({
+    entityType: 'user', entityId: user.id, action: 'login', actor: user,
+    changes: { method: 'password' },
+  });
+
   const token = signToken({ sub: user.id, role: user.role });
   res.json({ token, user: selfUser(user) });
 });
@@ -179,6 +191,11 @@ const otpLogin = asyncHandler(async (req, res) => {
   const ok = await checkOtp(user.email, 'login', code);
   if (!ok) throw new ApiError(400, 'Invalid or expired code');
   await consumeOtp(user.email, 'login');
+
+  await recordAudit({
+    entityType: 'user', entityId: user.id, action: 'login', actor: user,
+    changes: { method: 'otp' },
+  });
 
   const token = signToken({ sub: user.id, role: user.role });
   res.json({ token, user: selfUser(user) });
@@ -254,6 +271,10 @@ const googleAuth = asyncHandler(async (req, res) => {
       [email, name, desiredRole, googleId, avatar, randomPassword, uname]
     );
     user = created.rows[0];
+    await recordAudit({
+      entityType: 'user', entityId: user.id, action: 'register', actor: user,
+      changes: { role: user.role, method: 'google' },
+    });
   } else {
     // 3b. Existing user → backfill Google id / latest avatar.
     const updated = await query(
@@ -266,6 +287,10 @@ const googleAuth = asyncHandler(async (req, res) => {
       [user.id, googleId, avatar]
     );
     user = updated.rows[0];
+    await recordAudit({
+      entityType: 'user', entityId: user.id, action: 'login', actor: user,
+      changes: { method: 'google' },
+    });
   }
 
   const token = signToken({ sub: user.id, role: user.role });

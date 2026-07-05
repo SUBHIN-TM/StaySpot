@@ -293,6 +293,11 @@ const createProperty = asyncHandler(async (req, res) => {
     ]
   );
 
+  await recordAudit({
+    entityType: 'property', entityId: rows[0].id, action: 'create', actor: req.user,
+    changes: { title: rows[0].title, rent_amount: Number(rows[0].rent_amount), approval_status: rows[0].approval_status },
+  });
+
   res.status(201).json({ property: await hydrate(rows[0]) });
 });
 

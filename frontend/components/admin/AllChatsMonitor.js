@@ -24,6 +24,16 @@ function roleTag(role) {
   if (role === "admin") return { label: "Admin", cls: "bg-brand/15 text-brand" };
   return { label: "Seeker", cls: "bg-mist text-ink/55" };
 }
+// Red chip flagging a participant whose account is deleted or blocked.
+function StatusChip({ user }) {
+  const label = user?.deleted ? "Deleted" : user?.is_blocked ? "Blocked" : null;
+  if (!label) return null;
+  return (
+    <span className="ml-1 align-middle rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-red-600">
+      {label}
+    </span>
+  );
+}
 
 export default function AllChatsMonitor() {
   const [conversations, setConversations] = useState([]);
@@ -110,7 +120,7 @@ export default function AllChatsMonitor() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-sm font-semibold text-ink">
-                      {c.user_a?.name} <span className="text-ink/40">↔</span> {c.user_b?.name}
+                      {c.user_a?.name}<StatusChip user={c.user_a} /> <span className="text-ink/40">↔</span> {c.user_b?.name}<StatusChip user={c.user_b} />
                     </p>
                     <span className="shrink-0 text-[11px] text-ink/40">{c.message_count} msg</span>
                   </div>
@@ -139,7 +149,7 @@ export default function AllChatsMonitor() {
             <div className="flex items-center justify-between gap-3 border-b border-line p-4">
               <div className="min-w-0">
                 <p className="truncate font-semibold text-ink">
-                  {active.user_a?.name} <span className="text-ink/40">↔</span> {active.user_b?.name}
+                  {active.user_a?.name}<StatusChip user={active.user_a} /> <span className="text-ink/40">↔</span> {active.user_b?.name}<StatusChip user={active.user_b} />
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   {[active.user_a, active.user_b].map((u, i) => {

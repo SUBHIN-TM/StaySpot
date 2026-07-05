@@ -40,4 +40,43 @@ const getHistory = asyncHandler(async (req, res) => {
   res.json({ history });
 });
 
-module.exports = { getHistory };
+// GET /api/audit   (admin only) — GLOBAL activity feed across all entities.
+// Filters: ?entity_type= ?action= ?actor_role= ?q= (actor name/email) + page/limit.
+const listActivity = asyncHandler(async (req, res) => {
+  const { entity_type, action, actor_role, q } = req.query;
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '50', 10)));
+  const offset = (page - 1) * limit;
+
+  const where = [];
+  const params = [];
+  let i = 1;
+  if (entity_type) { params.push(entity_type); where.push(`a.entity_type = $${i++}`); }
+  if (action) { params.push(action); where.push(`a.action = $${i++}`); }
+  if (actor_role) { params.push(actor_role); where.push(`a.actor_role = $${i++}`); }
+  if (q) { params.push(`%${q}%`); where.push(`(u.name ILIKE $${i} OR u.email ILIKE $${i})`); i++; }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const countRes = await query(
+    `SELECT COUNT(*)::int AS total FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_id ${whereSql}`,
+    params
+  );
+  const total = countRes.rows[0]?.total || 0;
+
+  params.push(limit, offset);
+  const { rows } = await query(
+    `SELECT a.id, a.entity_type, a.entity_id, a.action, a.changes, a.created_at,
+            a.actor_role, u.name AS actor_name, u.email AS actor_email,
+            (u.deleted_at IS NOT NULL) AS actor_deleted
+       FROM audit_logs a
+       LEFT JOIN users u ON u.id = a.actor_id
+       ${whereSql}
+       ORDER BY a.created_at DESC
+       LIMIT $${i++} OFFSET $${i++}`,
+    params
+  );
+  const items = rows.map((r) => ({ ...r, changes: withMediaUrls(r.changes, r.action) }));
+  res.json({ items, total, page, limit, total_pages: Math.max(1, Math.ceil(total / limit)) });
+});
+
+module.exports = { getHistory, listActivity };
