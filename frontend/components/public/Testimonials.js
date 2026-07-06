@@ -10,6 +10,7 @@ import { motion } from "motion/react";
 import { Star, Send } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
+import { useConfirm } from "@/components/ConfirmProvider";
 import AvatarPopover from "./AvatarPopover";
 import { GOLD, SAGE, OLIVE, LINE } from "./palette";
 
@@ -82,8 +83,13 @@ function Stars({ value }) {
 
 export default function Testimonials({ initialReviews = [], prefillEnabled = true }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [reviews, setReviews] = useState(initialReviews);
   const [user, setUser] = useState(null);
+  // True once the logged-in user already has a review: the form is prefilled with
+  // it, so the primary action becomes "Update review" (with a confirm popup)
+  // instead of "Submit review".
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
   // Form state
   const [rating, setRating] = useState(0);
@@ -92,6 +98,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [doneWasEdit, setDoneWasEdit] = useState(false); // shapes the success line
 
   // Tracks whether the comment box currently holds an auto-suggestion (true) or
   // text the user typed themselves (false). We only overwrite suggestions, never
@@ -107,7 +114,8 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
       if (mine) {
         setRating(mine.rating);
         setComment(mine.comment);
-        autofilledRef.current = false; // their real review — don't overwrite it
+        setAlreadyReviewed(true);       // they've reviewed before → "Update" mode
+        autofilledRef.current = false;  // their real review — don't overwrite it
       }
     }
   }, [initialReviews]);
@@ -145,6 +153,22 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
     if (!rating) return setError("Please pick a star rating.");
     if (comment.trim().length < 3) return setError("Please write a short comment.");
 
+    // Remember whether this save is an edit BEFORE we flip alreadyReviewed, so the
+    // success line ("updated" vs "thanks for sharing") stays accurate.
+    const wasEdit = alreadyReviewed;
+
+    // Editing an existing review: confirm before overwriting the old one.
+    if (alreadyReviewed) {
+      const ok = await confirm({
+        title: "Update your review?",
+        message: "This will replace the review you shared earlier with your new rating and comment.",
+        confirmLabel: "Yes, update it",
+        cancelLabel: "Keep old one",
+        tone: "brand", // sage/gold styling, not the red destructive look
+      });
+      if (!ok) return;
+    }
+
     setSubmitting(true);
     try {
       const { review } = await apiPost(
@@ -154,6 +178,8 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
       );
       // Replace my old review (if any) and show mine first.
       setReviews((prev) => [review, ...prev.filter((r) => r.user?.id !== review.user.id)]);
+      setAlreadyReviewed(true); // now they definitely have one
+      setDoneWasEdit(wasEdit);
       setDone(true);
     } catch (e) {
       setError(e.message || "Couldn't submit your review.");
@@ -190,14 +216,20 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
           style={{ background: "white", border: `1px solid ${LINE}`, boxShadow: "0 4px 20px rgba(30,37,33,.06)" }}
         >
           <h3 className="text-lg font-bold mb-1" style={{ color: OLIVE }}>
-            {loggedIn ? "Rate your Parppidam experience" : "Share your experience"}
+            {!loggedIn
+              ? "Share your experience"
+              : alreadyReviewed
+                ? "Edit your review"
+                : "Rate your Parppidam experience"}
           </h3>
           <p className="text-sm mb-4" style={{ color: "#5A6B63" }}>
-            {loggedIn
-              ? prefillEnabled
-                ? "Tap a star and we'll suggest a comment — edit it however you like."
-                : "Tap a star and write a short review."
-              : "Log in to leave a star rating and a short review."}
+            {!loggedIn
+              ? "Log in to leave a star rating and a short review."
+              : alreadyReviewed
+                ? "This is the review you shared earlier. Change the stars or comment, then update it."
+                : prefillEnabled
+                  ? "Tap a star and we'll suggest a comment — edit it however you like."
+                  : "Tap a star and write a short review."}
           </p>
 
           {/* Star picker */}
@@ -230,7 +262,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
           />
 
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-          {done && !error && <p className="mt-2 text-sm" style={{ color: SAGE }}>Thanks for sharing your review! 🙌</p>}
+          {done && !error && <p className="mt-2 text-sm" style={{ color: SAGE }}>{doneWasEdit ? "Your review has been updated! 🙌" : "Thanks for sharing your review! 🙌"}</p>}
 
           <div className="mt-4 flex items-center justify-end">
             {loggedIn ? (
@@ -245,7 +277,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#3C4A41"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = SAGE; }}
               >
-                {submitting ? "Submitting…" : "Submit review"} <Send size={14} />
+                {submitting ? "Saving…" : alreadyReviewed ? "Update review" : "Submit review"} <Send size={14} />
               </motion.button>
             ) : (
               <motion.button
