@@ -273,6 +273,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 .reveal.reveal-in { opacity: 1; transform: none; }
 
+/* ── Failsafe: never show blank sections before JS hydrates ──────────────────
+   Framer Motion renders its scroll-entrance elements at opacity:0 in the SERVER
+   HTML and only fades them in after hydration + the element scrolling into view.
+   If the user scrolls (or the JS bundle is slow to run) before that happens, whole
+   sections are invisible — a blank/white scroll with nothing on it.
+
+   Until React confirms it has hydrated (<HydrationFlag/> adds `html.hydrated`), we
+   force any element that is hidden purely for a scroll entrance (opacity:0 combined
+   with a translate) to be visible. This targets ONLY the entrance wrappers — the
+   hero's cross-fading slides use opacity WITHOUT a translate, so the slideshow is
+   untouched. Once hydrated, this rule switches off and the normal fade-ins run. */
+html:not(.hydrated) [style*="opacity:0"][style*="translate"],
+html:not(.hydrated) [style*="opacity: 0"][style*="translate"] {
+  opacity: 1 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .blob, .floaty, .floaty-slow, .rise, .nav-drop, .marquee-track, .marquee-fast, .gradient-pan {
     animation: none !important;

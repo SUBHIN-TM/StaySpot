@@ -6,6 +6,7 @@ import ToastProvider from "@/components/ToastProvider";
 import ConfirmProvider from "@/components/ConfirmProvider";
 import NavProgress from "@/components/NavProgress";
 import ScrollTop from "@/components/ScrollTop";
+import HydrationFlag from "@/components/HydrationFlag";
 import ChatWidget from "@/components/chat/ChatWidget";
 
 // Brand typography (matches the design): Inter for body text, DM Sans for
@@ -52,6 +53,7 @@ export default function RootLayout({ children }) {
           <NavProgress />
         </Suspense>
         <ScrollTop />
+        <HydrationFlag />
         <Providers>
           <ToastProvider>
             <ConfirmProvider>{children}</ConfirmProvider>

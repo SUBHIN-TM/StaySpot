@@ -36,7 +36,17 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ height: "100vh", minHeight: 700 }}>
+    <section
+      className="relative w-full overflow-hidden"
+      style={{
+        height: "100vh",
+        minHeight: 700,
+        // Dark branded base so the hero is never a blank WHITE box before the
+        // (remote) slideshow image downloads — it shows a deep olive backdrop that
+        // the image simply fades in over.
+        background: "linear-gradient(160deg, #1E2521 0%, #2A332C 100%)",
+      }}
+    >
       {/* Image slider. First slide loads eager + high priority so the hero paints
           ASAP; the rest lazy-load so they don't compete on first render. */}
       {HERO_IMGS.map((img, i) => (
