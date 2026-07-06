@@ -115,8 +115,16 @@ export default function Navbar() {
           transition: "all 0.35s ease",
         }}
       >
-        {/* Logo */}
-        <Link href="/" className="flex flex-shrink-0 items-center">
+        {/* Logo — always goes to the landing page. When already on "/", Next won't
+            re-navigate, so scroll to the top ourselves so a click always lands the
+            user at the top of home (feels like "go home" everywhere). */}
+        <Link
+          href="/"
+          className="flex flex-shrink-0 items-center"
+          onClick={() => {
+            if (pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
           <Logo size={30} textClass="text-lg" tone={solid ? "light" : "dark"} />
         </Link>
 

@@ -55,15 +55,19 @@ export default function AvatarMenu({ user, onLogout }) {
         className="flex items-center gap-2"
         aria-label="Open profile menu"
       >
+        {/* "Owner" chip shown on ALL screen sizes (including phones) so an owner
+            browsing the public site always knows they're in owner mode. Kept
+            compact (tighter horizontal padding on small screens) so it doesn't
+            crowd the mobile navbar cluster. */}
         {isOwner && (
           <span
-            className="hidden items-center justify-center rounded-full text-[10px] font-extrabold uppercase leading-none text-white sm:inline-flex"
+            className="inline-flex items-center justify-center rounded-full text-[10px] font-extrabold uppercase leading-none text-white"
             style={{
               background: "linear-gradient(135deg, #D4A359, #B07C1E)",
               boxShadow: "0 2px 8px rgba(176,124,30,0.35)",
               // Caps sit high in the line box (no descenders), so a touch more top
               // padding than bottom optically centres "OWNER".
-              padding: "0.5em 0.75em 0.3em",
+              padding: "0.5em 0.6em 0.3em",
             }}
           >
             Owner
