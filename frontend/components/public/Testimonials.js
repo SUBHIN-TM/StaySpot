@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Star, Send } from "lucide-react";
+import { Star, Send, Pencil } from "lucide-react";
 import { apiPost } from "@/lib/api";
 import { getCurrentUser, getUserToken } from "@/lib/userAuth";
 import { useConfirm } from "@/components/ConfirmProvider";
@@ -99,6 +99,10 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [doneWasEdit, setDoneWasEdit] = useState(false); // shapes the success line
+  // For an existing review the form starts locked (read-only). "Edit review"
+  // flips this on so the stars + comment become editable and the button turns
+  // into "Save changes".
+  const [editing, setEditing] = useState(false);
 
   // Tracks whether the comment box currently holds an auto-suggestion (true) or
   // text the user typed themselves (false). We only overwrite suggestions, never
@@ -127,6 +131,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
       router.push(`/login?next=${encodeURIComponent("/")}`);
       return;
     }
+    if (readOnly) return; // locked existing review — "Edit review" unlocks it first
     setRating(n);
     setDone(false);
     if (!prefillEnabled) return; // admin turned suggestions off
@@ -140,6 +145,8 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
   }
 
   const loggedIn = !!user && !!getUserToken();
+  // An existing review is shown locked until the user taps "Edit review".
+  const readOnly = alreadyReviewed && !editing;
   const avg = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;
@@ -160,9 +167,9 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
     // Editing an existing review: confirm before overwriting the old one.
     if (alreadyReviewed) {
       const ok = await confirm({
-        title: "Update your review?",
+        title: "Save changes to your review?",
         message: "This will replace the review you shared earlier with your new rating and comment.",
-        confirmLabel: "Yes, update it",
+        confirmLabel: "Yes, save changes",
         cancelLabel: "Keep old one",
         tone: "brand", // sage/gold styling, not the red destructive look
       });
@@ -179,6 +186,7 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
       // Replace my old review (if any) and show mine first.
       setReviews((prev) => [review, ...prev.filter((r) => r.user?.id !== review.user.id)]);
       setAlreadyReviewed(true); // now they definitely have one
+      setEditing(false);        // lock the form back to read-only
       setDoneWasEdit(wasEdit);
       setDone(true);
     } catch (e) {
@@ -218,18 +226,22 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
           <h3 className="text-lg font-bold mb-1" style={{ color: OLIVE }}>
             {!loggedIn
               ? "Share your experience"
-              : alreadyReviewed
-                ? "Edit your review"
-                : "Rate your Parppidam experience"}
+              : readOnly
+                ? "Your review"
+                : editing
+                  ? "Edit your review"
+                  : "Rate your Parppidam experience"}
           </h3>
           <p className="text-sm mb-4" style={{ color: "#5A6B63" }}>
             {!loggedIn
               ? "Log in to leave a star rating and a short review."
-              : alreadyReviewed
-                ? "This is the review you shared earlier. Change the stars or comment, then update it."
-                : prefillEnabled
-                  ? "Tap a star and we'll suggest a comment — edit it however you like."
-                  : "Tap a star and write a short review."}
+              : readOnly
+                ? "This is the review you shared earlier. Tap Edit review to change it."
+                : editing
+                  ? "Update your stars or comment, then save your changes."
+                  : prefillEnabled
+                    ? "Tap a star and we'll suggest a comment — edit it however you like."
+                    : "Tap a star and write a short review."}
           </p>
 
           {/* Star picker */}
@@ -239,9 +251,10 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
                 key={n}
                 type="button"
                 onClick={() => pickStar(n)}
-                onMouseEnter={() => setHover(n)}
+                onMouseEnter={() => { if (!readOnly) setHover(n); }}
+                disabled={readOnly}
                 aria-label={`${n} star${n > 1 ? "s" : ""}`}
-                className="transition-transform hover:scale-110"
+                className={readOnly ? "cursor-default" : "transition-transform hover:scale-110"}
               >
                 <Star size={28} fill={(hover || rating) >= n ? GOLD : "none"} color={GOLD} />
               </button>
@@ -256,9 +269,9 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
             placeholder={loggedIn ? "Tell others how Parppidam worked for you…" : "Log in to write your review…"}
             maxLength={600}
             rows={3}
-            readOnly={!loggedIn}
+            readOnly={!loggedIn || readOnly}
             className="w-full rounded-2xl px-4 py-3 text-sm outline-none resize-none"
-            style={{ background: "var(--color-mist)", border: `1px solid ${LINE}`, color: OLIVE }}
+            style={{ background: "var(--color-mist)", border: `1px solid ${LINE}`, color: OLIVE, cursor: readOnly ? "default" : "text" }}
           />
 
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
@@ -266,19 +279,35 @@ export default function Testimonials({ initialReviews = [], prefillEnabled = tru
 
           <div className="mt-4 flex items-center justify-end">
             {loggedIn ? (
-              <motion.button
-                type="button"
-                onClick={submit}
-                disabled={submitting}
-                whileHover={submitting ? {} : { scale: 1.04, y: -2 }}
-                whileTap={submitting ? {} : { scale: 0.97 }}
-                className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
-                style={{ background: SAGE, boxShadow: `0 8px 22px ${SAGE}55` }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#3C4A41"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = SAGE; }}
-              >
-                {submitting ? "Saving…" : alreadyReviewed ? "Update review" : "Submit review"} <Send size={14} />
-              </motion.button>
+              readOnly ? (
+                // Locked existing review: primary action just unlocks the form.
+                <motion.button
+                  type="button"
+                  onClick={() => { setEditing(true); setDone(false); }}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+                  style={{ background: SAGE, boxShadow: `0 8px 22px ${SAGE}55` }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#3C4A41"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = SAGE; }}
+                >
+                  Edit review <Pencil size={14} />
+                </motion.button>
+              ) : (
+                <motion.button
+                  type="button"
+                  onClick={submit}
+                  disabled={submitting}
+                  whileHover={submitting ? {} : { scale: 1.04, y: -2 }}
+                  whileTap={submitting ? {} : { scale: 0.97 }}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
+                  style={{ background: SAGE, boxShadow: `0 8px 22px ${SAGE}55` }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#3C4A41"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = SAGE; }}
+                >
+                  {submitting ? "Saving…" : alreadyReviewed ? "Save changes" : "Submit review"} <Send size={14} />
+                </motion.button>
+              )
             ) : (
               <motion.button
                 type="button"
