@@ -43,6 +43,8 @@ const env = {
 
   storageDriver: (process.env.STORAGE_DRIVER || 'local').toLowerCase(),
   publicBaseUrl: (process.env.PUBLIC_BASE_URL || 'http://localhost:4000').replace(/\/$/, ''),
+  // Only for STORAGE_DRIVER=server: the VPS backend that holds uploads/.
+  uploadServerUrl: (process.env.UPLOAD_SERVER_URL || '').replace(/\/$/, ''),
 
   contabo: {
     endpoint: process.env.CONTABO_ENDPOINT || '',

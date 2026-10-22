@@ -8,7 +8,8 @@
 // longer tie up server memory or the DB connection while they upload.
 //
 //   1. POST /uploads/presign  -> { key, uploadUrl, method, headers }
-//   2. browser PUTs the file to uploadUrl (Contabo, or the local sink in dev)
+//   2. browser PUTs the file to uploadUrl (our /api/uploads/local sink with
+//      STORAGE_DRIVER=local, or Contabo with STORAGE_DRIVER=contabo)
 //   3. on form submit the key is saved on the property (see propertyController)
 
 const storage = require('../storage');
@@ -86,10 +87,10 @@ const cancel = asyncHandler(async (req, res) => {
 });
 
 // PUT /api/uploads/local?key=…&sig=…   (local storage driver only)
-// Dev-only sink that emulates a presigned URL: the browser PUTs raw bytes here
-// and we write them to disk. Authenticated by the HMAC signature in the query
-// (see storage/local.js), not a login token. The route uses express.raw(), so
-// req.body is a Buffer of the file.
+// Our own "bucket" endpoint, emulating a presigned URL: the browser PUTs raw
+// bytes here and we write them to backend/uploads/. Authenticated by the HMAC
+// signature in the query (see storage/local.js), not a login token. The route
+// uses express.raw(), so req.body is a Buffer of the file.
 const localPut = asyncHandler(async (req, res) => {
   if (storage.driver !== 'local') throw new ApiError(404, 'Not found');
 
@@ -99,8 +100,30 @@ const localPut = asyncHandler(async (req, res) => {
   }
   if (!req.body || !req.body.length) throw new ApiError(400, 'Empty upload body');
 
+  // Presign only saw the size the browser CLAIMED; here we have the real bytes,
+  // so enforce the admin limit for this key's folder ("image/…", "video/…", …).
+  const folder = key.split('/')[0];
+  const rules = (await getLimits())[folder];
+  if (rules && req.body.length > rules.maxBytes) {
+    throw new ApiError(413, `${folder} is too large (max ${rules.maxMb} MB)`);
+  }
+
   await storage.saveAtKey(key, req.body, req.headers['content-type']);
   res.json({ ok: true });
 });
 
-module.exports = { presign, cancel, localPut, limits };
+// DELETE /api/uploads/local?key=…&sig=…   (local storage driver only)
+// Lets another backend (one using the "server" driver) remove a file from our
+// uploads/. The signature is over "delete:<key>" (see storage/local.js).
+const localDelete = asyncHandler(async (req, res) => {
+  if (storage.driver !== 'local') throw new ApiError(404, 'Not found');
+
+  const { key, sig } = req.query;
+  if (!storage.verifyDeleteSig(key, sig)) {
+    throw new ApiError(403, 'Invalid delete URL');
+  }
+  await storage.delete(key);
+  res.json({ ok: true });
+});
+
+module.exports = { presign, cancel, localPut, localDelete, limits };

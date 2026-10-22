@@ -14,9 +14,13 @@ router.post('/presign', requireAuth, requireRole('owner', 'admin'), ctrl.presign
 // Cancel a still-pending upload (attachment removed before submit).
 router.post('/cancel', requireAuth, ctrl.cancel);
 
-// Local-driver-only sink for direct uploads in dev. Raw body (the file bytes);
-// limit a touch above the 50 MB video cap. No requireAuth — the signed query
-// string is the credential (see uploadController.localPut).
-router.put('/local', express.raw({ type: '*/*', limit: '60mb' }), ctrl.localPut);
+// Local-driver sink for direct uploads (our own "S3 bucket"). Raw body (the
+// file bytes). The hard cap matches nginx's client_max_body_size (100M); the
+// real admin-configured limit is checked in uploadController.localPut.
+// No requireAuth — the signed query string is the credential.
+router.put('/local', express.raw({ type: '*/*', limit: '100mb' }), ctrl.localPut);
+
+// Signed delete, used by backends running the "server" driver (dev PCs).
+router.delete('/local', ctrl.localDelete);
 
 module.exports = router;

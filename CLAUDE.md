@@ -51,7 +51,8 @@ Optional demo data: `npm run db:seed`.
 - `PUBLIC_BASE_URL` — base URL used to build uploaded-image/video URLs. Use
   `http://localhost:4000` for web-on-this-PC. (For the mobile app on a phone, set it
   to the PC's LAN IP.)
-- `STORAGE_DRIVER=local` (files saved to `backend/uploads/`; later swap to `contabo`).
+- `STORAGE_DRIVER=server` + `UPLOAD_SERVER_URL=http://157.173.122.163:8090` on a dev
+  PC (media goes to the VPS's uploads folder; see Gotchas). The VPS itself uses `local`.
 
 **`frontend/.env.local`**:
 - `NEXT_PUBLIC_API_URL=http://localhost:4000`
@@ -194,8 +195,22 @@ Admin login is at `/admin/login` (separate session from regular users).
   defaults 8/50, edited in Admin → Settings). Enforced in the browser before upload
   AND server-side at presign. The form fetches them from `GET /api/uploads/limits`
   and shows a live upload-progress % (XHR, not fetch — only XHR exposes progress).
-- Local-driver uploads land in `backend/uploads/`. Contabo is the prod driver
-  (`STORAGE_DRIVER=contabo` + `CONTABO_*` env) — same code path, presigned URLs.
+- **All media lives in the VPS's `/var/www/staymate/backend/uploads/` (since
+  2026-10-22)**, because the Contabo bucket returned 401 (account lost) and its
+  files were not recoverable; the listings were re-seeded with 44 Wikimedia
+  Commons photos. Drivers (`backend/src/storage/`):
+  - VPS: `STORAGE_DRIVER=local`, `PUBLIC_BASE_URL=http://157.173.122.163:8090`.
+    Presign returns a signed `PUT /api/uploads/local?key&sig`; files served at
+    `/uploads/<key>`; signed `DELETE /api/uploads/local` for remote deletes.
+  - Dev PC: `STORAGE_DRIVER=server`, `UPLOAD_SERVER_URL=http://157.173.122.163:8090`.
+    Uploads, avatars, deletes and image URLs all go to the VPS, never the PC.
+    Requires the SAME `JWT_SECRET` as the VPS (it keys the HMAC signatures).
+  - `contabo` driver kept in case a bucket returns.
+- **No domain:** `skillpursuit.shop` expired; its nginx site was disabled (backup
+  `/root/nginx-staymate-domain.bak-20261022`). The site is served by IP at
+  `http://157.173.122.163:8090` (nginx site `staymate-ip`, ufw 8090 open). Google
+  sign in does not work on a bare IP. The frontend bakes `NEXT_PUBLIC_API_URL` in
+  at build time, so changing it needs `npm run build` + `pm2 restart staymate-frontend`.
 
 ## Ops / debugging
 - **Error log file:** server faults (5xx), `unhandledRejection`, and

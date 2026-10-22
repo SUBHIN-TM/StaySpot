@@ -58,8 +58,22 @@ function signKey(key) {
 }
 
 function verifyUploadSig(key, sig) {
+  return sigMatches(signKey(key || ''), key, sig);
+}
+
+// Deletes from another backend (the "server" driver on a dev PC) are signed
+// the same way, with a "delete:" prefix so an upload signature can't be
+// replayed as a delete.
+function signDelete(key) {
+  return signKey(`delete:${key}`);
+}
+
+function verifyDeleteSig(key, sig) {
+  return sigMatches(signDelete(key || ''), key, sig);
+}
+
+function sigMatches(expected, key, sig) {
   if (!key || !sig) return false;
-  const expected = signKey(key);
   // Constant-time compare (both hex strings of equal length).
   return sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
@@ -105,8 +119,15 @@ const localStorage = {
     return { key, uploadUrl, method: 'PUT', headers };
   },
 
-  /** Validate the HMAC signature on a local direct-upload PUT. */
+  /** Validate the HMAC signature on a local direct-upload PUT / DELETE. */
   verifyUploadSig,
+  verifyDeleteSig,
+
+  // Shared with the "server" driver (storage/server.js), which signs the same
+  // way so this backend accepts its uploads and deletes.
+  buildKey,
+  signKey,
+  signDelete,
 
   /**
    * Write a buffer to an EXACT key (used by the local PUT sink — the key was

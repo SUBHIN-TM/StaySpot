@@ -6,8 +6,12 @@
 const env = require('../config/env');
 const local = require('./local');
 const contabo = require('./contabo');
+const server = require('./server');
 
-const drivers = { local, contabo };
+// local   = files on THIS machine's backend/uploads/ (used on the VPS itself)
+// server  = files on the VPS's uploads/, reached over HTTP (used on dev PCs)
+// contabo = S3-compatible bucket (no longer in use, kept in case it returns)
+const drivers = { local, server, contabo };
 
 const storage = drivers[env.storageDriver] || local;
 
